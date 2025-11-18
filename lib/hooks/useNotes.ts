@@ -19,6 +19,16 @@ interface Note {
       color: string | null
     }
   }>
+  properties?: Array<{
+    id: string
+    value: any
+    property: {
+      id: string
+      name: string
+      type: string
+      options: any
+    }
+  }>
 }
 
 // 노트 목록 조회
