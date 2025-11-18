@@ -147,12 +147,78 @@
 
 ### 다음 작업 계획 (Week 3)
 
-- [ ] [[링크]] 자동완성 (Tiptap Suggestion 플러그인 통합)
+- [x] [[링크]] 자동완성 (Tiptap Suggestion 플러그인 통합) ✅
 - [ ] #태그 자동 NoteTag 연결 로직
 - [ ] Table View / List View 구현
 - [ ] Command Palette (Cmd+K)
 - [ ] Navigation 메뉴 추가
 - [ ] 에러 핸들링 개선 (Toast 알림)
+
+---
+
+## [2025-11-18 18:00] Web Claude - [[링크]] 자동완성 구현 완료
+
+### 완료된 작업
+- [x] WikiLink 자동완성 Extension 작성
+  - `lib/tiptap-extensions/WikiLinkAutocomplete.ts` - Tiptap Suggestion 플러그인 통합
+  - `[[` 입력 시 노트 제목 드롭다운 표시
+  - 키보드 네비게이션 (↑↓ 화살표, Enter 선택)
+- [x] WikiLinkSuggestionList 개선
+  - 글로벌 window 객체에 등록하여 Tiptap extension에서 접근 가능
+  - 최대 높이 제한 및 스크롤
+  - 더 나은 UI/UX
+- [x] NoteEditorAdvanced에 자동완성 통합
+  - WikiLinkAutocomplete extension 추가
+  - 전체 노트 목록 전달
+
+### 구현된 기능
+**[[링크]] 자동완성** ✅
+```
+1. 에디터에서 [[ 입력
+2. 노트 제목 드롭다운 자동 표시
+3. 타이핑으로 필터링
+4. ↑↓ 화살표로 선택 이동
+5. Enter로 선택 → [[노트제목]] 자동 삽입
+6. ESC로 취소
+```
+
+### 사용 방법
+```
+에디터에서 [[ 입력
+→ 노트 목록 드롭다운 표시
+→ 노트 제목 타이핑으로 필터링
+→ 화살표 키로 선택 이동
+→ Enter 또는 클릭으로 삽입
+```
+
+### 터미널 Claude 테스트 시나리오
+```bash
+npm run dev
+# http://localhost:3004
+```
+
+**테스트:**
+- [ ] 노트 에디터에서 `[[` 입력 → 드롭다운 표시 확인
+- [ ] 제목 일부 타이핑 → 필터링 확인
+- [ ] ↑↓ 화살표 → 선택 이동 확인
+- [ ] Enter → `[[노트제목]]` 삽입 확인
+- [ ] 마우스 클릭으로 선택 → 삽입 확인
+- [ ] ESC → 드롭다운 닫힘 확인
+
+### 알려진 제약사항
+1. **노트 목록 실시간 업데이트 안 됨**
+   - 에디터 초기화 시점의 노트 목록만 사용
+   - 새 노트 추가 후 자동완성에 반영 안 됨
+   - 해결: 페이지 새로고침 필요
+
+2. **중복 자동완성**
+   - 기존 WikiLink decoration과 별도로 작동
+   - 충돌 가능성 낮음
+
+### 다음 개선 사항
+- [ ] 노트 목록 실시간 업데이트 (useEditor dependency 개선)
+- [ ] 자동완성 트리거를 `[[`에서 `@` 또는 `/`로 추가 옵션 제공
+- [ ] 최근 링크한 노트 우선 표시
 
 ---
 

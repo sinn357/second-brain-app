@@ -60,18 +60,18 @@ export const WikiLinkSuggestionList = forwardRef((props: SuggestionListProps, re
   if (props.items.length === 0) {
     return (
       <div className="bg-white border rounded-lg shadow-lg p-2 min-w-[200px]">
-        <div className="text-sm text-gray-500 px-3 py-2">No results</div>
+        <div className="text-sm text-gray-500 px-3 py-2">노트를 찾을 수 없습니다</div>
       </div>
     )
   }
 
   return (
-    <div className="bg-white border rounded-lg shadow-lg p-2 min-w-[200px]">
+    <div className="bg-white border rounded-lg shadow-lg p-2 min-w-[250px] max-h-[200px] overflow-y-auto">
       {props.items.map((item, index) => (
         <button
           key={item.id}
           onClick={() => selectItem(index)}
-          className={`w-full text-left px-3 py-2 rounded text-sm ${
+          className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
             index === selectedIndex ? 'bg-blue-100 text-blue-900' : 'hover:bg-gray-100'
           }`}
         >
@@ -83,3 +83,8 @@ export const WikiLinkSuggestionList = forwardRef((props: SuggestionListProps, re
 })
 
 WikiLinkSuggestionList.displayName = 'WikiLinkSuggestionList'
+
+// 글로벌에 등록하여 Tiptap extension에서 사용 가능하도록
+if (typeof window !== 'undefined') {
+  (window as any).WikiLinkSuggestionListComponent = WikiLinkSuggestionList
+}

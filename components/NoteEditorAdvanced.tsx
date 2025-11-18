@@ -6,6 +6,7 @@ import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { WikiLink } from '@/lib/tiptap-extensions/WikiLink'
 import { HashTag } from '@/lib/tiptap-extensions/HashTag'
+import { WikiLinkAutocomplete } from '@/lib/tiptap-extensions/WikiLinkAutocomplete'
 import { useEffect, useState } from 'react'
 import { useNotes } from '@/lib/hooks/useNotes'
 import { useCreateTag } from '@/lib/hooks/useTags'
@@ -13,6 +14,7 @@ import { useRouter } from 'next/navigation'
 import tippy, { Instance as TippyInstance } from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
 import { NoteLinkPreview } from './NoteLinkPreview'
+import { WikiLinkSuggestionList } from './WikiLinkSuggestionList'
 import { createRoot } from 'react-dom/client'
 
 interface NoteEditorAdvancedProps {
@@ -72,6 +74,10 @@ export function NoteEditorAdvanced({
             console.log('Tag already exists or error:', error)
           }
         },
+      }),
+      WikiLinkAutocomplete.configure({
+        notes: allNotes.map(note => ({ id: note.id, title: note.title })),
+        suggestion: {},
       }),
     ],
     content,
