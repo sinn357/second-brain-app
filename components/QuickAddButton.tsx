@@ -6,6 +6,7 @@ import { useFolders } from '@/lib/hooks/useFolders'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function QuickAddButton() {
   const router = useRouter()
@@ -29,7 +30,7 @@ export function QuickAddButton() {
       router.push(`/notes/${note.id}`)
     } catch (error) {
       console.error('Quick add error:', error)
-      alert('노트 생성에 실패했습니다')
+      toast.error('노트 생성에 실패했습니다')
     } finally {
       setIsCreating(false)
     }

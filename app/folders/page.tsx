@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Folder, Plus, Trash2 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
 
 export default function FoldersPage() {
   const { data: folders = [], isLoading } = useFolders()
@@ -17,7 +18,7 @@ export default function FoldersPage() {
 
   const handleCreate = async () => {
     if (!newFolderName.trim()) {
-      alert('폴더 이름을 입력하세요')
+      toast.error('폴더 이름을 입력하세요')
       return
     }
 
@@ -29,9 +30,10 @@ export default function FoldersPage() {
         position: folders.length,
       })
       setNewFolderName('')
+      toast.success('폴더가 생성되었습니다')
     } catch (error) {
       console.error('Create folder error:', error)
-      alert('폴더 생성에 실패했습니다')
+      toast.error('폴더 생성에 실패했습니다')
     } finally {
       setIsCreating(false)
     }
@@ -44,9 +46,10 @@ export default function FoldersPage() {
 
     try {
       await deleteFolder.mutateAsync(id)
+      toast.success('폴더가 삭제되었습니다')
     } catch (error) {
       console.error('Delete folder error:', error)
-      alert('폴더 삭제에 실패했습니다')
+      toast.error('폴더 삭제에 실패했습니다')
     }
   }
 

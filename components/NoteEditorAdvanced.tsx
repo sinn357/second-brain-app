@@ -16,6 +16,7 @@ import 'tippy.js/dist/tippy.css'
 import { NoteLinkPreview } from './NoteLinkPreview'
 import { WikiLinkSuggestionList } from './WikiLinkSuggestionList'
 import { createRoot } from 'react-dom/client'
+import { toast } from 'sonner'
 
 interface NoteEditorAdvancedProps {
   content: string
@@ -57,7 +58,7 @@ export function NoteEditorAdvanced({
           if (targetNote) {
             router.push(`/notes/${targetNote.id}`)
           } else {
-            alert(`"${title}" 노트를 찾을 수 없습니다`)
+            toast.error(`"${title}" 노트를 찾을 수 없습니다`)
           }
         },
       }),
@@ -69,7 +70,7 @@ export function NoteEditorAdvanced({
           // #태그 클릭 시 태그 생성 (없으면)
           try {
             await createTag.mutateAsync({ name: tag })
-            alert(`태그 "${tag}"가 생성되었습니다`)
+            toast.success(`태그 "${tag}"가 생성되었습니다`)
           } catch (error) {
             console.log('Tag already exists or error:', error)
           }

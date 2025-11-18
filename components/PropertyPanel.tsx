@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import { toast } from 'sonner'
 
 interface PropertyPanelProps {
   noteId: string
@@ -46,9 +47,10 @@ export function PropertyPanel({ noteId, currentProperties = [] }: PropertyPanelP
         propertyId,
         value,
       })
+      toast.success('속성이 설정되었습니다')
     } catch (error) {
       console.error('Set property error:', error)
-      alert('속성 설정에 실패했습니다')
+      toast.error('속성 설정에 실패했습니다')
     }
   }
 

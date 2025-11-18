@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, Save } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -51,10 +52,10 @@ export default function NoteDetailPage({ params }: Props) {
         body: JSON.stringify({ body }),
       })
 
-      alert('저장되었습니다')
+      toast.success('저장되었습니다')
     } catch (error) {
       console.error('Save error:', error)
-      alert('저장에 실패했습니다')
+      toast.error('저장에 실패했습니다')
     } finally {
       setIsSaving(false)
     }
