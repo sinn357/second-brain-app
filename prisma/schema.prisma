@@ -1,0 +1,113 @@
+// Second Brain App - Prisma Schema
+// MVP: Quick Add + Markdown Links + Property-based DB + Graph View
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 노트 (핵심 엔티티)
+model Note {
+  id        String   @id @default(cuid())
+  title     String   @db.VarChar(500)
+  body      String   @db.Text
+  folderId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  folder     Folder?        @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags       NoteTag[]
+  linksFrom  Link[]         @relation("SourceNote")
+  linksTo    Link[]         @relation("TargetNote")
+  properties NoteProperty[]
+
+  @@index([folderId])
+  @@index([createdAt])
+  @@map("notes")
+}
+
+// 폴더 (계층 구조)
+model Folder {
+  id       String   @id @default(cuid())
+  name     String   @db.VarChar(200)
+  parentId String?
+  position Int      @default(0)
+
+  // Relations
+  parent   Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Folder[] @relation("FolderHierarchy")
+  notes    Note[]
+
+  @@index([parentId])
+  @@map("folders")
+}
+
+// 태그
+model Tag {
+  id    String    @id @default(cuid())
+  name  String    @unique @db.VarChar(100)
+  color String?   @db.VarChar(20)
+  notes NoteTag[]
+
+  @@map("tags")
+}
+
+// 노트-태그 다대다 관계
+model NoteTag {
+  noteId String
+  tagId  String
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, tagId])
+  @@map("note_tags")
+}
+
+// 링크 ([[note]] 형태의 내부 링크)
+model Link {
+  id       String @id @default(cuid())
+  sourceId String
+  targetId String
+
+  source Note @relation("SourceNote", fields: [sourceId], references: [id], onDelete: Cascade)
+  target Note @relation("TargetNote", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId])
+  @@index([sourceId])
+  @@index([targetId])
+  @@map("links")
+}
+
+// 속성 (Select, Multi-Select, Date, Checkbox)
+model Property {
+  id    String @id @default(cuid())
+  name  String @db.VarChar(200)
+  type  String @db.VarChar(50) // 'select', 'multi_select', 'date', 'checkbox'
+  options Json? // Select/Multi-Select 옵션 저장
+
+  values NoteProperty[]
+
+  @@map("properties")
+}
+
+// 노트-속성 값
+model NoteProperty {
+  id         String @id @default(cuid())
+  noteId     String
+  propertyId String
+  value      Json // 속성 타입에 따라 다른 형태의 값 저장
+
+  note     Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, propertyId])
+  @@index([noteId])
+  @@index([propertyId])
+  @@map("note_properties")
+}
