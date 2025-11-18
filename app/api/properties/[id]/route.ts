@@ -27,9 +27,10 @@ export async function PATCH(
 
     const data = validated.data
 
-    // options가 null인 경우 Prisma.JsonNull로 변환
-    const updateData = {
-      ...data,
+    // options가 null인 경우 Prisma.JsonNull로 변환, undefined면 제외
+    const updateData: Prisma.PropertyUpdateInput = {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.type !== undefined && { type: data.type }),
       ...(data.options !== undefined && {
         options: data.options === null ? Prisma.JsonNull : data.options
       })

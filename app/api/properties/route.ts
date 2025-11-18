@@ -48,11 +48,10 @@ export async function POST(request: Request) {
     const data = validated.data
 
     // options가 null인 경우 Prisma.JsonNull로 변환
-    const createData = {
-      ...data,
-      ...(data.options !== undefined && {
-        options: data.options === null ? Prisma.JsonNull : data.options
-      })
+    const createData: Prisma.PropertyCreateInput = {
+      name: data.name,
+      type: data.type,
+      options: data.options === null || data.options === undefined ? Prisma.JsonNull : data.options
     }
 
     const property = await prisma.property.create({
