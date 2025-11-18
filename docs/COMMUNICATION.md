@@ -481,6 +481,88 @@ npm run dev
 
 ---
 
+## [2025-11-18 20:45] Web Claude - Vercel 빌드 에러 수정 완료
+
+### 완료된 작업
+- [x] Vercel 빌드 에러 5건 수정
+  1. `app/api/properties/route.ts` & `app/api/properties/[id]/route.ts` - Prisma JsonNull 타입 처리
+  2. `lib/hooks/useNotes.ts` - Note 타입에 properties 필드 추가
+  3. `lib/hooks/useNotes.ts` - Note 타입에 propertyId 필드 추가
+  4. `lib/tiptap-extensions/WikiLinkAutocomplete.ts` - items 함수를 addProseMirrorPlugins로 이동
+  5. `app/notes/page.tsx` - useSearchParams를 Suspense 경계로 감싸기
+
+### 수정 내역 상세
+
+**1. Prisma JsonNull 타입 처리**
+- 문제: Property의 options 필드(JSON 타입)에 null을 직접 할당하면 TypeScript 에러
+- 해결: `Prisma.JsonNull`로 변환 및 명시적 타입 어노테이션 추가
+```typescript
+const updateData: Prisma.PropertyUpdateInput = {
+  ...(data.options !== undefined && {
+    options: data.options === null ? Prisma.JsonNull : data.options
+  })
+}
+```
+
+**2. Note 타입에 properties 필드 추가**
+- 문제: API는 properties를 반환하지만 Note 타입에 필드 없음
+- 해결: Note 인터페이스에 properties 추가
+```typescript
+properties?: Array<{
+  id: string
+  propertyId: string
+  value: any
+  property: { ... }
+}>
+```
+
+**3. WikiLinkAutocomplete this.options 접근**
+- 문제: addOptions() 내부 중첩 객체에서 this.options 접근 불가
+- 해결: items 함수를 addProseMirrorPlugins() 메서드로 이동
+```typescript
+addProseMirrorPlugins() {
+  return [
+    Suggestion({
+      ...this.options.suggestion,
+      items: ({ query }) => this.options.notes.filter(...)
+    })
+  ]
+}
+```
+
+**4. useSearchParams Suspense 경계**
+- 문제: Next.js 15에서 useSearchParams()를 Suspense로 감싸지 않으면 prerender 에러
+- 해결: NotesPageContent 컴포넌트 분리 후 Suspense로 감싸기
+```typescript
+export default function NotesPage() {
+  return (
+    <Suspense fallback={<Skeleton />}>
+      <NotesPageContent />
+    </Suspense>
+  )
+}
+```
+
+### Git 커밋 내역
+1. `e70b193` - feat: complete Week 3 (메인 기능 완성)
+2. `a48815a` - fix: handle Prisma JsonNull for property options field
+3. `9a81df8` - fix: explicit Prisma type casting for property options field
+4. `54d363f` - fix: add properties field to Note type in useNotes hook
+5. `0e99078` - fix: add propertyId field to Note.properties type
+6. `284c4d1` - fix: move items function to addProseMirrorPlugins in WikiLinkAutocomplete
+7. `319f51a` - fix: wrap useSearchParams with Suspense boundary in notes page
+
+### 빌드 상태
+- ✅ TypeScript 컴파일 성공
+- ✅ Next.js Static Generation 성공
+- ✅ Vercel 배포 준비 완료
+
+### 다음 단계
+- [ ] Pull Request 생성 및 리뷰 준비
+- [ ] 추가 기능 구현 (Command Palette, Toast 알림, 다크 모드 등)
+
+---
+
 ## [작업 시작 전] Web Claude - 체크리스트
 
 작업을 시작하기 전에 다음을 확인하세요:
