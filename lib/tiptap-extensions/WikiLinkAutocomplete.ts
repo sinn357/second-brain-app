@@ -23,11 +23,6 @@ export const WikiLinkAutocomplete = Extension.create<WikiLinkAutocompleteOptions
         char: '[[',
         allowSpaces: true,
         startOfLine: false,
-        items: ({ query }: { query: string }) => {
-          return this.options.notes
-            .filter((note) => note.title.toLowerCase().includes(query.toLowerCase()))
-            .slice(0, 5)
-        },
         render: () => {
           let component: ReactRenderer
           let popup: TippyInstance[]
@@ -124,6 +119,11 @@ export const WikiLinkAutocomplete = Extension.create<WikiLinkAutocompleteOptions
       Suggestion({
         editor: this.editor,
         ...this.options.suggestion,
+        items: ({ query }: { query: string }) => {
+          return this.options.notes
+            .filter((note) => note.title.toLowerCase().includes(query.toLowerCase()))
+            .slice(0, 5)
+        },
       }),
     ]
   },
