@@ -127,7 +127,7 @@ export default function GraphPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6 flex items-center justify-center">
         <Skeleton className="w-full h-[800px]" />
       </div>
     )
@@ -135,23 +135,23 @@ export default function GraphPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm">
+      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
+        <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-          <p>{error.message}</p>
+          <p className="dark:text-indigo-100">{error.message}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h1 className="text-2xl font-bold mb-4">Graph View</h1>
-        <p className="text-sm text-gray-600 mb-4">
+    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
+      <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
+        <h1 className="text-2xl font-bold mb-4 text-indigo-900 dark:text-indigo-100">Graph View</h1>
+        <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-4">
           노트를 클릭하면 해당 노트로 이동합니다. 드래그로 노드를 이동할 수 있습니다.
         </p>
-        <svg ref={svgRef} className="w-full border rounded" />
+        <svg ref={svgRef} className="w-full border border-indigo-200 dark:border-indigo-700 rounded" />
       </div>
     </div>
   )

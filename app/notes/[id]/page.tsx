@@ -63,7 +63,7 @@ export default function NoteDetailPage({ params }: Props) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
         <Skeleton className="h-12 mb-6" />
         <Skeleton className="h-96" />
       </div>
@@ -72,12 +72,12 @@ export default function NoteDetailPage({ params }: Props) {
 
   if (error || !note) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm">
+      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
+        <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-          <p>{error?.message || 'Note not found'}</p>
+          <p className="dark:text-indigo-100">{error?.message || 'Note not found'}</p>
           <Link href="/notes">
-            <Button className="mt-4">
+            <Button className="mt-4 bg-purple-600 hover:bg-purple-700 text-white">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Notes
             </Button>
@@ -88,16 +88,16 @@ export default function NoteDetailPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950">
       {/* 헤더 */}
-      <header className="bg-white border-b px-6 py-4 flex items-center justify-between">
+      <header className="bg-white dark:bg-indigo-900 border-b border-indigo-200 dark:border-indigo-800 px-6 py-4 flex items-center justify-between">
         <Link href="/notes">
           <Button variant="outline" size="sm">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
         </Link>
-        <Button onClick={handleSave} disabled={isSaving}>
+        <Button onClick={handleSave} disabled={isSaving} className="bg-purple-600 hover:bg-purple-700 text-white">
           <Save className="h-4 w-4 mr-2" />
           {isSaving ? 'Saving...' : 'Save'}
         </Button>
@@ -105,18 +105,18 @@ export default function NoteDetailPage({ params }: Props) {
 
       <div className="grid grid-cols-12 gap-6 p-6">
         {/* 좌측: 폴더 트리 */}
-        <aside className="col-span-2 bg-white p-4 rounded-lg shadow-sm">
+        <aside className="col-span-2 bg-white dark:bg-indigo-900 p-4 rounded-lg shadow-sm">
           <FolderTree />
         </aside>
 
         {/* 중앙: 에디터 */}
-        <main className="col-span-7 bg-white p-6 rounded-lg shadow-sm">
+        <main className="col-span-7 bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
           {/* 제목 */}
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="노트 제목"
-            className="text-3xl font-bold border-none p-0 mb-4 focus-visible:ring-0"
+            className="text-3xl font-bold border-none p-0 mb-4 focus-visible:ring-0 dark:bg-indigo-900 dark:text-indigo-100"
           />
 
           {/* 에디터 */}
@@ -130,10 +130,10 @@ export default function NoteDetailPage({ params }: Props) {
 
         {/* 우측: 백링크 + 속성 */}
         <aside className="col-span-3 space-y-6">
-          <div className="bg-white p-4 rounded-lg shadow-sm">
+          <div className="bg-white dark:bg-indigo-900 p-4 rounded-lg shadow-sm">
             <BacklinkPanel noteId={id} />
           </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm">
+          <div className="bg-white dark:bg-indigo-900 p-4 rounded-lg shadow-sm">
             <PropertyPanel noteId={id} currentProperties={note.properties} />
           </div>
         </aside>

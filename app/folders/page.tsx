@@ -55,27 +55,28 @@ export default function FoldersPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
         <Skeleton className="h-96" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Folders</h1>
+        <h1 className="text-3xl font-bold mb-6 text-indigo-900 dark:text-indigo-100">Folders</h1>
 
         {/* 새 폴더 생성 */}
-        <Card className="p-4 mb-6">
+        <Card className="p-4 mb-6 bg-white dark:bg-indigo-900">
           <div className="flex gap-2">
             <Input
               placeholder="새 폴더 이름"
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+              className="dark:bg-indigo-800 dark:text-indigo-100"
             />
-            <Button onClick={handleCreate} disabled={isCreating}>
+            <Button onClick={handleCreate} disabled={isCreating} className="bg-purple-600 hover:bg-purple-700 text-white">
               <Plus className="h-4 w-4 mr-2" />
               {isCreating ? 'Creating...' : 'Create'}
             </Button>
@@ -85,12 +86,12 @@ export default function FoldersPage() {
         {/* 폴더 목록 */}
         <div className="space-y-2">
           {folders.length === 0 ? (
-            <Card className="p-8 text-center text-gray-500">
+            <Card className="p-8 text-center text-gray-500 dark:text-indigo-300 bg-white dark:bg-indigo-900">
               폴더가 없습니다. 새 폴더를 만들어보세요!
             </Card>
           ) : (
             folders.map((folder) => (
-              <Card key={folder.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+              <Card key={folder.id} className="p-4 flex items-center justify-between hover:bg-indigo-100 dark:hover:bg-indigo-800 bg-white dark:bg-indigo-900">
                 <div className="flex items-center gap-3">
                   <Folder className="h-5 w-5 text-gray-600" />
                   <div>
