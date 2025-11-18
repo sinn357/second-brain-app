@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { propertySchema } from '@/lib/validations/property'
 import { prisma } from '@/lib/db'
 
@@ -46,8 +47,16 @@ export async function POST(request: Request) {
 
     const data = validated.data
 
+    // options가 null인 경우 Prisma.JsonNull로 변환
+    const createData = {
+      ...data,
+      ...(data.options !== undefined && {
+        options: data.options === null ? Prisma.JsonNull : data.options
+      })
+    }
+
     const property = await prisma.property.create({
-      data,
+      data: createData,
       include: {
         _count: {
           select: {
