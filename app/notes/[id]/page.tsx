@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react'
 import { useNote, useUpdateNote, useParseLinks } from '@/lib/hooks/useNotes'
-import { NoteEditor } from '@/components/NoteEditor'
+import { NoteEditorAdvanced } from '@/components/NoteEditorAdvanced'
 import { BacklinkPanel } from '@/components/BacklinkPanel'
 import { PropertyPanel } from '@/components/PropertyPanel'
 import { FolderTree } from '@/components/FolderTree'
@@ -110,10 +110,11 @@ export default function NoteDetailPage({ params }: Props) {
           />
 
           {/* 에디터 */}
-          <NoteEditor
+          <NoteEditorAdvanced
             content={body}
             onUpdate={setBody}
-            placeholder="내용을 입력하세요. [[노트제목]]으로 링크를 추가할 수 있습니다."
+            currentNoteId={id}
+            placeholder="내용을 입력하세요. [[노트제목]]으로 링크, #태그로 태그를 추가할 수 있습니다."
           />
         </main>
 

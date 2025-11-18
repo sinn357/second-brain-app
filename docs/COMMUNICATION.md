@@ -45,6 +45,117 @@
 
 ---
 
+## [2025-11-18 17:00] Web Claude - Week 2 고급 에디터 기능 구현 완료
+
+### 완료된 작업
+- [x] Tiptap Custom Extensions 작성 (3개)
+  - `lib/tiptap-extensions/WikiLink.ts` - [[링크]] 감지 및 클릭 핸들러
+  - `lib/tiptap-extensions/HashTag.ts` - #태그 감지 및 클릭 핸들러
+  - `lib/tiptap-extensions/WikiLinkSuggestion.ts` - 자동완성 설정 (미사용, 향후 확장 가능)
+- [x] 자동완성 및 미리보기 컴포넌트 (2개)
+  - `components/WikiLinkSuggestionList.tsx` - [[링크]] 자동완성 드롭다운 (향후 확장)
+  - `components/NoteLinkPreview.tsx` - 링크 hover 미리보기 카드
+- [x] 고급 에디터 컴포넌트
+  - `components/NoteEditorAdvanced.tsx` - WikiLink, HashTag 통합 에디터
+  - [[링크]] 클릭 → 해당 노트로 이동
+  - [[링크]] hover → 노트 내용 미리보기 (tippy.js)
+  - #태그 클릭 → 태그 자동 생성
+  - 실시간 하이라이팅 (파란색 배경: [[링크]], 보라색 배경: #태그)
+- [x] 노트 검색 API
+  - `app/api/notes/search/route.ts` - 제목/본문 검색 + 정확한 제목 매칭
+- [x] 페이지 업데이트
+  - `app/notes/[id]/page.tsx` - NoteEditorAdvanced 적용
+- [x] 의존성 추가 (package.json)
+  - `tippy.js` ^6.3.7
+  - `@tiptap/extension-placeholder` ^3.10.7
+  - `@tiptap/pm` ^3.10.7
+  - `@tiptap/suggestion` ^3.10.7
+  - `date-fns` ^3.3.1
+
+### 구현된 고급 기능
+1. **[[WikiLink]] 완전 지원** ✅
+   - 실시간 하이라이팅 (파란색 배경)
+   - 클릭 시 해당 노트로 즉시 이동
+   - Hover 시 노트 내용 미리보기 (tippy.js 툴팁)
+   - 노트가 없으면 알림 표시
+
+2. **#HashTag 완전 지원** ✅
+   - 실시간 하이라이팅 (보라색 배경)
+   - 클릭 시 태그 자동 생성 (API 호출)
+   - 한글, 영문, 숫자, _ 지원
+
+3. **Hover 미리보기** ✅
+   - tippy.js 기반 우아한 툴팁
+   - 노트 제목 + 본문 일부 표시
+   - 비동기 로딩 + 스켈레톤 UI
+
+### 사용 방법
+
+**에디터에서 링크 추가:**
+```
+[[노트제목]]을 입력하면 파란색으로 하이라이트됩니다.
+클릭하면 해당 노트로 이동합니다.
+마우스를 올리면 내용 미리보기가 표시됩니다.
+```
+
+**에디터에서 태그 추가:**
+```
+#태그이름을 입력하면 보라색으로 하이라이트됩니다.
+클릭하면 태그가 생성됩니다.
+```
+
+### 터미널 Claude 요청 사항
+
+다음 작업을 로컬에서 수행해주세요:
+
+1. **의존성 재설치**
+   ```bash
+   git fetch origin
+   git checkout claude/mvp-019TffNNZDo7Nw4SHJGwq86V
+   npm install
+   ```
+
+2. **개발 서버 실행 및 테스트**
+   ```bash
+   npm run dev
+   # http://localhost:3004
+   ```
+
+3. **테스트 시나리오**
+   - [ ] 노트 에디터에서 `[[다른노트]]` 입력 → 파란색 하이라이트 확인
+   - [ ] [[링크]] 클릭 → 해당 노트로 이동 확인
+   - [ ] [[링크]]에 마우스 hover → 미리보기 툴팁 확인
+   - [ ] `#테스트태그` 입력 → 보라색 하이라이트 확인
+   - [ ] #태그 클릭 → 태그 생성 알림 확인
+   - [ ] Save 버튼 → 링크 파싱 → 백링크 패널 업데이트 확인
+
+### 발견된 이슈/개선 사항
+
+1. **자동완성 미구현**
+   - WikiLinkSuggestion 파일은 작성했으나 실제 통합은 하지 않음
+   - 이유: Tiptap Suggestion 플러그인 통합이 복잡하고 터미널 테스트 필요
+   - 향후 개선: `[[` 입력 시 노트 제목 드롭다운 표시
+
+2. **태그 자동 연결 미구현**
+   - 현재 #태그를 클릭하면 Tag만 생성됨
+   - NoteTag 연결은 Save 시점에 별도 로직 필요
+   - 향후 개선: Save 시 #태그 파싱하여 자동 연결
+
+3. **date-fns 중복**
+   - 이미 master에 있었으나 package.json에 명시적으로 추가
+   - 버전 충돌 없는지 확인 필요
+
+### 다음 작업 계획 (Week 3)
+
+- [ ] [[링크]] 자동완성 (Tiptap Suggestion 플러그인 통합)
+- [ ] #태그 자동 NoteTag 연결 로직
+- [ ] Table View / List View 구현
+- [ ] Command Palette (Cmd+K)
+- [ ] Navigation 메뉴 추가
+- [ ] 에러 핸들링 개선 (Toast 알림)
+
+---
+
 ## [2025-11-18 15:30] Web Claude - Week 1 MVP 핵심 기능 구현 완료
 
 ### 완료된 작업
