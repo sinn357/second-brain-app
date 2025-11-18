@@ -1,11 +1,13 @@
 'use client'
 
+import { Suspense } from 'react'
 import { NoteList } from '@/components/NoteList'
 import { QuickAddButton } from '@/components/QuickAddButton'
 import { FolderTree } from '@/components/FolderTree'
 import { useSearchParams } from 'next/navigation'
+import { Skeleton } from '@/components/ui/skeleton'
 
-export default function NotesPage() {
+function NotesPageContent() {
   const searchParams = useSearchParams()
   const folderId = searchParams.get('folderId') || undefined
 
@@ -30,5 +32,17 @@ export default function NotesPage() {
         </main>
       </div>
     </div>
+  )
+}
+
+export default function NotesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 p-6">
+        <Skeleton className="h-screen" />
+      </div>
+    }>
+      <NotesPageContent />
+    </Suspense>
   )
 }
