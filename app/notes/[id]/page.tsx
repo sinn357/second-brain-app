@@ -40,8 +40,17 @@ export default function NoteDetailPage({ params }: Props) {
     setIsSaving(true)
     try {
       await updateNote.mutateAsync({ title, body })
+
       // 링크 파싱
       await parseLinks.mutateAsync({ noteId: id, body })
+
+      // 태그 파싱 및 자동 연결
+      await fetch(`/api/notes/${id}/tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body }),
+      })
+
       alert('저장되었습니다')
     } catch (error) {
       console.error('Save error:', error)

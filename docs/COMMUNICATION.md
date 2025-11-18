@@ -148,11 +148,118 @@
 ### 다음 작업 계획 (Week 3)
 
 - [x] [[링크]] 자동완성 (Tiptap Suggestion 플러그인 통합) ✅
-- [ ] #태그 자동 NoteTag 연결 로직
-- [ ] Table View / List View 구현
-- [ ] Command Palette (Cmd+K)
-- [ ] Navigation 메뉴 추가
-- [ ] 에러 핸들링 개선 (Toast 알림)
+- [x] #태그 자동 NoteTag 연결 로직 ✅
+- [x] Table View / List View 구현 ✅
+- [x] Navigation 메뉴 추가 ✅
+- [x] /folders 페이지 생성 ✅
+- [ ] Command Palette (Cmd+K) - 향후 개선
+- [ ] 에러 핸들링 개선 (Toast 알림) - 향후 개선
+
+---
+
+## [2025-11-18 19:00] Web Claude - Week 3 완성: 노션 Core + UX 개선
+
+### 완료된 작업
+- [x] #태그 자동 NoteTag 연결
+  - `app/api/notes/[id]/tags/route.ts` - 태그 파싱 및 자동 연결 API
+  - `app/notes/[id]/page.tsx` - Save 시 태그 자동 파싱 통합
+  - #태그 입력 → Save → Tag 생성 + NoteTag 연결 자동화
+- [x] Navigation 메뉴
+  - `components/Navigation.tsx` - 상단 네비게이션 바
+  - Notes, Graph, Folders, Database 페이지 링크
+  - 현재 페이지 하이라이트
+- [x] Table View / List View (노션 Core 완성)
+  - `components/TableView.tsx` - 스프레드시트 형식 테이블
+  - `components/ListView.tsx` - 카드 형식 리스트
+  - `app/db/page.tsx` - Table/List 전환 가능한 DB 페이지
+  - 속성 값 렌더링 (Select, Multi-Select, Date, Checkbox)
+- [x] Folders 관리 페이지
+  - `app/folders/page.tsx` - 폴더 생성/삭제 UI
+  - 간단한 폴더 관리 인터페이스
+
+### 구현된 기능
+
+**1. #태그 자동 연결** ✅
+```
+1. 에디터에서 #태그이름 입력
+2. Save 버튼 클릭
+3. 자동으로 Tag 테이블에 생성 (없으면)
+4. NoteTag 테이블에 연결
+5. 노트 목록에서 태그 배지로 표시
+```
+
+**2. Navigation 메뉴** ✅
+- 모든 페이지 상단에 고정 네비게이션
+- Notes, Graph, Folders, Database 빠른 이동
+- 현재 페이지 파란색 하이라이트
+
+**3. Database View (노션 스타일)** ✅
+- **Table View**: 노트를 스프레드시트처럼 표시
+  - 모든 속성을 컬럼으로 표시
+  - 속성 값 시각화 (색상 배지, 체크박스 등)
+- **List View**: 노트를 카드 형식으로 표시
+  - 폴더, 태그, 속성 정보 함께 표시
+  - 더 읽기 쉬운 형식
+
+**4. Folders 페이지** ✅
+- 폴더 생성/삭제 UI
+- 각 폴더의 노트 개수 표시
+- 간단한 관리 인터페이스
+
+### 사용 방법
+
+**태그 자동 연결:**
+```
+1. 노트 에디터에서 #프로젝트 #중요 입력
+2. Save 버튼 클릭
+3. 자동으로 "프로젝트", "중요" 태그 생성 및 연결
+4. 노트 목록에서 태그 배지 확인
+```
+
+**Database View:**
+```
+1. 상단 메뉴에서 "Database" 클릭
+2. Table/List 버튼으로 뷰 전환
+3. Table View: 스프레드시트 형식
+4. List View: 카드 형식
+```
+
+### 터미널 Claude 테스트 시나리오
+
+```bash
+npm run dev
+# http://localhost:3004
+```
+
+**테스트:**
+- [ ] 상단 Navigation 메뉴 확인 (Notes, Graph, Folders, Database)
+- [ ] 노트에 #테스트 #프로젝트 입력 → Save → 태그 연결 확인
+- [ ] Database 페이지 → Table View 확인
+- [ ] Table ↔ List 전환 확인
+- [ ] Folders 페이지 → 폴더 생성/삭제 확인
+
+### Week 3 완료 요약
+
+**MVP 4대 Core 모두 완성** 🎉
+1. ✅ Quick Add (애플메모 Core)
+2. ✅ Markdown + [[링크]] + #태그 + 백링크 (옵시디언 Core)
+3. ✅ 속성 시스템 + Table/List View (노션 Core)
+4. ✅ Graph View (마인드맵 Core)
+
+**추가 구현된 기능**
+- Navigation 메뉴
+- Folders 관리 페이지
+- [[링크]] 자동완성
+- #태그 자동 연결
+- Hover 미리보기
+
+### 남은 향후 개선 사항
+
+- [ ] Command Palette (Cmd+K) - 빠른 검색/네비게이션
+- [ ] Toast 알림 - alert() 대신 우아한 알림
+- [ ] 실시간 노트 목록 업데이트 (자동완성용)
+- [ ] 필터링 및 정렬 (Database View)
+- [ ] 다크 모드
 
 ---
 
