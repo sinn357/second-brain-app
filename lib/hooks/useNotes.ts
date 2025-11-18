@@ -21,12 +21,13 @@ interface Note {
   }>
   properties?: Array<{
     id: string
+    propertyId: string
     value: any
     property: {
       id: string
       name: string
       type: string
-      options: any
+      options: string[] | null
     }
   }>
 }
