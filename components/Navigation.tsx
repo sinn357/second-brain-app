@@ -1,11 +1,18 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, Network, Folder, Table } from 'lucide-react'
+import { FileText, Network, Folder, Table, Search } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export function Navigation() {
   const pathname = usePathname()
+  const [isMac, setIsMac] = useState(false)
+
+  useEffect(() => {
+    setIsMac(navigator.platform.includes('Mac'))
+  }, [])
 
   const navItems = [
     { href: '/notes', label: 'Notes', icon: FileText },
@@ -13,6 +20,17 @@ export function Navigation() {
     { href: '/folders', label: 'Folders', icon: Folder },
     { href: '/db', label: 'Database', icon: Table },
   ]
+
+  const handleSearchClick = () => {
+    // Trigger Cmd+K event
+    const event = new KeyboardEvent('keydown', {
+      key: 'k',
+      metaKey: isMac,
+      ctrlKey: !isMac,
+      bubbles: true,
+    })
+    document.dispatchEvent(event)
+  }
 
   return (
     <nav className="bg-white border-b">
@@ -24,7 +42,7 @@ export function Navigation() {
           </Link>
 
           {/* 네비게이션 링크 */}
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1">
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname?.startsWith(item.href)
@@ -44,6 +62,20 @@ export function Navigation() {
                 </Link>
               )
             })}
+
+            {/* Command Palette 버튼 */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSearchClick}
+              className="ml-4 flex items-center gap-2"
+            >
+              <Search className="h-4 w-4" />
+              <span className="hidden sm:inline text-sm text-gray-600">Search</span>
+              <kbd className="hidden sm:inline-flex px-2 py-0.5 text-xs bg-gray-100 rounded">
+                {isMac ? '⌘K' : 'Ctrl+K'}
+              </kbd>
+            </Button>
           </div>
         </div>
       </div>

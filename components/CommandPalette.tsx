@@ -1,0 +1,220 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { useRouter } from 'next/navigation'
+import { Search, FileText, Tag, Folder, Hash } from 'lucide-react'
+import { useNotes } from '@/lib/hooks/useNotes'
+import { useTags } from '@/lib/hooks/useTags'
+import { useFolders } from '@/lib/hooks/useFolders'
+
+type SearchResult = {
+  id: string
+  type: 'note' | 'tag' | 'folder'
+  title: string
+  subtitle?: string
+  url: string
+}
+
+export function CommandPalette() {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const router = useRouter()
+
+  // Data hooks
+  const { data: notes = [] } = useNotes()
+  const { data: tags = [] } = useTags()
+  const { data: folders = [] } = useFolders()
+
+  // Filter results based on query
+  const results: SearchResult[] = []
+
+  if (query.trim()) {
+    const lowerQuery = query.toLowerCase()
+
+    // Search notes
+    notes
+      .filter((note) =>
+        note.title.toLowerCase().includes(lowerQuery) ||
+        note.body.toLowerCase().includes(lowerQuery)
+      )
+      .slice(0, 5)
+      .forEach((note) => {
+        results.push({
+          id: note.id,
+          type: 'note',
+          title: note.title,
+          subtitle: note.folder?.name || 'No folder',
+          url: `/notes/${note.id}`,
+        })
+      })
+
+    // Search tags
+    tags
+      .filter((tag) => tag.name.toLowerCase().includes(lowerQuery))
+      .slice(0, 3)
+      .forEach((tag) => {
+        results.push({
+          id: tag.id,
+          type: 'tag',
+          title: `#${tag.name}`,
+          subtitle: `${tag._count?.notes || 0} notes`,
+          url: `/notes?tag=${tag.id}`,
+        })
+      })
+
+    // Search folders
+    folders
+      .filter((folder) => folder.name.toLowerCase().includes(lowerQuery))
+      .slice(0, 3)
+      .forEach((folder) => {
+        results.push({
+          id: folder.id,
+          type: 'folder',
+          title: folder.name,
+          subtitle: `${folder._count?.notes || 0} notes`,
+          url: `/notes?folderId=${folder.id}`,
+        })
+      })
+  }
+
+  // Keyboard shortcut handler
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        setOpen((open) => !open)
+      }
+    }
+
+    document.addEventListener('keydown', down)
+    return () => document.removeEventListener('keydown', down)
+  }, [])
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setQuery('')
+      setSelectedIndex(0)
+    }
+  }, [open])
+
+  // Keyboard navigation
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSelectedIndex((i) => (i + 1) % results.length)
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelectedIndex((i) => (i - 1 + results.length) % results.length)
+      } else if (e.key === 'Enter' && results[selectedIndex]) {
+        e.preventDefault()
+        handleSelect(results[selectedIndex])
+      } else if (e.key === 'Escape') {
+        setOpen(false)
+      }
+    },
+    [results, selectedIndex]
+  )
+
+  // Navigate to selected item
+  const handleSelect = (result: SearchResult) => {
+    setOpen(false)
+    router.push(result.url)
+  }
+
+  // Icon for result type
+  const getIcon = (type: SearchResult['type']) => {
+    switch (type) {
+      case 'note':
+        return <FileText className="h-4 w-4" />
+      case 'tag':
+        return <Hash className="h-4 w-4" />
+      case 'folder':
+        return <Folder className="h-4 w-4" />
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="p-0 max-w-2xl">
+        <div className="flex flex-col">
+          {/* Search input */}
+          <div className="flex items-center border-b px-3">
+            <Search className="h-4 w-4 mr-2 text-gray-500" />
+            <Input
+              placeholder="Search notes, tags, folders..."
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setSelectedIndex(0)
+              }}
+              onKeyDown={handleKeyDown}
+              className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              autoFocus
+            />
+            <kbd className="ml-2 px-2 py-1 text-xs bg-gray-100 rounded">
+              {navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
+            </kbd>
+          </div>
+
+          {/* Results */}
+          <div className="max-h-[400px] overflow-y-auto p-2">
+            {query && results.length === 0 ? (
+              <div className="py-8 text-center text-sm text-gray-500">
+                No results found
+              </div>
+            ) : query ? (
+              <div className="space-y-1">
+                {results.map((result, index) => (
+                  <button
+                    key={`${result.type}-${result.id}`}
+                    onClick={() => handleSelect(result)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-colors ${
+                      index === selectedIndex
+                        ? 'bg-blue-50 text-blue-900'
+                        : 'hover:bg-gray-100'
+                    }`}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                  >
+                    <div
+                      className={`${
+                        index === selectedIndex ? 'text-blue-600' : 'text-gray-500'
+                      }`}
+                    >
+                      {getIcon(result.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{result.title}</div>
+                      {result.subtitle && (
+                        <div className="text-xs text-gray-500 truncate">
+                          {result.subtitle}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-400 capitalize">
+                      {result.type}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center">
+                <Search className="h-8 w-8 mx-auto mb-3 text-gray-300" />
+                <p className="text-sm text-gray-500">
+                  Type to search notes, tags, and folders
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  Use ↑↓ arrows to navigate, Enter to select
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
