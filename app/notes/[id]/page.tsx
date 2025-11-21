@@ -9,6 +9,7 @@ import { PropertyPanel } from '@/components/PropertyPanel'
 import { FolderTree } from '@/components/FolderTree'
 import { PresenceIndicator } from '@/components/PresenceIndicator'
 import { AIActions } from '@/components/AIActions'
+import { FileAttachment } from '@/components/FileAttachment'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -158,13 +159,16 @@ export default function NoteDetailPage({ params }: Props) {
           </div>
         </main>
 
-        {/* 우측: 백링크 + 속성 */}
+        {/* 우측: 백링크 + 속성 + 첨부파일 */}
         <aside className="col-span-3 space-y-6">
           <div className="bg-white dark:bg-indigo-900 p-4 rounded-lg shadow-sm">
             <BacklinkPanel noteId={id} />
           </div>
           <div className="bg-white dark:bg-indigo-900 p-4 rounded-lg shadow-sm">
             <PropertyPanel noteId={id} currentProperties={note.properties} />
+          </div>
+          <div className="bg-white dark:bg-indigo-900 p-4 rounded-lg shadow-sm">
+            <FileAttachment noteId={id} />
           </div>
         </aside>
       </div>

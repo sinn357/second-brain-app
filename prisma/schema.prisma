@@ -22,10 +22,11 @@ model Note {
   // Relations
   folder     Folder?        @relation(fields: [folderId], references: [id], onDelete: SetNull)
   tags       NoteTag[]
-  linksFrom  Link[]         @relation("SourceNote")
-  linksTo    Link[]         @relation("TargetNote")
-  properties NoteProperty[]
-  presences  Presence[]
+  linksFrom   Link[]         @relation("SourceNote")
+  linksTo     Link[]         @relation("TargetNote")
+  properties  NoteProperty[]
+  presences   Presence[]
+  attachments Attachment[]
 
   @@index([folderId])
   @@index([createdAt])
@@ -127,4 +128,23 @@ model Presence {
   @@index([noteId])
   @@index([lastSeenAt])
   @@map("presences")
+}
+
+// Attachment (파일 첨부 - Cloudinary)
+model Attachment {
+  id           String   @id @default(cuid())
+  noteId       String
+  fileName     String   @db.VarChar(500)
+  fileType     String   @db.VarChar(100) // image/png, application/pdf, etc.
+  fileSize     Int // bytes
+  cloudinaryId String   @db.VarChar(500) // Cloudinary public_id
+  url          String   @db.Text // Cloudinary URL
+  thumbnailUrl String?  @db.Text // 썸네일 URL (이미지인 경우)
+  createdAt    DateTime @default(now())
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+  @@index([createdAt])
+  @@map("attachments")
 }
