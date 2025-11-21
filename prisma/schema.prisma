@@ -25,6 +25,7 @@ model Note {
   linksFrom  Link[]         @relation("SourceNote")
   linksTo    Link[]         @relation("TargetNote")
   properties NoteProperty[]
+  presences  Presence[]
 
   @@index([folderId])
   @@index([createdAt])
@@ -110,4 +111,20 @@ model NoteProperty {
   @@index([noteId])
   @@index([propertyId])
   @@map("note_properties")
+}
+
+// Presence (누가 어떤 노트를 보고 있는지)
+model Presence {
+  id         String   @id @default(cuid())
+  noteId     String
+  sessionId  String   @db.VarChar(100) // 브라우저 세션 ID (임시)
+  userName   String   @db.VarChar(100) // 임시 사용자 이름 (나중에 User 모델로 교체)
+  lastSeenAt DateTime @default(now()) @updatedAt
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, sessionId])
+  @@index([noteId])
+  @@index([lastSeenAt])
+  @@map("presences")
 }

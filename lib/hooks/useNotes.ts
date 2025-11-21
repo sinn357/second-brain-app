@@ -43,6 +43,8 @@ export function useNotes(folderId?: string) {
       if (!data.success) throw new Error(data.error)
       return data.notes
     },
+    refetchInterval: 10000, // 10초마다 자동 갱신 (실시간 협업)
+    refetchOnWindowFocus: true, // 탭 포커스 시 갱신
   })
 }
 
@@ -57,6 +59,8 @@ export function useNote(id: string) {
       return data.note
     },
     enabled: !!id,
+    refetchInterval: 10000, // 10초마다 자동 갱신 (실시간 협업)
+    refetchOnWindowFocus: true, // 탭 포커스 시 갱신
   })
 }
 

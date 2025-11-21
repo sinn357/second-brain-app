@@ -2,10 +2,12 @@
 
 import { use, useState, useEffect } from 'react'
 import { useNote, useUpdateNote, useParseLinks } from '@/lib/hooks/useNotes'
+import { useAutoPresence } from '@/lib/hooks/usePresence'
 import { NoteEditorAdvanced } from '@/components/NoteEditorAdvanced'
 import { BacklinkPanel } from '@/components/BacklinkPanel'
 import { PropertyPanel } from '@/components/PropertyPanel'
 import { FolderTree } from '@/components/FolderTree'
+import { PresenceIndicator } from '@/components/PresenceIndicator'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -28,6 +30,9 @@ export default function NoteDetailPage({ params }: Props) {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+
+  // 실시간 협업: Presence 자동 업데이트
+  useAutoPresence(id)
 
   // note가 로드되면 title과 body 초기화
   useEffect(() => {
@@ -91,12 +96,16 @@ export default function NoteDetailPage({ params }: Props) {
     <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950">
       {/* 헤더 */}
       <header className="bg-white dark:bg-indigo-900 border-b border-indigo-200 dark:border-indigo-800 px-6 py-4 flex items-center justify-between">
-        <Link href="/notes">
-          <Button variant="outline" size="sm">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href="/notes">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          </Link>
+          {/* 실시간 협업: 누가 보고 있는지 표시 */}
+          <PresenceIndicator noteId={id} />
+        </div>
         <Button onClick={handleSave} disabled={isSaving} className="bg-purple-600 hover:bg-purple-700 text-white">
           <Save className="h-4 w-4 mr-2" />
           {isSaving ? 'Saving...' : 'Save'}
