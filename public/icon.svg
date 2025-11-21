@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="128" fill="#7c3aed"/>
+
+  <!-- Brain icon representation -->
+  <path d="M256 128C194.144 128 144 178.144 144 240C144 280.8 163.2 316.8 192 339.2V384C192 419.2 220.8 448 256 448C291.2 448 320 419.2 320 384V339.2C348.8 316.8 368 280.8 368 240C368 178.144 317.856 128 256 128Z" fill="white" opacity="0.9"/>
+
+  <!-- Connection nodes -->
+  <circle cx="256" cy="240" r="24" fill="#eef2ff"/>
+  <circle cx="208" cy="200" r="16" fill="#eef2ff"/>
+  <circle cx="304" cy="200" r="16" fill="#eef2ff"/>
+  <circle cx="224" cy="280" r="16" fill="#eef2ff"/>
+  <circle cx="288" cy="280" r="16" fill="#eef2ff"/>
+
+  <!-- Connection lines -->
+  <line x1="256" y1="240" x2="208" y2="200" stroke="#eef2ff" stroke-width="4"/>
+  <line x1="256" y1="240" x2="304" y2="200" stroke="#eef2ff" stroke-width="4"/>
+  <line x1="256" y1="240" x2="224" y2="280" stroke="#eef2ff" stroke-width="4"/>
+  <line x1="256" y1="240" x2="288" y2="280" stroke="#eef2ff" stroke-width="4"/>
+</svg>
