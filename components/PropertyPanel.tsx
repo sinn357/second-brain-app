@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, memo, useCallback } from 'react'
 import { useProperties, useSetNoteProperty } from '@/lib/hooks/useProperties'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,7 +26,7 @@ interface PropertyPanelProps {
   }>
 }
 
-export function PropertyPanel({ noteId, currentProperties = [] }: PropertyPanelProps) {
+export const PropertyPanel = memo(({ noteId, currentProperties = [] }: PropertyPanelProps) => {
   const { data: properties = [], isLoading } = useProperties()
   const setNoteProperty = useSetNoteProperty()
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>('')
@@ -40,7 +40,7 @@ export function PropertyPanel({ noteId, currentProperties = [] }: PropertyPanelP
     )
   }
 
-  const handleSetProperty = async (propertyId: string, value: any) => {
+  const handleSetProperty = useCallback(async (propertyId: string, value: any) => {
     try {
       await setNoteProperty.mutateAsync({
         noteId,
@@ -52,7 +52,7 @@ export function PropertyPanel({ noteId, currentProperties = [] }: PropertyPanelP
       console.error('Set property error:', error)
       toast.error('속성 설정에 실패했습니다')
     }
-  }
+  }, [noteId, setNoteProperty])
 
   const renderPropertyValue = (prop: any) => {
     const currentValue = currentProperties.find((p) => p.propertyId === prop.id)?.value
@@ -163,4 +163,6 @@ export function PropertyPanel({ noteId, currentProperties = [] }: PropertyPanelP
       )}
     </div>
   )
-}
+})
+
+PropertyPanel.displayName = 'PropertyPanel'

@@ -55,20 +55,20 @@ export default function FoldersPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
+      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-4 sm:p-6">
         <Skeleton className="h-96" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
+    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-4 sm:p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-indigo-900 dark:text-indigo-100">Folders</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-indigo-900 dark:text-indigo-100">Folders</h1>
 
         {/* 새 폴더 생성 */}
-        <Card className="p-4 mb-6 bg-white dark:bg-indigo-900">
-          <div className="flex gap-2">
+        <Card className="p-4 mb-4 sm:mb-6 bg-white dark:bg-indigo-900">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Input
               placeholder="새 폴더 이름"
               value={newFolderName}
@@ -76,9 +76,9 @@ export default function FoldersPage() {
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
               className="dark:bg-indigo-800 dark:text-indigo-100"
             />
-            <Button onClick={handleCreate} disabled={isCreating} className="bg-purple-600 hover:bg-purple-700 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              {isCreating ? 'Creating...' : 'Create'}
+            <Button onClick={handleCreate} disabled={isCreating} className="bg-purple-600 hover:bg-purple-700 text-white" size="sm">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="sm:inline">{isCreating ? 'Creating...' : 'Create'}</span>
             </Button>
           </div>
         </Card>

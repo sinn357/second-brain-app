@@ -20,8 +20,10 @@ export default function GraphPage() {
     const svg = d3.select(svgRef.current)
     svg.selectAll('*').remove()
 
-    const width = 1200
-    const height = 800
+    // 반응형 크기
+    const container = svgRef.current.parentElement
+    const width = container?.clientWidth || 1200
+    const height = Math.min(800, window.innerHeight - 200)
 
     svg.attr('width', width).attr('height', height)
 
@@ -127,17 +129,17 @@ export default function GraphPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6 flex items-center justify-center">
-        <Skeleton className="w-full h-[800px]" />
+      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-4 sm:p-6 flex items-center justify-center">
+        <Skeleton className="w-full h-[400px] sm:h-[800px]" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-4 sm:p-6">
+        <div className="bg-white dark:bg-indigo-900 p-4 sm:p-6 rounded-lg shadow-sm">
+          <h1 className="text-xl sm:text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="dark:text-indigo-100">{error.message}</p>
         </div>
       </div>
@@ -145,13 +147,15 @@ export default function GraphPage() {
   }
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-      <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
-        <h1 className="text-2xl font-bold mb-4 text-indigo-900 dark:text-indigo-100">Graph View</h1>
-        <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-4">
+    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-4 sm:p-6">
+      <div className="bg-white dark:bg-indigo-900 p-4 sm:p-6 rounded-lg shadow-sm">
+        <h1 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-indigo-900 dark:text-indigo-100">Graph View</h1>
+        <p className="text-xs sm:text-sm text-indigo-700 dark:text-indigo-300 mb-3 sm:mb-4">
           노트를 클릭하면 해당 노트로 이동합니다. 드래그로 노드를 이동할 수 있습니다.
         </p>
-        <svg ref={svgRef} className="w-full border border-indigo-200 dark:border-indigo-700 rounded" />
+        <div className="overflow-x-auto">
+          <svg ref={svgRef} className="w-full border border-indigo-200 dark:border-indigo-700 rounded" />
+        </div>
       </div>
     </div>
   )

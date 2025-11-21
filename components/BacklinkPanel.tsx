@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { useBacklinks } from '@/lib/hooks/useNotes'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,7 +11,7 @@ interface BacklinkPanelProps {
   noteId: string
 }
 
-export function BacklinkPanel({ noteId }: BacklinkPanelProps) {
+export const BacklinkPanel = memo(({ noteId }: BacklinkPanelProps) => {
   const { data: backlinks = [], isLoading, error } = useBacklinks(noteId)
 
   if (isLoading) {
@@ -57,4 +58,6 @@ export function BacklinkPanel({ noteId }: BacklinkPanelProps) {
       )}
     </div>
   )
-}
+})
+
+BacklinkPanel.displayName = 'BacklinkPanel'

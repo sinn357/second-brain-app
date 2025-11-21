@@ -1,7 +1,9 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useNotes } from '@/lib/hooks/useNotes'
 import { useProperties } from '@/lib/hooks/useProperties'
+import { FilterOptions } from '@/components/FilterBar'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -9,7 +11,11 @@ import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 
-export function ListView() {
+interface ListViewProps {
+  filters: FilterOptions
+}
+
+export function ListView({ filters }: ListViewProps) {
   const { data: notes = [], isLoading: notesLoading } = useNotes()
   const { data: properties = [], isLoading: propsLoading } = useProperties()
 
@@ -22,6 +28,61 @@ export function ListView() {
       </div>
     )
   }
+
+  // 필터링 및 정렬된 노트
+  const filteredAndSortedNotes = useMemo(() => {
+    let result = [...notes]
+
+    // 폴더 필터
+    if (filters.folderId) {
+      result = result.filter(note => note.folderId === filters.folderId)
+    }
+
+    // 태그 필터
+    if (filters.tagIds.length > 0) {
+      result = result.filter(note => {
+        if (!(note as any).tags) return false
+        const noteTags = (note as any).tags.map((nt: any) => nt.tagId)
+        return filters.tagIds.some(tagId => noteTags.includes(tagId))
+      })
+    }
+
+    // 속성 필터
+    Object.entries(filters.propertyFilters).forEach(([propertyId, filterValue]) => {
+      result = result.filter(note => {
+        if (!(note as any).properties) return false
+        const noteProp = (note as any).properties.find((p: any) => p.propertyId === propertyId)
+        if (!noteProp) return false
+
+        const property = properties.find(p => p.id === propertyId)
+        if (!property) return false
+
+        if (property.type === 'checkbox') {
+          return noteProp.value === filterValue
+        } else if (property.type === 'select') {
+          return noteProp.value === filterValue
+        }
+        return true
+      })
+    })
+
+    // 정렬
+    result.sort((a, b) => {
+      let compareValue = 0
+
+      if (filters.sortBy === 'title') {
+        compareValue = a.title.localeCompare(b.title)
+      } else if (filters.sortBy === 'createdAt') {
+        compareValue = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      } else if (filters.sortBy === 'updatedAt') {
+        compareValue = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+      }
+
+      return filters.sortOrder === 'asc' ? compareValue : -compareValue
+    })
+
+    return result
+  }, [notes, filters, properties])
 
   // 속성 값 가져오기
   const getNoteProperties = (noteId: string) => {
@@ -53,7 +114,7 @@ export function ListView() {
     }
   }
 
-  if (notes.length === 0) {
+  if (filteredAndSortedNotes.length === 0) {
     return (
       <div className="text-center p-8 text-gray-500">
         노트가 없습니다
@@ -63,7 +124,7 @@ export function ListView() {
 
   return (
     <div className="space-y-4">
-      {notes.map((note) => {
+      {filteredAndSortedNotes.map((note) => {
         const noteProperties = getNoteProperties(note.id)
 
         return (
