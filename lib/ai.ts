@@ -1,9 +1,18 @@
 import OpenAI from 'openai'
 
-// OpenAI 클라이언트 초기화
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// OpenAI 클라이언트 lazy 초기화 (API 키가 없어도 빌드 가능)
+let openaiInstance: OpenAI | null = null
+
+function getOpenAI(): OpenAI {
+  if (!openaiInstance) {
+    const apiKey = process.env.OPENAI_API_KEY
+    if (!apiKey || apiKey === 'sk-placeholder') {
+      throw new Error('OpenAI API key is not configured')
+    }
+    openaiInstance = new OpenAI({ apiKey })
+  }
+  return openaiInstance
+}
 
 // AI를 사용한 태그 생성
 export async function generateTags(content: string): Promise<string[]> {
@@ -13,6 +22,7 @@ export async function generateTags(content: string): Promise<string[]> {
       return []
     }
 
+    const openai = getOpenAI()
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
@@ -60,6 +70,7 @@ export async function generateSummary(content: string): Promise<string> {
       return '요약하기엔 내용이 너무 짧습니다.'
     }
 
+    const openai = getOpenAI()
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
@@ -101,6 +112,7 @@ export async function suggestTitle(content: string): Promise<string> {
       return '제목 없음'
     }
 
+    const openai = getOpenAI()
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
