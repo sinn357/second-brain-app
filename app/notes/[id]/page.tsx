@@ -8,6 +8,7 @@ import { BacklinkPanel } from '@/components/BacklinkPanel'
 import { PropertyPanel } from '@/components/PropertyPanel'
 import { FolderTree } from '@/components/FolderTree'
 import { PresenceIndicator } from '@/components/PresenceIndicator'
+import { AIActions } from '@/components/AIActions'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
@@ -64,6 +65,17 @@ export default function NoteDetailPage({ params }: Props) {
     } finally {
       setIsSaving(false)
     }
+  }
+
+  // AI가 생성한 태그를 본문에 추가
+  const handleTagsGenerated = (tags: string[]) => {
+    const tagString = tags.map((tag) => `#${tag}`).join(' ')
+    setBody((prev) => `${prev}\n\n${tagString}`)
+  }
+
+  // AI가 제안한 제목 적용
+  const handleTitleSuggested = (suggestedTitle: string) => {
+    setTitle(suggestedTitle)
   }
 
   if (isLoading) {
@@ -135,6 +147,15 @@ export default function NoteDetailPage({ params }: Props) {
             currentNoteId={id}
             placeholder="내용을 입력하세요. [[노트제목]]으로 링크, #태그로 태그를 추가할 수 있습니다."
           />
+
+          {/* AI 기능 */}
+          <div className="mt-4">
+            <AIActions
+              content={body}
+              onTagsGenerated={handleTagsGenerated}
+              onTitleSuggested={handleTitleSuggested}
+            />
+          </div>
         </main>
 
         {/* 우측: 백링크 + 속성 */}
