@@ -127,13 +127,27 @@ export function useDeleteNote() {
 
 // 백링크 조회
 export function useBacklinks(noteId: string) {
-  return useQuery<Note[], Error>({
+  return useQuery<any[], Error>({
     queryKey: ['backlinks', noteId],
     queryFn: async () => {
       const response = await fetch(`/api/notes/${noteId}/backlinks`)
       const data = await response.json()
       if (!data.success) throw new Error(data.error)
       return data.backlinks
+    },
+    enabled: !!noteId,
+  })
+}
+
+// Unlinked Mentions 조회
+export function useUnlinkedMentions(noteId: string) {
+  return useQuery<any[], Error>({
+    queryKey: ['unlinked-mentions', noteId],
+    queryFn: async () => {
+      const response = await fetch(`/api/notes/${noteId}/unlinked-mentions`)
+      const data = await response.json()
+      if (!data.success) throw new Error(data.error)
+      return data.unlinkedMentions
     },
     enabled: !!noteId,
   })
