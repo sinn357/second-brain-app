@@ -24,7 +24,7 @@ export default function DatabasePage() {
             <Button
               variant={view === 'table' ? 'default' : 'outline'}
               onClick={() => setView('table')}
-              className={`flex items-center gap-2 ${view === 'table' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}`}
+              className={`flex items-center gap-2 ${view === 'table' ? 'gradient-mesh hover-glow text-white' : ''}`}
             >
               <Table className="h-4 w-4" />
               Table
@@ -32,7 +32,7 @@ export default function DatabasePage() {
             <Button
               variant={view === 'list' ? 'default' : 'outline'}
               onClick={() => setView('list')}
-              className={`flex items-center gap-2 ${view === 'list' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}`}
+              className={`flex items-center gap-2 ${view === 'list' ? 'gradient-mesh hover-glow text-white' : ''}`}
             >
               <List className="h-4 w-4" />
               List
@@ -41,7 +41,7 @@ export default function DatabasePage() {
         </div>
 
         {/* View 렌더링 */}
-        <div className="bg-white dark:bg-indigo-900 rounded-lg shadow-sm p-6">
+        <div className="glass-strong p-6 rounded-lg">
           {view === 'table' ? <TableView /> : <ListView />}
         </div>
       </div>

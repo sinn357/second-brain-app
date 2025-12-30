@@ -45,7 +45,7 @@ export function NoteList({ folderId }: NoteListProps) {
     <div className="space-y-4">
       {notes.map((note) => (
         <Link key={note.id} href={`/notes/${note.id}`}>
-          <Card className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+          <Card className="glass-strong hover-lift hover-glow p-4 cursor-pointer">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-1">{note.title}</h3>

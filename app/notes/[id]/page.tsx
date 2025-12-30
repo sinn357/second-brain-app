@@ -100,11 +100,11 @@ export default function NoteDetailPage({ params }: Props) {
   if (error || !note) {
     return (
       <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
+        <div className="glass-strong p-6 rounded-lg">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="dark:text-indigo-100">{error?.message || 'Note not found'}</p>
           <Link href="/notes">
-            <Button className="mt-4 bg-purple-600 hover:bg-purple-700 text-white">
+            <Button className="mt-4 gradient-mesh hover-glow text-white">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Notes
             </Button>
@@ -117,7 +117,7 @@ export default function NoteDetailPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950">
       {/* 헤더 */}
-      <header className="bg-white dark:bg-indigo-900 border-b border-indigo-200 dark:border-indigo-800 px-6 py-4 flex items-center justify-between">
+      <header className="glass-strong border-b border-white/10 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/notes">
             <Button variant="outline" size="sm">
@@ -129,7 +129,7 @@ export default function NoteDetailPage({ params }: Props) {
           <PresenceIndicator noteId={id} />
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={handleSave} disabled={isSaving} className="bg-purple-600 hover:bg-purple-700 text-white">
+          <Button onClick={handleSave} disabled={isSaving} className="gradient-mesh hover-glow text-white">
             <Save className="h-4 w-4 mr-2" />
             {isSaving ? 'Saving...' : 'Save'}
           </Button>
@@ -173,12 +173,12 @@ export default function NoteDetailPage({ params }: Props) {
 
       <div className="grid grid-cols-12 gap-6 p-6">
         {/* 좌측: 폴더 트리 */}
-        <aside className="col-span-2 bg-white dark:bg-indigo-900 p-4 rounded-lg shadow-sm">
+        <aside className="col-span-2 glass-strong p-4 rounded-lg">
           <FolderTree />
         </aside>
 
         {/* 중앙: 에디터 */}
-        <main className="col-span-7 bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
+        <main className="col-span-7 glass-strong p-6 rounded-lg">
           {/* 제목 */}
           <Input
             value={title}
@@ -198,10 +198,10 @@ export default function NoteDetailPage({ params }: Props) {
 
         {/* 우측: 백링크 + 속성 */}
         <aside className="col-span-3 space-y-6">
-          <div className="bg-white dark:bg-indigo-900 p-4 rounded-lg shadow-sm">
+          <div className="glass-strong p-4 rounded-lg">
             <BacklinkPanel noteId={id} />
           </div>
-          <div className="bg-white dark:bg-indigo-900 p-4 rounded-lg shadow-sm">
+          <div className="glass-strong p-4 rounded-lg">
             <PropertyPanel noteId={id} currentProperties={note.properties} />
           </div>
         </aside>

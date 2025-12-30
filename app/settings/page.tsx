@@ -170,7 +170,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Export Section */}
-        <Card className="bg-white dark:bg-indigo-900 border-indigo-200 dark:border-indigo-800">
+        <Card className="glass-strong hover-lift hover-glow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900 dark:text-indigo-100">
               <Download className="w-5 h-5" />
@@ -182,7 +182,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Export Markdown ZIP */}
-            <div className="flex items-start justify-between p-4 border border-indigo-200 dark:border-indigo-700 rounded-lg">
+            <div className="flex items-start justify-between p-4 glass hover-lift rounded-lg">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <FolderArchive className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -197,14 +197,14 @@ export default function SettingsPage() {
               <Button
                 onClick={handleExportMarkdown}
                 disabled={isExporting}
-                className="ml-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                className="ml-4 gradient-mesh hover-glow text-white"
               >
                 {isExporting ? 'Exporting...' : 'Export'}
               </Button>
             </div>
 
             {/* Export JSON */}
-            <div className="flex items-start justify-between p-4 border border-indigo-200 dark:border-indigo-700 rounded-lg">
+            <div className="flex items-start justify-between p-4 glass hover-lift rounded-lg">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <FileJson className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -219,7 +219,7 @@ export default function SettingsPage() {
               <Button
                 onClick={handleExportJSON}
                 disabled={isExporting}
-                className="ml-4 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+                className="ml-4 gradient-mesh hover-glow text-white"
               >
                 {isExporting ? 'Exporting...' : 'Export'}
               </Button>
@@ -228,7 +228,7 @@ export default function SettingsPage() {
         </Card>
 
         {/* Import Section */}
-        <Card className="bg-white dark:bg-indigo-900 border-indigo-200 dark:border-indigo-800">
+        <Card className="glass-strong hover-lift hover-glow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900 dark:text-indigo-100">
               <Upload className="w-5 h-5" />
@@ -240,7 +240,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Import Obsidian Vault */}
-            <div className="p-4 border border-indigo-200 dark:border-indigo-700 rounded-lg">
+            <div className="p-4 glass hover-lift rounded-lg">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -271,7 +271,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Import JSON */}
-            <div className="p-4 border border-indigo-200 dark:border-indigo-700 rounded-lg">
+            <div className="p-4 glass hover-lift rounded-lg">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">

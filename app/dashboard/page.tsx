@@ -29,7 +29,7 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
+        <div className="glass-strong p-6 rounded-lg">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="dark:text-indigo-100">{error.message}</p>
         </div>
@@ -54,7 +54,7 @@ export default function DashboardPage() {
 
         {/* 총 개수 카드 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="dark:bg-indigo-900 dark:border-indigo-700">
+          <Card className="glass-strong hover-lift hover-glow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
                 Total Notes
@@ -66,7 +66,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="dark:bg-indigo-900 dark:border-indigo-700">
+          <Card className="glass-strong hover-lift hover-glow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
                 Folders
@@ -78,7 +78,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="dark:bg-indigo-900 dark:border-indigo-700">
+          <Card className="glass-strong hover-lift hover-glow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
                 Tags
@@ -90,7 +90,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="dark:bg-indigo-900 dark:border-indigo-700">
+          <Card className="glass-strong hover-lift hover-glow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
                 Links
@@ -104,7 +104,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 최근 7일 활동 그래프 */}
-        <Card className="dark:bg-indigo-900 dark:border-indigo-700">
+        <Card className="glass-strong hover-lift hover-glow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900 dark:text-indigo-100">
               <TrendingUp className="h-5 w-5" />
@@ -138,7 +138,7 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Top 10 연결된 노트 */}
-          <Card className="dark:bg-indigo-900 dark:border-indigo-700">
+          <Card className="glass-strong hover-lift hover-glow">
             <CardHeader>
               <CardTitle className="text-indigo-900 dark:text-indigo-100">Top 10 Connected Notes</CardTitle>
             </CardHeader>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* 폴더별 분포 파이 차트 */}
-          <Card className="dark:bg-indigo-900 dark:border-indigo-700">
+          <Card className="glass-strong hover-lift hover-glow">
             <CardHeader>
               <CardTitle className="text-indigo-900 dark:text-indigo-100">Notes by Folder</CardTitle>
             </CardHeader>

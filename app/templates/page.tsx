@@ -50,7 +50,7 @@ export default function TemplatesPage() {
             </p>
           </div>
           <CreateTemplateDialog>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600">
+            <Button className="gradient-mesh hover-glow text-white">
               <Plus className="w-4 h-4 mr-2" />
               New Template
             </Button>
@@ -62,7 +62,7 @@ export default function TemplatesPage() {
           {templates?.map((template) => (
             <Card
               key={template.id}
-              className="bg-white dark:bg-indigo-900 border-indigo-200 dark:border-indigo-800 hover:shadow-lg transition-shadow cursor-pointer"
+              className="glass-strong hover-lift hover-glow cursor-pointer"
             >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between text-indigo-900 dark:text-indigo-100">
@@ -124,7 +124,7 @@ export default function TemplatesPage() {
               Create your first template to get started
             </p>
             <CreateTemplateDialog>
-              <Button className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600">
+              <Button className="gradient-mesh hover-glow text-white">
                 <Plus className="w-4 h-4 mr-2" />
                 Create Template
               </Button>

@@ -23,7 +23,7 @@ export default function CalendarPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
+        <div className="glass-strong p-6 rounded-lg">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="dark:text-indigo-100">{error.message}</p>
         </div>

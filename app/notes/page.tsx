@@ -17,13 +17,13 @@ function NotesPageContent() {
 
       <div className="grid grid-cols-12 gap-6 p-6">
         {/* 좌측: 폴더 트리 */}
-        <aside className="col-span-3 bg-white dark:bg-indigo-900 p-4 rounded-lg shadow-sm">
+        <aside className="col-span-3 glass-strong p-4 rounded-lg">
           <FolderTree />
         </aside>
 
         {/* 중앙: 노트 리스트 */}
         <main className="col-span-9">
-          <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
+          <div className="glass-strong p-6 rounded-lg">
             <h1 className="text-2xl font-bold mb-6 text-indigo-900 dark:text-indigo-100">
               {folderId ? '폴더 노트' : '모든 노트'}
             </h1>

@@ -68,7 +68,7 @@ export function ListView() {
 
         return (
           <Link key={note.id} href={`/notes/${note.id}`}>
-            <Card className="p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+            <Card className="glass-strong hover-lift hover-glow p-4 cursor-pointer">
               <div className="flex items-start justify-between mb-2">
                 <h3 className="font-semibold text-lg">{note.title}</h3>
                 {note.folder && (
