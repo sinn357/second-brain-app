@@ -2,7 +2,33 @@
 
 ## 2025-12-30
 
-### Added
+### Added (Second Session)
+- **Enhanced Backlinks**: 백링크 개선
+  - 백링크 컨텍스트 미리보기 (주변 50자)
+  - 언급 횟수 배지 표시 (2회 이상 시)
+  - BacklinkPanel 탭 UI (Backlinks / Unlinked)
+  - Unlinked Mentions 기능 추가
+  - 다크모드 지원
+
+- **Unlinked Mentions** (New Feature):
+  - 노트 제목이 언급되었지만 [[]]로 링크되지 않은 경우 탐지
+  - 언급된 컨텍스트와 횟수 표시
+  - 최소 제목 길이 3자 (오탐 방지)
+  - `/api/notes/[id]/unlinked-mentions` 엔드포인트
+
+### Technical Changes (Second Session)
+- `/api/notes/[id]/backlinks` 개선 (context extraction)
+- `/api/notes/[id]/unlinked-mentions` 신규 엔드포인트
+- `useUnlinkedMentions` hook 추가
+- BacklinkPanel 리팩토링 (탭, 컨텍스트, 배지)
+
+### Documentation
+- ROADMAP.md 업데이트 (Phase 2-3 계획 추가)
+- 작업 우선순위 가이드 추가
+
+---
+
+### Added (First Session)
 - **Daily Notes**: 매일 자동 생성되는 일일 노트 시스템
   - 날짜별 노트 자동 생성 (`yyyy-MM-dd` 형식)
   - 이전/다음 날짜 네비게이션
