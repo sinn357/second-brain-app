@@ -8,12 +8,7 @@ Phase 3 진행 예정 (노션 Core 강화)
 
 ## Next Tasks
 
-### Phase 3: 노션 Core 강화
-
-- [ ] **Timeline View**
-  - 시간순 노트 나열 (세로 스크롤)
-  - 최근 수정 노트 하이라이트
-  - 날짜 범위 필터 (이번 주/월)
+### Phase 3: 노션 Core 강화 (진행 중)
 
 - [ ] **통계 대시보드**
   - `/dashboard` 페이지
@@ -74,6 +69,29 @@ Phase 3 진행 예정 (노션 Core 강화)
 ---
 
 ## Completed Phases
+
+### Phase 3-3: 노션 Core - Timeline View ✅ (2025-12-30)
+- [x] Timeline API (시간순 노트 조회)
+- [x] useTimeline hook
+- [x] /timeline 페이지
+- [x] 날짜별 그룹화 (sticky 헤더)
+- [x] 최근 수정 하이라이트 (24시간 이내)
+- [x] 날짜 범위 필터 (All/Week/Month)
+- [x] Timeline 점 디자인 (세로 라인)
+- [x] 노트 미리보기 (150자)
+- [x] 폴더/태그 표시
+- [x] 다크모드 지원
+
+### Phase 3-2: 노션 Core - Dashboard ✅ (2025-12-30)
+- [x] Dashboard API (통계 집계)
+- [x] useDashboard hook
+- [x] /dashboard 페이지
+- [x] 총 개수 카드 (Notes, Folders, Tags, Links)
+- [x] 최근 7일 활동 그래프 (Bar Chart)
+- [x] Top 10 연결된 노트 (클릭 가능)
+- [x] 폴더별 분포 파이 차트
+- [x] recharts 통합
+- [x] 다크모드 지원
 
 ### Phase 3-1: 노션 Core - Calendar View ✅ (2025-12-30)
 - [x] Calendar API (날짜별 노트 활동 집계)

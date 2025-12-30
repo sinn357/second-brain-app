@@ -2,6 +2,55 @@
 
 ## 2025-12-30
 
+### Added (Sixth Session)
+- **Timeline View**: 시간순 노트 타임라인
+  - 날짜별 그룹화 (sticky 날짜 헤더)
+  - 최근 24시간 수정 노트 하이라이트 (⭐)
+  - 세로 Timeline 디자인 (점 + 라인)
+  - 노트 미리보기 (150자 제한)
+  - 날짜 범위 필터 (All Time / This Week / This Month)
+  - 폴더 및 태그 표시
+  - 클릭 시 노트로 이동
+  - 다크모드 지원
+
+### Technical Changes (Sixth Session)
+- `/api/timeline` 신규 엔드포인트 (range 파라미터)
+- `useTimeline` hook 추가
+- `/timeline` 페이지 생성
+- 날짜별 그룹화 로직
+- 24시간 이내 수정 감지 로직
+
+### Files Changed (Sixth Session)
+- 3 files created
+- +150 insertions
+
+---
+
+### Added (Fifth Session)
+- **Dashboard (통계 대시보드)**: 노션 스타일 Analytics
+  - 총 개수 카드 (Notes, Folders, Tags, Links)
+  - 최근 7일 활동 그래프 (Created/Updated)
+  - Top 10 연결된 노트 (링크 수 기준)
+  - 폴더별 노트 분포 파이 차트
+  - recharts 라이브러리 통합
+  - 반응형 레이아웃
+  - 다크모드 완전 지원
+
+### Technical Changes (Fifth Session)
+- `/api/dashboard` 신규 엔드포인트
+- `useDashboard` hook 추가
+- `/dashboard` 페이지 생성
+- recharts 설치 (v2.x)
+- Card 컴포넌트 활용 (shadcn/ui)
+- BarChart, PieChart 구현
+
+### Files Changed (Fifth Session)
+- 3 files created
+- +250 insertions
+- recharts dependency 추가
+
+---
+
 ### Added (Fourth Session)
 - **Calendar View**: GitHub 스타일 활동 히트맵
   - 날짜별 노트 생성/수정 활동 시각화
