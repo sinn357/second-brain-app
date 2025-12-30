@@ -5,6 +5,130 @@
 
 ---
 
+## [2025-12-30 20:00] Terminal Claude - Daily Notes, Templates, Enhanced Search 구현 완료
+
+### 완료된 작업
+- [x] **Daily Notes 시스템 구현**
+  - `/api/daily-notes` API 엔드포인트 생성 (자동 폴더/노트 생성)
+  - `/app/daily/page.tsx` Daily Notes 페이지 구현
+  - `useDailyNote` hook 추가
+  - 날짜 네비게이션 (이전/다음/오늘)
+  - Navigation에 "Daily" 링크 추가 (CalendarDays 아이콘)
+  - Daily Note 템플릿 자동 적용
+
+- [x] **Templates 시스템 구현**
+  - Prisma schema에 Template 모델 추가
+  - `/api/templates` CRUD API 구현
+  - `useTemplates` hooks 추가
+  - Template validation schema (Zod)
+  - 4종 기본 템플릿 시드 데이터:
+    - Daily Note (Tasks, Notes, Reflections)
+    - Meeting Note (Agenda, Discussion, Action Items)
+    - Project Note (Overview, Requirements, Progress Log)
+    - Book Note (Summary, Key Takeaways, Quotes)
+  - QuickAddButton에 템플릿 선택 Dialog 통합
+  - 템플릿 변수 치환 (`{{date}}`, `{{title}}`)
+
+- [x] **검색 기능 대폭 개선**
+  - Search API 개선:
+    - 검색어 주변 컨텍스트 추출 (50자)
+    - 태그/폴더 필터 지원 (`?tagId=xxx`, `?folderId=xxx`)
+    - 제목 매칭 우선 정렬
+    - 검색 결과 20개로 증가
+  - Command Palette 업그레이드:
+    - Debounced search (300ms)
+    - 서버 사이드 검색으로 전환
+    - 로딩 상태 표시 (Loader2)
+    - 검색 결과에 컨텍스트 미리보기 표시
+
+### 구현된 주요 기능
+
+**1. Daily Notes**
+- 매일 `yyyy-MM-dd` 형식의 노트 자동 생성
+- Daily Notes 폴더 자동 생성
+- 이전/다음/오늘 버튼으로 날짜 이동
+- Daily Note 템플릿 자동 적용
+- Wiki Links, HashTags 완벽 지원
+- 자동 저장 (10초마다 refetch)
+
+**2. Templates**
+- Template 데이터베이스 관리
+- Quick Add 버튼 → Dialog 팝업 → 템플릿 선택
+- 변수 치환 기능 (`{{date}}`, `{{title}}`)
+- 4종 기본 템플릿 제공
+- 템플릿별 설명 표시
+
+**3. Enhanced Search**
+- 검색어 주변 텍스트 컨텍스트 표시
+- 태그/폴더로 검색 필터링
+- 제목에 매칭된 결과 우선 표시
+- Command Palette (Cmd+K)에서 실시간 검색
+- 300ms debounce로 API 호출 최적화
+
+### 기술적 구현 사항
+- **새 파일** (11개):
+  - `app/api/daily-notes/route.ts`
+  - `app/api/templates/route.ts`
+  - `app/api/templates/[id]/route.ts`
+  - `app/daily/page.tsx`
+  - `lib/hooks/useDailyNote.ts`
+  - `lib/hooks/useTemplates.ts`
+  - `lib/validations/template.ts`
+  - `scripts/seed-templates.ts`
+  - `docs/CHANGELOG.md`
+  - `docs/FIXES.md`
+  - `docs/ROADMAP.md`
+
+- **수정 파일** (6개):
+  - `prisma/schema.prisma` (Template 모델 추가)
+  - `app/api/notes/search/route.ts` (컨텍스트, 필터 추가)
+  - `components/CommandPalette.tsx` (debounced search, context display)
+  - `components/QuickAddButton.tsx` (템플릿 선택 Dialog)
+  - `components/Navigation.tsx` (Daily 링크 추가)
+  - `package-lock.json` (의존성 업데이트)
+
+### Git 통계
+- **Commit**: `a00cd59` - feat: add Daily Notes, Templates, and Enhanced Search
+- **Changed**: 17 files, +1036 insertions, -84 deletions
+- **Pushed**: origin/master
+
+### 테스트 방법
+```bash
+npm run dev --prefix /Users/woocheolshin/Documents/Vibecoding/projects/second-brain-app
+```
+
+**1. Daily Notes 테스트:**
+- `/daily` 페이지 접속
+- 오늘 날짜 노트 자동 생성 확인
+- 이전/다음 버튼으로 날짜 이동
+- Tasks, Notes, Reflections 섹션 확인
+
+**2. Templates 테스트:**
+- Quick Add 버튼 클릭
+- 템플릿 선택 Dialog 확인
+- 각 템플릿 선택 후 노트 생성
+- 템플릿 내용 적용 확인
+
+**3. Search 테스트:**
+- Cmd+K (Command Palette) 실행
+- 검색어 입력 → 300ms 후 자동 검색
+- 검색 결과에 컨텍스트 표시 확인
+- 제목 매칭 우선 정렬 확인
+
+### 다음 단계 (Phase 2-2)
+- [ ] 백링크 개선 (컨텍스트 미리보기, Unlinked Mentions)
+- [ ] Graph View 필터 (폴더/태그)
+- [ ] Calendar View
+- [ ] Export/Import (Markdown, JSON)
+
+### 현재 상태
+- ✅ Daily Notes 완성
+- ✅ Templates 완성
+- ✅ Enhanced Search 완성
+- 🚀 Phase 2-1 완료!
+
+---
+
 ## [2025-11-18 15:00] Terminal Claude - 베이스먼트 구축 완료
 
 ### 완료된 작업
