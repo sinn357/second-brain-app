@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, Network, Folder, Table, Search, Moon, Sun, CalendarDays, Settings } from 'lucide-react'
+import { FileText, Network, Folder, Table, Search, Moon, Sun, CalendarDays, Settings, LayoutTemplate } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/lib/hooks/useTheme'
 
@@ -21,6 +21,7 @@ export function Navigation() {
     { href: '/notes', label: 'Notes', icon: FileText },
     { href: '/graph', label: 'Graph', icon: Network },
     { href: '/folders', label: 'Folders', icon: Folder },
+    { href: '/templates', label: 'Templates', icon: LayoutTemplate },
     { href: '/db', label: 'Database', icon: Table },
     { href: '/settings', label: 'Settings', icon: Settings },
   ]
