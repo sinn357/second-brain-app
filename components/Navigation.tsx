@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, Network, Folder, Table, Search, Moon, Sun } from 'lucide-react'
+import { FileText, Network, Folder, Table, Search, Moon, Sun, CalendarDays } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/lib/hooks/useTheme'
 
@@ -17,6 +17,7 @@ export function Navigation() {
   }, [])
 
   const navItems = [
+    { href: '/daily', label: 'Daily', icon: CalendarDays },
     { href: '/notes', label: 'Notes', icon: FileText },
     { href: '/graph', label: 'Graph', icon: Network },
     { href: '/folders', label: 'Folders', icon: Folder },

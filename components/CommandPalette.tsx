@@ -4,8 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { useRouter } from 'next/navigation'
-import { Search, FileText, Tag, Folder, Hash } from 'lucide-react'
-import { useNotes } from '@/lib/hooks/useNotes'
+import { Search, FileText, Tag, Folder, Hash, Loader2 } from 'lucide-react'
 import { useTags } from '@/lib/hooks/useTags'
 import { useFolders } from '@/lib/hooks/useFolders'
 
@@ -14,6 +13,7 @@ type SearchResult = {
   type: 'note' | 'tag' | 'folder'
   title: string
   subtitle?: string
+  context?: string
   url: string
 }
 
@@ -21,12 +21,38 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
   const router = useRouter()
 
-  // Data hooks
-  const { data: notes = [] } = useNotes()
+  // Data hooks (for tags and folders only)
   const { data: tags = [] } = useTags()
   const { data: folders = [] } = useFolders()
+
+  // Debounced search
+  useEffect(() => {
+    if (!query.trim()) {
+      setSearchResults([])
+      return
+    }
+
+    const delaySearch = setTimeout(async () => {
+      setIsSearching(true)
+      try {
+        const res = await fetch(`/api/notes/search?q=${encodeURIComponent(query)}`)
+        const data = await res.json()
+        if (data.success) {
+          setSearchResults(data.notes || [])
+        }
+      } catch (error) {
+        console.error('Search error:', error)
+      } finally {
+        setIsSearching(false)
+      }
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(delaySearch)
+  }, [query])
 
   // Filter results based on query
   const results: SearchResult[] = []
@@ -34,22 +60,17 @@ export function CommandPalette() {
   if (query.trim()) {
     const lowerQuery = query.toLowerCase()
 
-    // Search notes
-    notes
-      .filter((note) =>
-        note.title.toLowerCase().includes(lowerQuery) ||
-        note.body.toLowerCase().includes(lowerQuery)
-      )
-      .slice(0, 5)
-      .forEach((note) => {
-        results.push({
-          id: note.id,
-          type: 'note',
-          title: note.title,
-          subtitle: note.folder?.name || 'No folder',
-          url: `/notes/${note.id}`,
-        })
+    // Add search results (notes) with context
+    searchResults.slice(0, 10).forEach((note) => {
+      results.push({
+        id: note.id,
+        type: 'note',
+        title: note.title,
+        subtitle: note.folder?.name || 'No folder',
+        context: note.context,
+        url: `/notes/${note.id}`,
       })
+    })
 
     // Search tags
     tags
@@ -163,7 +184,12 @@ export function CommandPalette() {
 
           {/* Results */}
           <div className="max-h-[400px] overflow-y-auto p-2">
-            {query && results.length === 0 ? (
+            {isSearching ? (
+              <div className="py-8 text-center">
+                <Loader2 className="h-6 w-6 mx-auto mb-2 animate-spin text-gray-400" />
+                <p className="text-sm text-gray-500">Searching...</p>
+              </div>
+            ) : query && results.length === 0 ? (
               <div className="py-8 text-center text-sm text-gray-500">
                 No results found
               </div>
@@ -189,7 +215,12 @@ export function CommandPalette() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{result.title}</div>
-                      {result.subtitle && (
+                      {result.context && (
+                        <div className="text-xs text-gray-600 truncate mt-1">
+                          {result.context}
+                        </div>
+                      )}
+                      {result.subtitle && !result.context && (
                         <div className="text-xs text-gray-500 truncate">
                           {result.subtitle}
                         </div>

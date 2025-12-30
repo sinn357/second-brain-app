@@ -128,3 +128,16 @@ model Presence {
   @@index([lastSeenAt])
   @@map("presences")
 }
+
+// 템플릿 (노트 템플릿)
+model Template {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(200)
+  content     String   @db.Text
+  description String?  @db.VarChar(500)
+  isDefault   Boolean  @default(false) // 기본 템플릿 여부
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("templates")
+}
