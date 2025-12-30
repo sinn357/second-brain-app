@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Navigation } from "@/components/Navigation";
+import { FloatingNav } from "@/components/FloatingNav";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Toaster } from "sonner";
 
@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Second Brain App",
-  description: "MVP: Quick Add + Markdown Links + Property-based DB + Graph View",
+  title: "Nexus",
+  description: "Your knowledge, connected - A modern personal knowledge management system",
 };
 
 export default function RootLayout({
@@ -32,7 +32,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <Navigation />
+          <FloatingNav />
           <CommandPalette />
           <Toaster position="top-right" richColors />
           {children}
