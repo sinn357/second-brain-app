@@ -1,54 +1,14 @@
 # Second Brain App Roadmap
 
 ## Current Status
-Phase 2 진행 중 (애플메모 + 옵시디언 + 노션 + 마인드맵 컨셉 강화)
+Phase 2 완료 (애플메모 + 옵시디언 + 노션 + 마인드맵 컨셉 강화)
+Phase 3 진행 예정 (노션 Core 강화)
 
 ---
 
 ## Next Tasks
 
-### Phase 2-3: 마인드맵 강화 (Graph View 개선) 🎯
-**우선순위: 높음** - 마인드맵 Core 기능 개선
-
-- [ ] **Graph View 필터링**
-  - 폴더별 노드 필터 (특정 폴더 노트만 표시)
-  - 태그별 노드 필터 (특정 태그 노트만 표시)
-  - 필터 UI (체크박스 또는 드롭다운)
-
-- [ ] **폴더별 색상 코딩**
-  - 각 폴더마다 고유 색상 지정
-  - 노드를 폴더 색상으로 표시
-  - 레전드 추가 (색상-폴더 매핑)
-
-- [ ] **반응형 크기**
-  - 컨테이너 기반 동적 width/height
-  - 창 크기 변경에 따라 자동 조절
-  - 현재 고정 1200x800 → 100% 반응형
-
-- [ ] **고립 노드 하이라이트**
-  - 링크가 없는 노드 찾기
-  - 다른 색상으로 강조 (예: 회색)
-  - 토글 옵션 제공
-
-- [ ] **Graph 클러스터링** (선택)
-  - 연결도 높은 노트 그룹화
-  - 클러스터별 색상 구분
-  - Force layout 파라미터 조정
-
-- [ ] **미니맵** (선택)
-  - 전체 그래프 미니어처
-  - 현재 뷰포트 표시
-  - 미니맵 클릭으로 네비게이션
-
----
-
 ### Phase 3: 노션 Core 강화
-
-- [ ] **Calendar View**
-  - 날짜별 노트 히트맵 (GitHub 스타일)
-  - 월별 캘린더 뷰
-  - Daily Notes 통합
-  - 특정 날짜 클릭 → 해당 날짜 노트
 
 - [ ] **Timeline View**
   - 시간순 노트 나열 (세로 스크롤)
@@ -115,6 +75,23 @@ Phase 2 진행 중 (애플메모 + 옵시디언 + 노션 + 마인드맵 컨셉 �
 
 ## Completed Phases
 
+### Phase 3-1: 노션 Core - Calendar View ✅ (2025-12-30)
+- [x] Calendar API (날짜별 노트 활동 집계)
+- [x] useCalendar hook
+- [x] CalendarHeatmap 컴포넌트 (GitHub 스타일)
+- [x] /calendar 페이지
+- [x] 연도 선택 기능
+- [x] 통계 (Total, Max/Day, Active Days)
+- [x] 노트 삭제 기능 (Dialog 확인)
+
+### Phase 2-3: 마인드맵 강화 (Graph View 개선) ✅ (2025-12-30)
+- [x] 반응형 크기 (컨테이너 기반, ResizeObserver)
+- [x] 폴더별 색상 코딩 (10색 팔레트)
+- [x] 레전드 UI (폴더별 색상 표시)
+- [x] 고립 노드 하이라이트 (회색 + 개수)
+- [x] 폴더 필터링 (체크박스)
+- [x] 고립 노드 토글 (숨기기/보기)
+
 ### Phase 2-2: 옵시디언 심화 ✅ (2025-12-30)
 - [x] 백링크 컨텍스트 미리보기
 - [x] Unlinked Mentions
@@ -142,22 +119,23 @@ Phase 2 진행 중 (애플메모 + 옵시디언 + 노션 + 마인드맵 컨셉 �
 ## 작업 우선순위 가이드
 
 ### 높음 🔥
-1. Graph View 개선 (Phase 2-3) - 마인드맵 Core 강화
-2. Calendar View - 노션 Core 필수 기능
-3. Export/Import - 데이터 백업 필수
+1. Calendar View - 노션 Core 필수 기능
+2. Export/Import - 데이터 백업 필수
+3. 통계 대시보드 - 노션 Analytics
 
 ### 중간 ⭐
-4. 통계 대시보드 - 노션 Analytics
-5. Timeline View
-6. 템플릿 관리 페이지
+4. Timeline View
+5. 템플릿 관리 페이지
+6. 고급 검색 (정규식, 복합 필터)
 
 ### 낮음 💡
 7. Graph 클러스터링 (고급 기능)
-8. 모바일 UX (반응형은 이미 지원)
-9. 성능 최적화 (필요 시)
+8. 미니맵 (Graph View)
+9. 모바일 UX (반응형은 이미 지원)
+10. 성능 최적화 (필요 시)
 
 ---
 
 **Last Updated**: 2025-12-30
-**Current Phase**: 2-3 (Graph View 개선)
-**Next Milestone**: 마인드맵 Core 완성
+**Current Phase**: Phase 3 (노션 Core 강화)
+**Next Milestone**: Calendar View 구현

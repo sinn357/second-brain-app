@@ -2,6 +2,60 @@
 
 ## 2025-12-30
 
+### Added (Fourth Session)
+- **Calendar View**: GitHub 스타일 활동 히트맵
+  - 날짜별 노트 생성/수정 활동 시각화
+  - 연도 선택 기능 (이전/다음)
+  - 통계 (Total, Max/Day, Active Days)
+  - 5단계 색상 강도 (활동량에 따라)
+  - 범례 및 툴팁 (hover)
+  - 다크모드 지원
+
+- **노트 삭제 기능**: 안전한 삭제 UX
+  - 노트 상세 페이지에 삭제 버튼 (Trash2 아이콘)
+  - 삭제 확인 Dialog (되돌릴 수 없음 경고)
+  - 삭제 후 /notes로 리다이렉트
+  - Toast 알림
+
+### Technical Changes (Fourth Session)
+- `/api/calendar` 신규 엔드포인트 (연도별 활동 집계)
+- `useCalendar` hook 추가
+- `CalendarHeatmap` 컴포넌트 (주차 그리드, 월 레이블)
+- `/calendar` 페이지 추가
+- `/notes/[id]/page.tsx` 개선 (삭제 버튼, Dialog)
+- `useDeleteNote` hook 활용
+
+### Files Changed (Fourth Session)
+- 5 files created, 1 file modified
+- +250 insertions, -10 deletions
+
+---
+
+### Added (Third Session)
+- **Enhanced Graph View**: Graph View 대폭 개선
+  - 반응형 크기 (컨테이너 기반, ResizeObserver)
+  - 폴더별 색상 코딩 (10색 팔레트)
+  - 레전드 UI (폴더별 색상 표시)
+  - 고립 노드 하이라이트 (회색 + 개수 표시)
+  - 폴더 필터링 (체크박스)
+  - 고립 노드 토글 (숨기기/보기)
+  - 다크모드 완전 지원
+
+### Technical Changes (Third Session)
+- `/api/graph` 개선 (folders 포함, folderName 추가)
+- `useGraph` hook 타입 확장 (Folder, folderName)
+- GraphPage 전면 리팩토링:
+  - ResizeObserver로 반응형 구현
+  - 필터 상태 관리 (selectedFolders, showIsolated)
+  - 필터링된 노드/엣지 렌더링
+  - 폴더 색상 매핑 로직
+  - 고립 노드 탐지 로직
+
+### Files Changed (Third Session)
+- 3 files changed, +150 insertions, -20 deletions
+
+---
+
 ### Added (Second Session)
 - **Enhanced Backlinks**: 백링크 개선
   - 백링크 컨텍스트 미리보기 (주변 50자)

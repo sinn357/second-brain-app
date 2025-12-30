@@ -1,7 +1,7 @@
 'use client'
 
 import { use, useState, useEffect } from 'react'
-import { useNote, useUpdateNote, useParseLinks } from '@/lib/hooks/useNotes'
+import { useNote, useUpdateNote, useParseLinks, useDeleteNote } from '@/lib/hooks/useNotes'
 import { useAutoPresence } from '@/lib/hooks/usePresence'
 import { NoteEditorAdvanced } from '@/components/NoteEditorAdvanced'
 import { BacklinkPanel } from '@/components/BacklinkPanel'
@@ -11,7 +11,16 @@ import { PresenceIndicator } from '@/components/PresenceIndicator'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Save } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { ArrowLeft, Save, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -24,12 +33,14 @@ export default function NoteDetailPage({ params }: Props) {
   const { id } = use(params)
   const { data: note, isLoading, error } = useNote(id)
   const updateNote = useUpdateNote(id)
+  const deleteNote = useDeleteNote()
   const parseLinks = useParseLinks()
   const router = useRouter()
 
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   // 실시간 협업: Presence 자동 업데이트
   useAutoPresence(id)
@@ -63,6 +74,17 @@ export default function NoteDetailPage({ params }: Props) {
       toast.error('저장에 실패했습니다')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      await deleteNote.mutateAsync(id)
+      toast.success('노트가 삭제되었습니다')
+      router.push('/notes')
+    } catch (error) {
+      console.error('Delete error:', error)
+      toast.error('삭제에 실패했습니다')
     }
   }
 
@@ -106,10 +128,47 @@ export default function NoteDetailPage({ params }: Props) {
           {/* 실시간 협업: 누가 보고 있는지 표시 */}
           <PresenceIndicator noteId={id} />
         </div>
-        <Button onClick={handleSave} disabled={isSaving} className="bg-purple-600 hover:bg-purple-700 text-white">
-          <Save className="h-4 w-4 mr-2" />
-          {isSaving ? 'Saving...' : 'Save'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={handleSave} disabled={isSaving} className="bg-purple-600 hover:bg-purple-700 text-white">
+            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? 'Saving...' : 'Save'}
+          </Button>
+
+          {/* 삭제 버튼 + 확인 Dialog */}
+          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-red-600 hover:bg-red-50 dark:hover:bg-red-950">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="dark:bg-indigo-900">
+              <DialogHeader>
+                <DialogTitle className="dark:text-indigo-100">노트 삭제</DialogTitle>
+                <DialogDescription className="dark:text-indigo-300">
+                  정말로 이 노트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                >
+                  취소
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    handleDelete()
+                    setIsDeleteDialogOpen(false)
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  삭제
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </header>
 
       <div className="grid grid-cols-12 gap-6 p-6">

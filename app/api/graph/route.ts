@@ -10,6 +10,12 @@ export async function GET() {
         id: true,
         title: true,
         folderId: true,
+        folder: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     })
 
@@ -22,11 +28,20 @@ export async function GET() {
       },
     })
 
+    // 모든 폴더 조회
+    const folders = await prisma.folder.findMany({
+      select: {
+        id: true,
+        name: true,
+      },
+    })
+
     // D3.js 형식으로 변환
     const nodes = notes.map((note) => ({
       id: note.id,
       title: note.title,
       folderId: note.folderId,
+      folderName: note.folder?.name || null,
     }))
 
     const edges = links.map((link) => ({
@@ -40,6 +55,7 @@ export async function GET() {
       graph: {
         nodes,
         edges,
+        folders,
       }
     })
   } catch (error) {
