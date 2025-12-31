@@ -3,10 +3,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { Search, FileText, Tag, Folder, Hash, Loader2 } from 'lucide-react'
+import { Search, FileText, Tag, Folder, Hash, Loader2, SlidersHorizontal } from 'lucide-react'
 import { useTags } from '@/lib/hooks/useTags'
 import { useFolders } from '@/lib/hooks/useFolders'
+import { useSearchHistory } from '@/lib/hooks/useSearchHistory'
+import { AdvancedSearchDialog, type SearchParams } from '@/components/AdvancedSearchDialog'
+import { SearchHighlight } from '@/components/SearchHighlight'
 
 type SearchResult = {
   id: string
@@ -23,11 +27,14 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [searchMode, setSearchMode] = useState<'normal' | 'regex'>('normal')
+  const [advancedFilters, setAdvancedFilters] = useState<Partial<SearchParams>>({})
   const router = useRouter()
 
   // Data hooks (for tags and folders only)
   const { data: tags = [] } = useTags()
   const { data: folders = [] } = useFolders()
+  const { addToHistory } = useSearchHistory()
 
   // Debounced search
   useEffect(() => {
@@ -39,10 +46,26 @@ export function CommandPalette() {
     const delaySearch = setTimeout(async () => {
       setIsSearching(true)
       try {
-        const res = await fetch(`/api/notes/search?q=${encodeURIComponent(query)}`)
+        // 고급 필터 파라미터 구성
+        const params = new URLSearchParams({
+          q: query,
+          mode: searchMode,
+          ...(advancedFilters.folderId && { folderId: advancedFilters.folderId }),
+          ...(advancedFilters.tagId && { tagId: advancedFilters.tagId }),
+          ...(advancedFilters.dateFrom && { dateFrom: advancedFilters.dateFrom }),
+          ...(advancedFilters.dateTo && { dateTo: advancedFilters.dateTo }),
+        })
+
+        const res = await fetch(`/api/notes/search?${params}`)
         const data = await res.json()
         if (data.success) {
           setSearchResults(data.notes || [])
+          // 검색 히스토리에 추가
+          addToHistory({
+            query,
+            mode: searchMode,
+            filters: advancedFilters,
+          })
         }
       } catch (error) {
         console.error('Search error:', error)
@@ -52,7 +75,7 @@ export function CommandPalette() {
     }, 300) // 300ms debounce
 
     return () => clearTimeout(delaySearch)
-  }, [query])
+  }, [query, searchMode, advancedFilters])
 
   // Filter results based on query
   const results: SearchResult[] = []
@@ -159,6 +182,18 @@ export function CommandPalette() {
     }
   }
 
+  // 고급 검색 핸들러
+  const handleAdvancedSearch = (params: SearchParams) => {
+    setQuery(params.query)
+    setSearchMode(params.mode)
+    setAdvancedFilters({
+      folderId: params.folderId,
+      tagId: params.tagId,
+      dateFrom: params.dateFrom,
+      dateTo: params.dateTo,
+    })
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="p-0 max-w-2xl">
@@ -177,6 +212,11 @@ export function CommandPalette() {
               className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
               autoFocus
             />
+            <AdvancedSearchDialog onSearch={handleAdvancedSearch}>
+              <Button variant="ghost" size="sm" className="ml-2">
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
+            </AdvancedSearchDialog>
             <kbd className="ml-2 px-2 py-1 text-xs bg-gray-100 rounded">
               {navigator.platform.includes('Mac') ? '⌘K' : 'Ctrl+K'}
             </kbd>
@@ -214,10 +254,16 @@ export function CommandPalette() {
                       {getIcon(result.type)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{result.title}</div>
+                      <div className="font-medium truncate">
+                        {result.type === 'note' ? (
+                          <SearchHighlight text={result.title} query={query} mode={searchMode} />
+                        ) : (
+                          result.title
+                        )}
+                      </div>
                       {result.context && (
                         <div className="text-xs text-gray-600 truncate mt-1">
-                          {result.context}
+                          <SearchHighlight text={result.context} query={query} mode={searchMode} />
                         </div>
                       )}
                       {result.subtitle && !result.context && (

@@ -31,6 +31,9 @@ export async function GET(request: Request) {
     const title = searchParams.get('title')
     const folderId = searchParams.get('folderId')
     const tagId = searchParams.get('tagId')
+    const mode = searchParams.get('mode') || 'normal' // 'normal' | 'regex'
+    const dateFrom = searchParams.get('dateFrom')
+    const dateTo = searchParams.get('dateTo')
 
     if (title) {
       // 제목으로 정확히 찾기 (링크 미리보기용)
@@ -55,33 +58,54 @@ export async function GET(request: Request) {
 
     // 필터 조건 구성
     const whereConditions: any = {
-      OR: [
-        { title: { contains: query, mode: 'insensitive' } },
-        { body: { contains: query, mode: 'insensitive' } },
-      ],
+      AND: [],
+    }
+
+    // 검색 조건 (정규식 모드는 나중에 JavaScript로 필터링)
+    if (mode === 'normal') {
+      whereConditions.AND.push({
+        OR: [
+          { title: { contains: query, mode: 'insensitive' } },
+          { body: { contains: query, mode: 'insensitive' } },
+        ],
+      })
     }
 
     // 폴더 필터
     if (folderId) {
-      whereConditions.folderId = folderId
+      whereConditions.AND.push({ folderId })
     }
 
     // 태그 필터
     if (tagId) {
-      whereConditions.tags = {
-        some: {
-          tagId,
+      whereConditions.AND.push({
+        tags: {
+          some: { tagId },
         },
-      }
+      })
+    }
+
+    // 날짜 범위 필터
+    if (dateFrom || dateTo) {
+      const dateFilter: any = {}
+      if (dateFrom) dateFilter.gte = new Date(dateFrom)
+      if (dateTo) dateFilter.lte = new Date(dateTo)
+      whereConditions.AND.push({ createdAt: dateFilter })
+    }
+
+    // AND 조건이 없으면 제거
+    if (whereConditions.AND.length === 0) {
+      delete whereConditions.AND
     }
 
     // 제목 또는 본문에서 검색
-    const notes = await prisma.note.findMany({
+    let notes = await prisma.note.findMany({
       where: whereConditions,
       select: {
         id: true,
         title: true,
         body: true,
+        createdAt: true,
         updatedAt: true,
         folder: {
           select: {
@@ -96,8 +120,23 @@ export async function GET(request: Request) {
         },
       },
       orderBy: { updatedAt: 'desc' },
-      take: 20, // 결과 수 증가
+      take: mode === 'regex' ? 1000 : 20, // 정규식 모드에서는 더 많이 가져옴
     })
+
+    // 정규식 검색 모드
+    if (mode === 'regex') {
+      try {
+        const regex = new RegExp(query, 'i')
+        notes = notes.filter(
+          (note) => regex.test(note.title) || regex.test(note.body)
+        ).slice(0, 20)
+      } catch (error) {
+        return NextResponse.json(
+          { success: false, error: '잘못된 정규식입니다' },
+          { status: 400 }
+        )
+      }
+    }
 
     // 검색 결과에 컨텍스트 추가
     const notesWithContext = notes.map((note) => ({

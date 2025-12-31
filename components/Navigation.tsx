@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { FileText, Network, Folder, Table, Search, Moon, Sun, CalendarDays, Settings, LayoutTemplate } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/lib/hooks/useTheme'
+import { MobileNav } from '@/components/MobileNav'
 
 export function Navigation() {
   const pathname = usePathname()
@@ -41,13 +42,18 @@ export function Navigation() {
     <nav className="bg-white dark:bg-indigo-900 border-b border-indigo-200 dark:border-indigo-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+          {/* 모바일 햄버거 메뉴 */}
+          <div className="md:hidden">
+            <MobileNav />
+          </div>
+
           {/* 로고 */}
           <Link href="/notes" className="flex items-center">
             <span className="text-xl font-bold text-indigo-900 dark:text-indigo-100">Second Brain</span>
           </Link>
 
-          {/* 네비게이션 링크 */}
-          <div className="flex items-center gap-1">
+          {/* 데스크톱 네비게이션 링크 */}
+          <div className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = pathname?.startsWith(item.href)
