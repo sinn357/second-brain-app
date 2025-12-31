@@ -141,3 +141,15 @@ model Template {
 
   @@map("templates")
 }
+
+// 저장된 뷰 (필터 조합 저장)
+model SavedView {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(200)
+  description String?  @db.VarChar(500)
+  filters     Json     // 필터 조건 저장 { operator: 'AND' | 'OR', conditions: [...] }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("saved_views")
+}

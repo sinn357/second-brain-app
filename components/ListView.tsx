@@ -1,6 +1,5 @@
 'use client'
 
-import { useNotes } from '@/lib/hooks/useNotes'
 import { useProperties } from '@/lib/hooks/useProperties'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,11 +8,14 @@ import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 
-export function ListView() {
-  const { data: notes = [], isLoading: notesLoading } = useNotes()
+interface ListViewProps {
+  notes?: any[]
+}
+
+export function ListView({ notes = [] }: ListViewProps) {
   const { data: properties = [], isLoading: propsLoading } = useProperties()
 
-  if (notesLoading || propsLoading) {
+  if (propsLoading) {
     return (
       <div className="space-y-4">
         {[...Array(5)].map((_, i) => (

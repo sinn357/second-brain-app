@@ -1,27 +1,14 @@
 # Second Brain App Roadmap
 
 ## Current Status
-Phase 2 완료 (애플메모 + 옵시디언 + 노션 + 마인드맵 컨셉 강화)
-Phase 3 진행 예정 (노션 Core 강화)
+Phase 3 완료 (노션 Core 강화)
+Phase 4 진행 예정 (옵시디언 Core 확장)
 
 ---
 
 ## Next Tasks
 
-### Phase 3: 노션 Core 강화 (진행 중)
-
-- [ ] **통계 대시보드**
-  - `/dashboard` 페이지
-  - 총 노트/태그/링크 수
-  - 최근 7일 작성/수정 그래프
-  - Top 10 연결된 노트 (PageRank)
-  - 폴더별 노트 분포 (파이 차트)
-  - 작성 히트맵 (활동 캘린더)
-
-- [ ] **속성 필터 강화**
-  - AND/OR 조건 지원
-  - 다중 속성 필터
-  - 필터 저장 (Saved Views)
+### Phase 4: 옵시디언 Core 확장 (진행 예정)
 
 ---
 
@@ -69,6 +56,20 @@ Phase 3 진행 예정 (노션 Core 강화)
 ---
 
 ## Completed Phases
+
+### Phase 3-4: 노션 Core - 속성 필터 강화 ✅ (2025-12-31)
+- [x] SavedView DB 모델 추가
+- [x] 필터 쿼리 엔진 (AND/OR 조건)
+- [x] /api/notes/filter 엔드포인트
+- [x] /api/saved-views CRUD API
+- [x] Zustand 필터 상태 관리
+- [x] FilterBuilder 컴포넌트
+- [x] PropertyFilterItem 컴포넌트 (Codex)
+- [x] FilterConditionToggle 컴포넌트 (Codex)
+- [x] SavedViewDialog 컴포넌트 (Codex)
+- [x] SavedViewButton 컴포넌트 (Codex)
+- [x] /db 페이지 필터 UI 통합
+- [x] Claude + Codex 협업 완료
 
 ### Phase 3-3: 노션 Core - Timeline View ✅ (2025-12-30)
 - [x] Timeline API (시간순 노트 조회)

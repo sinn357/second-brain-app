@@ -1,5 +1,51 @@
 # Second Brain App Changelog
 
+## 2025-12-31
+
+### Added (Seventh Session - Claude + Codex 협업)
+- **속성 필터 강화**: 노션 스타일 고급 필터 시스템
+  - 다중 속성 필터 (Select, Multi-Select, Date, Checkbox)
+  - AND/OR 조건 지원
+  - 저장된 뷰 (Saved Views) - 필터 조합 저장/불러오기
+  - 실시간 필터 적용 (Table/List View)
+  - 필터 결과 카운트 표시
+  - FilterBuilder 통합 UI
+
+### Technical Changes (Seventh Session)
+- Prisma schema: SavedView 모델 추가
+- `lib/filterEngine.ts` - 필터 쿼리 빌더 엔진 (AND/OR 조건 → Prisma 쿼리)
+- `lib/stores/filterStore.ts` - Zustand 필터 상태 관리
+- `lib/hooks/useFilters.ts` - useFilteredNotes, useSavedViews hooks
+- `/api/notes/filter` - POST (필터 적용된 노트 조회)
+- `/api/saved-views` - GET/POST (뷰 목록/생성)
+- `/api/saved-views/[id]` - GET/PATCH/DELETE (뷰 조회/수정/삭제)
+
+### Codex Components (Seventh Session)
+- `lib/validations/filter.ts` - 필터 Zod 스키마
+- `lib/validations/savedView.ts` - SavedView Zod 스키마
+- `components/PropertyFilterItem.tsx` - 개별 필터 아이템 UI
+- `components/FilterConditionToggle.tsx` - AND/OR 토글 버튼
+- `components/SavedViewDialog.tsx` - 뷰 저장 다이얼로그
+- `components/SavedViewButton.tsx` - 저장된 뷰 버튼
+
+### Integrated (Seventh Session)
+- `components/FilterBuilder.tsx` - Codex 컴포넌트 활용 리팩토링
+- `app/db/page.tsx` - 필터 UI 통합 (TableView/ListView 연동)
+- `components/TableView.tsx` - props로 notes 받도록 수정
+- `components/ListView.tsx` - props로 notes 받도록 수정
+
+### Files Changed (Seventh Session)
+- 15 files created
+- 5 files modified
+- +800 insertions
+
+### Documentation (Seventh Session)
+- `docs/FILTER_IMPLEMENTATION.md` - 구현 문서 작성
+- `docs/ROADMAP.md` - Phase 3-4 완료 표시
+- `docs/CHANGELOG.md` - 이 파일
+
+---
+
 ## 2025-12-30
 
 ### Added (Sixth Session)

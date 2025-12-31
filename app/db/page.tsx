@@ -3,17 +3,27 @@
 import { useState } from 'react'
 import { TableView } from '@/components/TableView'
 import { ListView } from '@/components/ListView'
+import { FilterBuilder } from '@/components/FilterBuilder'
+import { useFilterStore } from '@/lib/stores/filterStore'
+import { useFilteredNotes } from '@/lib/hooks/useFilters'
 import { Button } from '@/components/ui/button'
 import { Table, List } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function DatabasePage() {
   const [view, setView] = useState<'table' | 'list'>('table')
+  const { activeFilters, isEmpty } = useFilterStore()
+
+  // 필터 적용된 노트 조회
+  const { data: filteredNotes = [], isLoading } = useFilteredNotes(
+    isEmpty() ? null : activeFilters
+  )
 
   return (
     <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* 헤더 */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2 text-indigo-900 dark:text-indigo-100">Database</h1>
             <p className="text-indigo-700 dark:text-indigo-300">노트를 테이블이나 리스트 형태로 관리하세요</p>
@@ -40,9 +50,29 @@ export default function DatabasePage() {
           </div>
         </div>
 
+        {/* 필터 빌더 */}
+        <FilterBuilder />
+
+        {/* 필터 결과 카운트 */}
+        {!isEmpty() && (
+          <div className="text-sm text-indigo-700 dark:text-indigo-300">
+            필터 결과: {filteredNotes.length}개의 노트
+          </div>
+        )}
+
         {/* View 렌더링 */}
         <div className="glass-strong p-6 rounded-lg">
-          {view === 'table' ? <TableView /> : <ListView />}
+          {isLoading ? (
+            <Skeleton className="h-96" />
+          ) : (
+            <>
+              {view === 'table' ? (
+                <TableView notes={filteredNotes} />
+              ) : (
+                <ListView notes={filteredNotes} />
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

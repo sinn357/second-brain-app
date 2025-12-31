@@ -1,16 +1,18 @@
 'use client'
 
-import { useNotes } from '@/lib/hooks/useNotes'
 import { useProperties } from '@/lib/hooks/useProperties'
 import { Skeleton } from '@/components/ui/skeleton'
 import Link from 'next/link'
 import { format } from 'date-fns'
 
-export function TableView() {
-  const { data: notes = [], isLoading: notesLoading } = useNotes()
+interface TableViewProps {
+  notes?: any[]
+}
+
+export function TableView({ notes = [] }: TableViewProps) {
   const { data: properties = [], isLoading: propsLoading } = useProperties()
 
-  if (notesLoading || propsLoading) {
+  if (propsLoading) {
     return <Skeleton className="h-96" />
   }
 
