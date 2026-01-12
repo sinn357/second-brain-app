@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   FileText, Network, Folder, Table, Search, Moon, Sun,
-  CalendarDays, Settings, LayoutTemplate, Home, Brain
+  Settings, LayoutTemplate, Home, Brain
 } from 'lucide-react'
 import { useTheme } from '@/lib/hooks/useTheme'
 
@@ -24,6 +24,7 @@ export function FloatingNav() {
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/notes', label: 'Notes', icon: FileText },
     { href: '/graph', label: 'Graph', icon: Network },
+    { href: '/db', label: 'Database', icon: Table },
     { href: '/mindmap', label: 'Mindmap', icon: Brain },
     { href: '/folders', label: 'Folders', icon: Folder },
     { href: '/templates', label: 'Templates', icon: LayoutTemplate },
@@ -46,9 +47,9 @@ export function FloatingNav() {
       <motion.header
         initial={{ y: -60 }}
         animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-40 px-4 pt-3 pointer-events-none"
+        className="relative z-40 px-4 pt-3"
       >
-        <div className="max-w-7xl mx-auto glass-strong border border-white/15 px-4 py-3 rounded-2xl flex items-center justify-between pointer-events-auto">
+        <div className="max-w-7xl mx-auto glass-strong border border-white/15 px-4 py-3 rounded-2xl flex items-center justify-between">
           {/* Logo */}
           <Link href="/notes" className="flex items-center gap-3 group">
             <motion.div
@@ -100,9 +101,9 @@ export function FloatingNav() {
         initial={{ y: 60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.15 }}
-        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50"
       >
-        <div className="glass-strong border border-white/15 px-2 py-2 rounded-2xl shadow-2xl pointer-events-auto">
+        <div className="glass-strong border border-white/15 px-2 py-2 rounded-2xl shadow-2xl">
           <div className="flex items-center gap-2">
             {navItems.map((item, index) => {
               const Icon = item.icon
@@ -159,7 +160,7 @@ export function FloatingNav() {
       </motion.nav>
 
       {/* Spacer for content */}
-      <div className="h-20" />
+      <div className="h-6" />
     </>
   )
 }

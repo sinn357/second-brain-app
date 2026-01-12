@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useFolders, useCreateFolder, useDeleteFolder } from '@/lib/hooks/useFolders'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
 import { Folder, Plus, Trash2 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -14,7 +15,23 @@ export default function FoldersPage() {
   const createFolder = useCreateFolder()
   const deleteFolder = useDeleteFolder()
   const [newFolderName, setNewFolderName] = useState('')
+  const [parentId, setParentId] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
+
+  const depthMap = new Map<string, number>()
+  const getDepth = (id: string | null): number => {
+    if (!id) return 0
+    if (depthMap.has(id)) return depthMap.get(id) ?? 0
+    const folder = folders.find((f) => f.id === id)
+    if (!folder) return 0
+    const depth = getDepth(folder.parentId) + 1
+    depthMap.set(id, depth)
+    return depth
+  }
+
+  const parentDepth = parentId ? getDepth(parentId) : 0
+  const nextDepth = parentDepth + 1
+  const isDepthLimitReached = nextDepth > 5
 
   const handleCreate = async () => {
     if (!newFolderName.trim()) {
@@ -22,14 +39,21 @@ export default function FoldersPage() {
       return
     }
 
+    if (isDepthLimitReached) {
+      toast.error('폴더는 최대 5단계까지만 만들 수 있습니다')
+      return
+    }
+
     setIsCreating(true)
     try {
+      const siblingCount = folders.filter((f) => f.parentId === parentId).length
       await createFolder.mutateAsync({
         name: newFolderName,
-        parentId: null,
-        position: folders.length,
+        parentId,
+        position: siblingCount,
       })
       setNewFolderName('')
+      setParentId(null)
       toast.success('폴더가 생성되었습니다')
     } catch (error) {
       console.error('Create folder error:', error)
@@ -74,8 +98,24 @@ export default function FoldersPage() {
         </div>
 
         {/* 새 폴더 생성 */}
-        <Card className="panel hover-lift hover-glow p-4">
-          <div className="flex gap-2">
+        <Card className="panel hover-lift hover-glow p-4 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Select value={parentId ?? ''} onValueChange={(value) => setParentId(value || null)}>
+              <SelectTrigger className="min-w-[200px] text-sm">
+                <SelectValue placeholder="상위 폴더 (선택)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">최상위</SelectItem>
+                {folders.map((folder) => {
+                  const depth = getDepth(folder.id)
+                  return (
+                    <SelectItem key={folder.id} value={folder.id}>
+                      {'—'.repeat(depth)} {folder.name}
+                    </SelectItem>
+                  )
+                })}
+              </SelectContent>
+            </Select>
             <Input
               placeholder="새 폴더 이름"
               value={newFolderName}
@@ -85,12 +125,17 @@ export default function FoldersPage() {
             />
             <Button
               onClick={handleCreate}
-              disabled={isCreating}
+              disabled={isCreating || isDepthLimitReached}
               className="gradient-mesh hover-glow text-white"
             >
               <Plus className="h-4 w-4 mr-2" />
               {isCreating ? 'Creating...' : 'Create'}
             </Button>
+          </div>
+          <div className="text-xs text-indigo-600 dark:text-indigo-300">
+            {isDepthLimitReached
+              ? '선택한 상위 폴더는 최대 깊이에 도달했습니다.'
+              : `폴더 깊이: ${nextDepth}/5`}
           </div>
         </Card>
 

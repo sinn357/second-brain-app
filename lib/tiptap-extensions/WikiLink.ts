@@ -86,27 +86,14 @@ export const WikiLink = Mark.create<WikiLinkOptions>({
             return DecorationSet.create(doc, decorations)
           },
           handleClick: (view, pos, event) => {
-            const { doc } = view.state
-            const $pos = doc.resolve(pos)
-            const node = $pos.parent
+            const target = event.target as HTMLElement | null
+            if (!target) return false
 
-            if (node.isText) {
-              const text = node.text || ''
-              const offset = $pos.parentOffset
-              const regex = /\[\[([^\]]+)\]\]/g
-              let match
-
-              while ((match = regex.exec(text)) !== null) {
-                const from = match.index
-                const to = from + match[0].length
-
-                if (offset >= from && offset <= to) {
-                  const title = match[1]
-                  if (this.options.onLinkClick) {
-                    this.options.onLinkClick(title)
-                    return true
-                  }
-                }
+            if (target.classList.contains('wiki-link-decoration')) {
+              const title = target.getAttribute('data-title')
+              if (title && this.options.onLinkClick) {
+                this.options.onLinkClick(title)
+                return true
               }
             }
 
