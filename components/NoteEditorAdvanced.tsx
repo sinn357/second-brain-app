@@ -17,7 +17,7 @@ import { WikiLink } from '@/lib/tiptap-extensions/WikiLink'
 import { HashTag } from '@/lib/tiptap-extensions/HashTag'
 import { WikiLinkAutocomplete } from '@/lib/tiptap-extensions/WikiLinkAutocomplete'
 import { useEffect, useRef, useState } from 'react'
-import { useNotes } from '@/lib/hooks/useNotes'
+import { useCreateNote, useNotes } from '@/lib/hooks/useNotes'
 import { useCreateTag } from '@/lib/hooks/useTags'
 import { useRouter } from 'next/navigation'
 import tippy, { Instance as TippyInstance } from 'tippy.js'
@@ -43,8 +43,10 @@ export function NoteEditorAdvanced({
 }: NoteEditorAdvancedProps) {
   const router = useRouter()
   const { data: allNotes = [] } = useNotes()
+  const createNote = useCreateNote()
   const createTag = useCreateTag()
   const [hoveredLink, setHoveredLink] = useState<string | null>(null)
+  const [creatingLinkTitle, setCreatingLinkTitle] = useState<string | null>(null)
   const lastSyncedMarkdown = useRef<string | null>(null)
 
   const getEditorContent = (value: string) => {
@@ -78,13 +80,30 @@ export function NoteEditorAdvanced({
         HTMLAttributes: {
           class: 'wiki-link-decoration',
         },
-        onLinkClick: (title: string) => {
+        onLinkClick: async (title: string) => {
           // [[링크]] 클릭 시 해당 노트로 이동
           const targetNote = allNotes.find(n => n.title === title)
           if (targetNote) {
             router.push(`/notes/${targetNote.id}`)
-          } else {
-            toast.error(`"${title}" 노트를 찾을 수 없습니다`)
+            return
+          }
+
+          if (creatingLinkTitle === title) return
+
+          try {
+            setCreatingLinkTitle(title)
+            const newNote = await createNote.mutateAsync({
+              title,
+              body: '',
+              folderId: null,
+            })
+            toast.success(`"${title}" 노트를 생성했습니다`)
+            router.push(`/notes/${newNote.id}`)
+          } catch (error) {
+            console.error('Create note from link failed:', error)
+            toast.error(`"${title}" 노트 생성에 실패했습니다`)
+          } finally {
+            setCreatingLinkTitle(null)
           }
         },
       }),

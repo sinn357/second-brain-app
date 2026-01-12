@@ -211,8 +211,8 @@ h1, h2, h3, h4, h5, h6 {
 /* === Layout System === */
 .page-shell {
   min-height: 100vh;
-  padding-top: 6.5rem;
-  padding-bottom: 7rem;
+  padding-top: 8.5rem;
+  padding-bottom: 8.5rem;
   background:
     radial-gradient(circle at top left, rgba(var(--accent-1), 0.08), transparent 45%),
     radial-gradient(circle at top right, rgba(var(--accent-2), 0.08), transparent 40%),

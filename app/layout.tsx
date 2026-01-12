@@ -5,6 +5,7 @@ import { Providers } from "./providers";
 import { FloatingNav } from "@/components/FloatingNav";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Toaster } from "sonner";
+import { ShortcutManager } from "@/components/ShortcutManager";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,6 +49,7 @@ export default function RootLayout({
         <Providers>
           <FloatingNav />
           <CommandPalette />
+          <ShortcutManager />
           <Toaster position="top-right" richColors />
           {children}
         </Providers>

@@ -124,17 +124,17 @@ export function CommandPalette() {
       })
   }
 
-  // Keyboard shortcut handler
   useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setOpen((open) => !open)
-      }
-    }
+    const handleToggle = () => setOpen((open) => !open)
+    const handleOpen = () => setOpen(true)
 
-    document.addEventListener('keydown', down)
-    return () => document.removeEventListener('keydown', down)
+    document.addEventListener('command-palette:toggle', handleToggle)
+    document.addEventListener('command-palette:open', handleOpen)
+
+    return () => {
+      document.removeEventListener('command-palette:toggle', handleToggle)
+      document.removeEventListener('command-palette:open', handleOpen)
+    }
   }, [])
 
   // Reset state when dialog closes

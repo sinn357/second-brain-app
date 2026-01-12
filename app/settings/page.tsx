@@ -1,17 +1,49 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Download, Upload, FileJson, FolderArchive, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Download, Upload, FileJson, FolderArchive, AlertCircle, CheckCircle2, Keyboard, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
+import { SHORTCUT_DEFINITIONS, formatShortcut, type ShortcutId } from '@/lib/shortcuts'
+import { useShortcutStore } from '@/lib/stores/shortcutStore'
 
 export default function SettingsPage() {
   const [isExporting, setIsExporting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [importMode, setImportMode] = useState<'merge' | 'replace'>('merge')
+  const [recordingId, setRecordingId] = useState<ShortcutId | null>(null)
   const obsidianInputRef = useRef<HTMLInputElement>(null)
   const jsonInputRef = useRef<HTMLInputElement>(null)
+  const { shortcuts, setShortcut, resetShortcut, resetAll } = useShortcutStore()
+  const [isMac, setIsMac] = useState(false)
+
+  useEffect(() => {
+    setIsMac(navigator.platform.includes('Mac'))
+  }, [])
+
+  useEffect(() => {
+    if (!recordingId) return
+
+    const handler = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase()
+      if (['shift', 'control', 'meta', 'alt'].includes(key)) return
+
+      event.preventDefault()
+
+      const parts: string[] = []
+      if (event.metaKey || event.ctrlKey) parts.push('mod')
+      if (event.shiftKey) parts.push('shift')
+      if (event.altKey) parts.push('alt')
+      parts.push(key)
+
+      setShortcut(recordingId, parts.join('+'))
+      setRecordingId(null)
+    }
+
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [recordingId, setShortcut])
 
   // Export Markdown ZIP
   const handleExportMarkdown = async () => {
@@ -332,6 +364,69 @@ export default function SettingsPage() {
                   hover:file:bg-indigo-200 dark:hover:file:bg-indigo-700
                   cursor-pointer"
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Shortcuts */}
+        <Card className="panel hover-lift hover-glow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-indigo-900 dark:text-indigo-100">
+              <Keyboard className="w-5 h-5" />
+              Keyboard Shortcuts
+            </CardTitle>
+            <CardDescription className="dark:text-indigo-300">
+              작업 흐름에 맞게 단축키를 커스터마이즈하세요
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {SHORTCUT_DEFINITIONS.map((shortcut) => (
+              <div
+                key={shortcut.id}
+                className="panel-soft flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+              >
+                <div>
+                  <div className="font-semibold text-indigo-900 dark:text-indigo-100">
+                    {shortcut.label}
+                  </div>
+                  <div className="text-xs text-indigo-600 dark:text-indigo-300">
+                    {shortcut.description}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="toolbar-pill">
+                    {shortcuts[shortcut.id]
+                      ? formatShortcut(shortcuts[shortcut.id], isMac)
+                      : 'Unassigned'}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setRecordingId(shortcut.id)}
+                  >
+                    {recordingId === shortcut.id ? 'Press keys...' : 'Record'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => resetShortcut(shortcut.id)}
+                  >
+                    Reset
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={resetAll}
+                className="flex items-center gap-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset All
+              </Button>
             </div>
           </CardContent>
         </Card>
