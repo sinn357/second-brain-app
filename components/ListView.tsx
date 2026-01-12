@@ -57,7 +57,7 @@ export function ListView({ notes = [] }: ListViewProps) {
 
   if (notes.length === 0) {
     return (
-      <div className="text-center p-8 text-gray-500">
+      <div className="panel-soft text-center p-8 text-gray-500 dark:text-indigo-300">
         노트가 없습니다
       </div>
     )
@@ -70,9 +70,9 @@ export function ListView({ notes = [] }: ListViewProps) {
 
         return (
           <Link key={note.id} href={`/notes/${note.id}`}>
-            <Card className="glass-strong hover-lift hover-glow p-4 cursor-pointer">
+            <Card className="panel hover-lift hover-glow p-4 cursor-pointer">
               <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-lg">{note.title}</h3>
+                <h3 className="font-semibold text-lg text-indigo-900 dark:text-indigo-100">{note.title}</h3>
                 {note.folder && (
                   <Badge variant="secondary" className="text-xs">
                     {note.folder.name}
@@ -80,7 +80,7 @@ export function ListView({ notes = [] }: ListViewProps) {
                 )}
               </div>
 
-              <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+              <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-3 line-clamp-2">
                 {note.body.replace(/<[^>]*>/g, '').slice(0, 200) || '내용 없음'}
               </p>
 
@@ -100,7 +100,7 @@ export function ListView({ notes = [] }: ListViewProps) {
                 </div>
               )}
 
-              <div className="flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center gap-4 text-xs text-indigo-500 dark:text-indigo-300">
                 {note.tags && note.tags.length > 0 && (
                   <div className="flex gap-1">
                     {note.tags.slice(0, 3).map((nt: any) => (

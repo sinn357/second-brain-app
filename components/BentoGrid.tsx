@@ -18,12 +18,7 @@ function BentoCard({ title, icon, className = '', children }: BentoCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02 }}
-      className={`group relative overflow-hidden rounded-2xl p-6 ${className}`}
-      style={{
-        background: 'rgba(255, 255, 255, 0.05)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-      }}
+      className={`group panel relative overflow-hidden p-6 ${className}`}
     >
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -33,7 +28,7 @@ function BentoCard({ title, icon, className = '', children }: BentoCardProps) {
           <div className="p-2 rounded-lg bg-white/5">
             {icon}
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white/90">{title}</h3>
+          <h3 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">{title}</h3>
         </div>
         {children}
       </div>
@@ -52,7 +47,7 @@ export default function BentoGrid() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Quick Add - Large */}
       <BentoCard
         title="Quick Add"
@@ -64,7 +59,7 @@ export default function BentoGrid() {
             value={quickNote}
             onChange={(e) => setQuickNote(e.target.value)}
             placeholder="Capture your thoughts instantly..."
-            className="w-full h-40 p-4 rounded-xl bg-white/5 border border-white/10 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus:outline-none focus:border-purple-500/50 resize-none"
+            className="w-full h-40 p-4 rounded-xl bg-white/5 border border-white/10 text-indigo-900 dark:text-indigo-100 placeholder-gray-500 dark:placeholder-white/40 focus:outline-none focus:border-purple-500/50 resize-none"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.metaKey) {
                 handleQuickAdd()
@@ -92,8 +87,8 @@ export default function BentoGrid() {
               key={i}
               className="p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-colors"
             >
-              <p className="text-sm text-gray-800 dark:text-white/80">Note title {i}</p>
-              <p className="text-xs text-gray-500 dark:text-white/40 mt-1">2 hours ago</p>
+              <p className="text-sm text-indigo-900 dark:text-indigo-100">Note title {i}</p>
+              <p className="text-xs text-indigo-500 dark:text-indigo-300 mt-1">2 hours ago</p>
             </div>
           ))}
         </div>
@@ -107,12 +102,12 @@ export default function BentoGrid() {
       >
         <div className="space-y-3">
           <div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">247</p>
-            <p className="text-xs text-gray-500 dark:text-white/40">Total Notes</p>
+            <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">247</p>
+            <p className="text-xs text-indigo-500 dark:text-indigo-300">Total Notes</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">89</p>
-            <p className="text-xs text-gray-500 dark:text-white/40">Links</p>
+            <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">89</p>
+            <p className="text-xs text-indigo-500 dark:text-indigo-300">Links</p>
           </div>
         </div>
       </BentoCard>
@@ -127,7 +122,7 @@ export default function BentoGrid() {
           {['#ideas', '#meeting', '#journal', '#research'].map((tag) => (
             <span
               key={tag}
-              className="px-3 py-1 rounded-full bg-white/10 text-xs text-gray-700 dark:text-white/70"
+              className="px-3 py-1 rounded-full bg-white/10 text-xs text-indigo-700 dark:text-indigo-200"
             >
               {tag}
             </span>
@@ -145,7 +140,7 @@ export default function BentoGrid() {
           <input
             type="text"
             placeholder="Search your second brain..."
-            className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/40 focus:outline-none focus:border-cyan-400/50"
+            className="w-full h-11 px-4 rounded-xl bg-white/5 border border-white/10 text-indigo-900 dark:text-indigo-100 placeholder-gray-500 dark:placeholder-white/40 focus:outline-none focus:border-cyan-400/50"
           />
           <div className="space-y-2">
             {['Design system', 'Project roadmap'].map((query) => (
@@ -153,8 +148,8 @@ export default function BentoGrid() {
                 key={query}
                 className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-colors"
               >
-                <span className="text-sm text-gray-800 dark:text-white/80">{query}</span>
-                <span className="text-xs text-gray-500 dark:text-white/40">Recent</span>
+                <span className="text-sm text-indigo-900 dark:text-indigo-100">{query}</span>
+                <span className="text-xs text-indigo-500 dark:text-indigo-300">Recent</span>
               </div>
             ))}
           </div>
@@ -169,7 +164,7 @@ export default function BentoGrid() {
       >
         <Link
           href="/graph"
-          className="inline-flex items-center gap-2 text-sm text-gray-800 dark:text-white/80 hover:text-gray-900 dark:hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-indigo-900 dark:text-indigo-100 hover:text-indigo-700 dark:hover:text-white transition-colors"
         >
           View full graph →
         </Link>

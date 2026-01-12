@@ -43,17 +43,17 @@ export function FloatingNav() {
     <>
       {/* Top Header - Minimal */}
       <motion.header
-        initial={{ y: -100 }}
+        initial={{ y: -60 }}
         animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-40 px-6 py-4"
+        className="fixed top-0 left-0 right-0 z-40 px-4 pt-4"
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="max-w-7xl mx-auto glass-strong border border-white/15 px-4 py-3 rounded-2xl flex items-center justify-between">
           {/* Logo */}
-          <Link href="/notes" className="flex items-center gap-2 group">
+          <Link href="/notes" className="flex items-center gap-3 group">
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-10 h-10 rounded-xl gradient-mesh flex items-center justify-center shadow-lg"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-10 h-10 rounded-xl gradient-mesh flex items-center justify-center shadow-md"
             >
               <span className="text-white font-bold text-xl">N</span>
             </motion.div>
@@ -63,8 +63,8 @@ export function FloatingNav() {
           {/* Search & Theme Toggle */}
           <div className="flex items-center gap-2">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleSearchClick}
               className="glass px-4 py-2 rounded-full flex items-center gap-2 hover-glow"
             >
@@ -77,8 +77,8 @@ export function FloatingNav() {
 
             {mounted && (
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={toggleTheme}
                 className="glass w-10 h-10 rounded-full flex items-center justify-center hover-glow"
                 aria-label="Toggle theme"
@@ -96,13 +96,13 @@ export function FloatingNav() {
 
       {/* Floating Dock - Bottom */}
       <motion.nav
-        initial={{ y: 100, opacity: 0 }}
+        initial={{ y: 60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.15 }}
         className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
       >
-        <div className="glass-strong px-3 py-3 rounded-2xl shadow-2xl">
-          <div className="flex items-center gap-1">
+        <div className="glass-strong border border-white/15 px-2 py-2 rounded-2xl shadow-2xl">
+          <div className="flex items-center gap-2">
             {navItems.map((item, index) => {
               const Icon = item.icon
               const isActive = pathname?.startsWith(item.href)
@@ -116,14 +116,14 @@ export function FloatingNav() {
                   className="relative"
                 >
                   <motion.div
-                    whileHover={{ y: -8, scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ y: -4, scale: 1.04 }}
+                    whileTap={{ scale: 0.98 }}
                     className={`
                       relative w-12 h-12 rounded-xl flex items-center justify-center
                       transition-all duration-200
                       ${isActive
-                        ? 'gradient-mesh text-white shadow-lg'
-                        : 'hover:bg-white/10'
+                        ? 'gradient-mesh text-white shadow-md'
+                        : 'hover:bg-white/10 text-indigo-200'
                       }
                     `}
                   >
@@ -134,7 +134,7 @@ export function FloatingNav() {
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="absolute -top-12 left-1/2 -translate-x-1/2 glass-strong px-3 py-1.5 rounded-lg whitespace-nowrap text-sm font-medium"
+                        className="absolute -top-12 left-1/2 -translate-x-1/2 glass-strong px-3 py-1.5 rounded-lg whitespace-nowrap text-xs font-medium"
                       >
                         {item.label}
                         <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-inherit rotate-45" />

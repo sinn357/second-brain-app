@@ -14,7 +14,8 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
+      <div className="page-shell">
+        <div className="page-content">
         <Skeleton className="h-12 mb-6" />
         <div className="grid grid-cols-4 gap-4 mb-6">
           {[1, 2, 3, 4].map((i) => (
@@ -22,16 +23,19 @@ export default function DashboardPage() {
           ))}
         </div>
         <Skeleton className="h-96" />
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="glass-strong p-6 rounded-lg">
+      <div className="page-shell">
+        <div className="page-content">
+        <div className="panel p-6">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="dark:text-indigo-100">{error.message}</p>
+        </div>
         </div>
       </div>
     )
@@ -42,19 +46,21 @@ export default function DashboardPage() {
   const { totals, recentActivity, topConnectedNotes, folderDistribution } = dashboard
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="page-shell">
+      <div className="page-content space-y-6">
         {/* 헤더 */}
-        <div>
-          <h1 className="text-3xl font-bold text-indigo-900 dark:text-indigo-100 mb-2">Dashboard</h1>
-          <p className="text-sm text-indigo-700 dark:text-indigo-300">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title text-indigo-900 dark:text-indigo-100">Dashboard</h1>
+            <p className="page-subtitle">
             통계 및 분석 대시보드
           </p>
+          </div>
         </div>
 
         {/* 총 개수 카드 */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="glass-strong hover-lift hover-glow">
+          <Card className="panel hover-lift hover-glow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
                 Total Notes
@@ -66,7 +72,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="glass-strong hover-lift hover-glow">
+          <Card className="panel hover-lift hover-glow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
                 Folders
@@ -78,7 +84,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="glass-strong hover-lift hover-glow">
+          <Card className="panel hover-lift hover-glow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
                 Tags
@@ -90,7 +96,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="glass-strong hover-lift hover-glow">
+          <Card className="panel hover-lift hover-glow">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
                 Links
@@ -104,7 +110,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 최근 7일 활동 그래프 */}
-        <Card className="glass-strong hover-lift hover-glow">
+        <Card className="panel hover-lift hover-glow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900 dark:text-indigo-100">
               <TrendingUp className="h-5 w-5" />
@@ -138,7 +144,7 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Top 10 연결된 노트 */}
-          <Card className="glass-strong hover-lift hover-glow">
+          <Card className="panel hover-lift hover-glow">
             <CardHeader>
               <CardTitle className="text-indigo-900 dark:text-indigo-100">Top 10 Connected Notes</CardTitle>
             </CardHeader>
@@ -172,7 +178,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* 폴더별 분포 파이 차트 */}
-          <Card className="glass-strong hover-lift hover-glow">
+          <Card className="panel hover-lift hover-glow">
             <CardHeader>
               <CardTitle className="text-indigo-900 dark:text-indigo-100">Notes by Folder</CardTitle>
             </CardHeader>

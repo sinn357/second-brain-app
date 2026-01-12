@@ -20,13 +20,13 @@ export default function DatabasePage() {
   )
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="page-shell">
+      <div className="page-content space-y-6">
         {/* 헤더 */}
-        <div className="flex items-center justify-between">
+        <div className="page-header">
           <div>
-            <h1 className="text-3xl font-bold mb-2 text-indigo-900 dark:text-indigo-100">Database</h1>
-            <p className="text-indigo-700 dark:text-indigo-300">노트를 테이블이나 리스트 형태로 관리하세요</p>
+            <h1 className="page-title text-indigo-900 dark:text-indigo-100">Database</h1>
+            <p className="page-subtitle">노트를 테이블이나 리스트 형태로 관리하세요</p>
           </div>
 
           {/* View 전환 버튼 */}
@@ -55,13 +55,13 @@ export default function DatabasePage() {
 
         {/* 필터 결과 카운트 */}
         {!isEmpty() && (
-          <div className="text-sm text-indigo-700 dark:text-indigo-300">
+          <div className="toolbar-pill">
             필터 결과: {filteredNotes.length}개의 노트
           </div>
         )}
 
         {/* View 렌더링 */}
-        <div className="glass-strong p-6 rounded-lg">
+        <div className="panel p-6">
           {isLoading ? (
             <Skeleton className="h-96" />
           ) : (

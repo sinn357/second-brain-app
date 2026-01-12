@@ -59,7 +59,7 @@ export function QuickAddButton() {
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed top-4 right-4 z-50"
+        className="fixed top-24 right-6 z-40 gradient-mesh hover-glow text-white shadow-lg"
         size="lg"
       >
         <Plus className="h-5 w-5 mr-2" />

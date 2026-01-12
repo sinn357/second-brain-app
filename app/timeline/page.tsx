@@ -14,12 +14,14 @@ export default function TimelinePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <Skeleton className="h-12 mb-6" />
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
+      <div className="page-shell">
+        <div className="page-content max-w-4xl">
+          <Skeleton className="h-12 mb-6" />
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-32" />
+            ))}
+          </div>
         </div>
       </div>
     )
@@ -27,10 +29,12 @@ export default function TimelinePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="glass-strong p-6 rounded-lg">
+      <div className="page-shell">
+        <div className="page-content max-w-4xl">
+          <div className="panel p-6">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="dark:text-indigo-100">{error.message}</p>
+          </div>
         </div>
       </div>
     )
@@ -41,17 +45,17 @@ export default function TimelinePage() {
   const { timeline, total } = timelineData
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="page-shell">
+      <div className="page-content max-w-4xl">
         {/* 헤더 */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-indigo-900 dark:text-indigo-100 mb-2 flex items-center gap-2">
-            <Clock className="h-8 w-8" />
-            Timeline
-          </h1>
-          <p className="text-sm text-indigo-700 dark:text-indigo-300">
-            시간순으로 노트를 확인하세요. (총 {total}개)
-          </p>
+        <div className="page-header">
+          <div>
+            <h1 className="page-title text-indigo-900 dark:text-indigo-100 flex items-center gap-2">
+              <Clock className="h-7 w-7" />
+              Timeline
+            </h1>
+            <p className="page-subtitle">시간순으로 노트를 확인하세요. (총 {total}개)</p>
+          </div>
         </div>
 
         {/* 필터 */}
@@ -85,7 +89,7 @@ export default function TimelinePage() {
             timeline.map((group) => (
               <div key={group.date} className="relative">
                 {/* 날짜 헤더 */}
-                <div className="sticky top-0 glass rounded-lg px-3 py-2 mb-4 z-10">
+                <div className="sticky top-4 glass rounded-lg px-3 py-2 mb-4 z-10">
                   <h2 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100">
                     {new Date(group.date).toLocaleDateString('ko-KR', {
                       year: 'numeric',
@@ -100,7 +104,7 @@ export default function TimelinePage() {
                 <div className="space-y-4 pl-6 border-l-2 border-indigo-300 dark:border-indigo-700">
                   {group.notes.map((note) => (
                     <Link key={note.id} href={`/notes/${note.id}`}>
-                      <div className="relative glass-strong hover-lift hover-glow p-4 rounded-lg cursor-pointer">
+                      <div className="relative panel hover-lift hover-glow p-4 cursor-pointer">
                         {/* Timeline 점 */}
                         <div className="absolute -left-[29px] top-6 w-3 h-3 bg-indigo-600 dark:bg-indigo-400 rounded-full border-2 border-indigo-50 dark:border-indigo-950" />
 

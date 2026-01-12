@@ -63,6 +63,7 @@ body {
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   border: 1px solid var(--border-subtle);
+  border-radius: 0.9rem;
 }
 
 .glass-strong {
@@ -71,6 +72,7 @@ body {
   -webkit-backdrop-filter: blur(40px) saturate(200%);
   border: 1px solid var(--border-default);
   box-shadow: var(--shadow-glass);
+  border-radius: 1rem;
 }
 
 /* === Gradient Utilities === */
@@ -204,6 +206,111 @@ h1, h2, h3, h4, h5, h6 {
 
 .card-elevated:hover {
   transform: translateY(-2px);
+}
+
+/* === Layout System === */
+.page-shell {
+  min-height: 100vh;
+  padding-top: 6.5rem;
+  padding-bottom: 7rem;
+  background:
+    radial-gradient(circle at top left, rgba(var(--accent-1), 0.08), transparent 45%),
+    radial-gradient(circle at top right, rgba(var(--accent-2), 0.08), transparent 40%),
+    radial-gradient(circle at 40% 10%, rgba(var(--accent-3), 0.08), transparent 55%),
+    rgb(var(--bg-base));
+}
+
+.page-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.page-subtitle {
+  font-size: 0.95rem;
+  color: rgb(var(--text-secondary));
+}
+
+.panel {
+  background: rgba(var(--bg-elevated), 0.9);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-md);
+}
+
+.panel-soft {
+  background: rgba(var(--bg-elevated), 0.65);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+}
+
+.panel-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.panel-body {
+  padding: 1.25rem;
+}
+
+.toolbar-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(var(--bg-elevated), 0.7);
+  font-size: 0.85rem;
+  color: rgb(var(--text-secondary));
+}
+
+.table-base {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table-base th,
+.table-base td {
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: left;
+}
+
+.table-base th {
+  font-weight: 600;
+  color: rgb(var(--text-secondary));
+  background: rgba(var(--bg-elevated), 0.7);
+}
+
+.table-base tr:hover td {
+  background: rgba(var(--accent-1), 0.05);
+}
+
+@media (max-width: 768px) {
+  .page-content {
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 /* === Editor Typography === */

@@ -14,12 +14,14 @@ export default function TemplatesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <Skeleton className="h-12 mb-6" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48" />
-          ))}
+      <div className="page-shell">
+        <div className="page-content">
+          <Skeleton className="h-12 mb-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-48" />
+            ))}
+          </div>
         </div>
       </div>
     )
@@ -27,27 +29,25 @@ export default function TemplatesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
+      <div className="page-shell">
+        <div className="page-content">
+          <div className="panel p-6">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="dark:text-indigo-100">{error.message}</p>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="page-shell">
+      <div className="page-content space-y-6">
         {/* 헤더 */}
-        <div className="flex items-center justify-between">
+        <div className="page-header">
           <div>
-            <h1 className="text-3xl font-bold text-indigo-900 dark:text-indigo-100 mb-2">
-              Templates
-            </h1>
-            <p className="text-sm text-indigo-700 dark:text-indigo-300">
-              Create and manage note templates
-            </p>
+            <h1 className="page-title text-indigo-900 dark:text-indigo-100">Templates</h1>
+            <p className="page-subtitle">Create and manage note templates</p>
           </div>
           <CreateTemplateDialog>
             <Button className="gradient-mesh hover-glow text-white">
@@ -62,7 +62,7 @@ export default function TemplatesPage() {
           {templates?.map((template) => (
             <Card
               key={template.id}
-              className="glass-strong hover-lift hover-glow cursor-pointer"
+              className="panel hover-lift hover-glow cursor-pointer"
             >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between text-indigo-900 dark:text-indigo-100">

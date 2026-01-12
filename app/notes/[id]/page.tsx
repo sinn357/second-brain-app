@@ -90,17 +90,20 @@ export default function NoteDetailPage({ params }: Props) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <Skeleton className="h-12 mb-6" />
-        <Skeleton className="h-96" />
+      <div className="page-shell">
+        <div className="page-content">
+          <Skeleton className="h-12 mb-6" />
+          <Skeleton className="h-96" />
+        </div>
       </div>
     )
   }
 
   if (error || !note) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="glass-strong p-6 rounded-lg">
+      <div className="page-shell">
+        <div className="page-content">
+        <div className="panel p-6">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="dark:text-indigo-100">{error?.message || 'Note not found'}</p>
           <Link href="/notes">
@@ -110,14 +113,16 @@ export default function NoteDetailPage({ params }: Props) {
             </Button>
           </Link>
         </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950">
+    <div className="page-shell">
       {/* 헤더 */}
-      <header className="glass-strong border-b border-white/10 px-6 py-4 flex items-center justify-between">
+      <header className="page-content pb-0">
+        <div className="panel px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/notes">
             <Button variant="outline" size="sm">
@@ -169,16 +174,17 @@ export default function NoteDetailPage({ params }: Props) {
             </DialogContent>
           </Dialog>
         </div>
+        </div>
       </header>
 
-      <div className="grid grid-cols-12 gap-6 p-6">
+      <div className="page-content grid grid-cols-12 gap-6">
         {/* 좌측: 폴더 트리 */}
-        <aside className="col-span-2 glass-strong p-4 rounded-lg">
+        <aside className="col-span-2 panel p-4">
           <FolderTree />
         </aside>
 
         {/* 중앙: 에디터 */}
-        <main className="col-span-7 glass-strong p-6 rounded-lg">
+        <main className="col-span-7 panel p-6">
           {/* 제목 */}
           <Input
             value={title}
@@ -198,10 +204,10 @@ export default function NoteDetailPage({ params }: Props) {
 
         {/* 우측: 백링크 + 속성 */}
         <aside className="col-span-3 space-y-6">
-          <div className="glass-strong p-4 rounded-lg">
+          <div className="panel p-4">
             <BacklinkPanel noteId={id} />
           </div>
-          <div className="glass-strong p-4 rounded-lg">
+          <div className="panel p-4">
             <PropertyPanel noteId={id} currentProperties={note.properties} />
           </div>
         </aside>

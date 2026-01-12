@@ -205,18 +205,22 @@ export default function GraphPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6 flex items-center justify-center">
-        <Skeleton className="w-full h-[800px]" />
+      <div className="page-shell">
+        <div className="page-content">
+          <Skeleton className="w-full h-[800px]" />
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
+      <div className="page-shell">
+        <div className="page-content">
+        <div className="panel p-6">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="dark:text-indigo-100">{error.message}</p>
+        </div>
         </div>
       </div>
     )
@@ -252,12 +256,17 @@ export default function GraphPage() {
   }
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-      <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
-        <h1 className="text-2xl font-bold mb-2 text-indigo-900 dark:text-indigo-100">Graph View</h1>
-        <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-4">
+    <div className="page-shell">
+      <div className="page-content">
+      <div className="panel p-6">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title text-indigo-900 dark:text-indigo-100">Graph View</h1>
+            <p className="page-subtitle">
           노트를 클릭하면 해당 노트로 이동합니다. 드래그로 노드를 이동할 수 있습니다.
         </p>
+          </div>
+        </div>
 
         {/* Filters */}
         <div className="mb-4 space-y-3">
@@ -266,7 +275,7 @@ export default function GraphPage() {
             {folders.map((folder) => (
               <label
                 key={folder.id}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors"
+                className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors"
               >
                 <input
                   type="checkbox"
@@ -283,7 +292,7 @@ export default function GraphPage() {
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
+            <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
               <input
                 type="checkbox"
                 checked={showIsolated}
@@ -322,8 +331,9 @@ export default function GraphPage() {
 
         {/* Graph Container */}
         <div ref={containerRef} className="w-full">
-          <svg ref={svgRef} className="w-full border border-indigo-200 dark:border-indigo-700 rounded" />
+          <svg ref={svgRef} className="w-full border border-indigo-200 dark:border-indigo-700 rounded-lg" />
         </div>
+      </div>
       </div>
     </div>
   )

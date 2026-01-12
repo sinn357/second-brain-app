@@ -35,7 +35,7 @@ export function NoteList({ folderId }: NoteListProps) {
 
   if (notes.length === 0) {
     return (
-      <div className="text-gray-500 text-center p-8">
+      <div className="panel-soft text-center p-8 text-gray-600 dark:text-indigo-300">
         노트가 없습니다. Quick Add 버튼을 눌러 노트를 추가하세요.
       </div>
     )
@@ -45,15 +45,15 @@ export function NoteList({ folderId }: NoteListProps) {
     <div className="space-y-4">
       {notes.map((note) => (
         <Link key={note.id} href={`/notes/${note.id}`}>
-          <Card className="glass-strong hover-lift hover-glow p-4 cursor-pointer">
+          <Card className="panel hover-lift hover-glow p-4 cursor-pointer">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-1">{note.title}</h3>
-                <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                <h3 className="font-semibold text-lg mb-1 text-indigo-900 dark:text-indigo-100">{note.title}</h3>
+                <p className="text-sm text-indigo-700 dark:text-indigo-300 line-clamp-2 mb-2">
                   {note.body.slice(0, 150) || '내용 없음'}
                 </p>
 
-                <div className="flex items-center gap-2 text-xs text-gray-500">
+                <div className="flex items-center gap-2 text-xs text-indigo-500 dark:text-indigo-300">
                   {note.folder && (
                     <Badge variant="outline" className="text-xs">
                       {note.folder.name}

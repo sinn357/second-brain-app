@@ -55,19 +55,26 @@ export default function FoldersPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <Skeleton className="h-96" />
+      <div className="page-shell">
+        <div className="page-content max-w-4xl">
+          <Skeleton className="h-96" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6 text-indigo-900 dark:text-indigo-100">Folders</h1>
+    <div className="page-shell">
+      <div className="page-content max-w-4xl space-y-6">
+        <div className="page-header">
+          <div>
+            <h1 className="page-title text-indigo-900 dark:text-indigo-100">Folders</h1>
+            <p className="page-subtitle">폴더를 정리하고 구조를 관리하세요.</p>
+          </div>
+        </div>
 
         {/* 새 폴더 생성 */}
-        <Card className="glass-strong hover-lift hover-glow p-4 mb-6">
+        <Card className="panel hover-lift hover-glow p-4">
           <div className="flex gap-2">
             <Input
               placeholder="새 폴더 이름"
@@ -90,14 +97,14 @@ export default function FoldersPage() {
         {/* 폴더 목록 */}
         <div className="space-y-2">
           {folders.length === 0 ? (
-            <Card className="glass-strong hover-lift hover-glow p-8 text-center text-gray-500 dark:text-indigo-300">
+            <Card className="panel hover-lift hover-glow p-8 text-center text-gray-500 dark:text-indigo-300">
               폴더가 없습니다. 새 폴더를 만들어보세요!
             </Card>
           ) : (
             folders.map((folder) => (
               <Card
                 key={folder.id}
-                className="glass-strong hover-lift hover-glow p-4 flex items-center justify-between"
+                className="panel hover-lift hover-glow p-4 flex items-center justify-between"
               >
                 <div className="flex items-center gap-3">
                   <Folder className="h-5 w-5 text-gray-600" />

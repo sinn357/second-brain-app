@@ -159,18 +159,18 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="page-shell">
+      <div className="page-content max-w-4xl space-y-6">
         {/* 헤더 */}
-        <div>
-          <h1 className="text-3xl font-bold text-indigo-900 dark:text-indigo-100 mb-2">Settings</h1>
-          <p className="text-sm text-indigo-700 dark:text-indigo-300">
-            Export and import your data
-          </p>
+        <div className="page-header">
+          <div>
+            <h1 className="page-title text-indigo-900 dark:text-indigo-100">Settings</h1>
+            <p className="page-subtitle">Export and import your data</p>
+          </div>
         </div>
 
         {/* Export Section */}
-        <Card className="glass-strong hover-lift hover-glow">
+        <Card className="panel hover-lift hover-glow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900 dark:text-indigo-100">
               <Download className="w-5 h-5" />
@@ -182,7 +182,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Export Markdown ZIP */}
-            <div className="flex items-start justify-between p-4 glass hover-lift rounded-lg">
+            <div className="flex items-start justify-between p-4 panel-soft hover-lift rounded-lg">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <FolderArchive className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -204,7 +204,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Export JSON */}
-            <div className="flex items-start justify-between p-4 glass hover-lift rounded-lg">
+            <div className="flex items-start justify-between p-4 panel-soft hover-lift rounded-lg">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <FileJson className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -228,7 +228,7 @@ export default function SettingsPage() {
         </Card>
 
         {/* Import Section */}
-        <Card className="glass-strong hover-lift hover-glow">
+        <Card className="panel hover-lift hover-glow">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-indigo-900 dark:text-indigo-100">
               <Upload className="w-5 h-5" />
@@ -240,7 +240,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Import Obsidian Vault */}
-            <div className="p-4 glass hover-lift rounded-lg">
+            <div className="p-4 panel-soft hover-lift rounded-lg">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -271,7 +271,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Import JSON */}
-            <div className="p-4 glass hover-lift rounded-lg">
+            <div className="p-4 panel-soft hover-lift rounded-lg">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">

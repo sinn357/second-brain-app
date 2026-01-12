@@ -53,8 +53,8 @@ export default function DailyPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="max-w-4xl mx-auto">
+      <div className="page-shell">
+        <div className="page-content max-w-4xl">
           <Skeleton className="h-12 w-64 mb-6" />
           <Skeleton className="h-96 w-full" />
         </div>
@@ -64,9 +64,9 @@ export default function DailyPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
+      <div className="page-shell">
+        <div className="page-content max-w-4xl">
+          <div className="panel p-6">
             <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
             <p className="dark:text-indigo-100">{error.message}</p>
           </div>
@@ -76,10 +76,10 @@ export default function DailyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="page-shell">
+      <div className="page-content max-w-4xl">
         {/* 날짜 네비게이션 */}
-        <div className="bg-white dark:bg-indigo-900 p-4 rounded-lg shadow-sm mb-6">
+        <div className="panel p-4 mb-6">
           <div className="flex items-center justify-between">
             <Button
               variant="outline"
@@ -119,7 +119,7 @@ export default function DailyPage() {
         </div>
 
         {/* 에디터 */}
-        <div className="bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
+        <div className="panel p-6">
           {dailyNote && (
             <NoteEditorAdvanced
               content={dailyNote.body}

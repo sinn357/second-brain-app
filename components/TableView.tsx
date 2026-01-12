@@ -56,43 +56,41 @@ export function TableView({ notes = [] }: TableViewProps) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse">
+      <table className="table-base">
         <thead>
-          <tr className="bg-gray-100 border-b">
-            <th className="text-left p-3 font-semibold text-sm">제목</th>
-            <th className="text-left p-3 font-semibold text-sm">폴더</th>
+          <tr>
+            <th>제목</th>
+            <th>폴더</th>
             {properties.map((prop) => (
-              <th key={prop.id} className="text-left p-3 font-semibold text-sm">
-                {prop.name}
-              </th>
+              <th key={prop.id}>{prop.name}</th>
             ))}
-            <th className="text-left p-3 font-semibold text-sm">수정일</th>
+            <th>수정일</th>
           </tr>
         </thead>
         <tbody>
           {notes.length === 0 ? (
             <tr>
-              <td colSpan={properties.length + 3} className="text-center p-8 text-gray-500">
+              <td colSpan={properties.length + 3} className="text-center p-8 text-gray-500 dark:text-indigo-300">
                 노트가 없습니다
               </td>
             </tr>
           ) : (
             notes.map((note) => (
-              <tr key={note.id} className="border-b hover:bg-gray-50">
-                <td className="p-3">
-                  <Link href={`/notes/${note.id}`} className="text-blue-600 hover:underline font-medium">
+              <tr key={note.id}>
+                <td>
+                  <Link href={`/notes/${note.id}`} className="text-indigo-700 dark:text-indigo-200 hover:underline font-medium">
                     {note.title}
                   </Link>
                 </td>
-                <td className="p-3 text-sm text-gray-600">
+                <td className="text-sm text-indigo-600 dark:text-indigo-300">
                   {note.folder?.name || '-'}
                 </td>
                 {properties.map((prop) => (
-                  <td key={prop.id} className="p-3">
+                  <td key={prop.id}>
                     {renderPropertyValue(getPropertyValue(note.id, prop.id), prop.type)}
                   </td>
                 ))}
-                <td className="p-3 text-sm text-gray-500">
+                <td className="text-sm text-indigo-500 dark:text-indigo-300">
                   {format(new Date(note.updatedAt), 'yyyy-MM-dd HH:mm')}
                 </td>
               </tr>

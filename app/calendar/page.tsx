@@ -13,32 +13,42 @@ export default function CalendarPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <Skeleton className="h-12 mb-6" />
-        <Skeleton className="h-96" />
+      <div className="page-shell">
+        <div className="page-content">
+          <Skeleton className="h-12 mb-6" />
+          <Skeleton className="h-96" />
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-        <div className="glass-strong p-6 rounded-lg">
+      <div className="page-shell">
+        <div className="page-content">
+          <div className="panel p-6">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
           <p className="dark:text-indigo-100">{error.message}</p>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-indigo-50 dark:bg-indigo-950 p-6">
-      <div className="max-w-7xl mx-auto bg-white dark:bg-indigo-900 p-6 rounded-lg shadow-sm">
+    <div className="page-shell">
+      <div className="page-content">
+        <div className="panel p-6">
         {/* 헤더 */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
-            Calendar View
-          </h1>
+        <div className="page-header">
+          <div>
+            <h1 className="page-title text-indigo-900 dark:text-indigo-100">
+              Calendar View
+            </h1>
+            <p className="page-subtitle">
+              노트 생성 및 수정 활동을 날짜별로 시각화합니다.
+            </p>
+          </div>
 
           {/* 연도 선택 */}
           <div className="flex items-center gap-2">
@@ -63,14 +73,11 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-6">
-          노트 생성 및 수정 활동을 날짜별로 시각화합니다. (GitHub 스타일 히트맵)
-        </p>
-
         {/* 히트맵 */}
         {calendarData && (
           <CalendarHeatmap year={calendarData.year} activities={calendarData.activities} />
         )}
+        </div>
       </div>
     </div>
   )
