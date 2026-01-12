@@ -8,8 +8,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
 import { NoteEditorAdvanced } from '@/components/NoteEditorAdvanced'
 import { Input } from '@/components/ui/input'
-import { useNote, useUpdateNote, useParseLinks } from '@/lib/hooks/useNotes'
+import { useDeleteNote, useNote, useParseLinks, useUpdateNote } from '@/lib/hooks/useNotes'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Trash2 } from 'lucide-react'
 
 function NotesPageContent() {
   const searchParams = useSearchParams()
@@ -18,13 +20,15 @@ function NotesPageContent() {
   const noteId = searchParams.get('noteId') || undefined
   const { data: note, isLoading: isNoteLoading } = useNote(noteId || '')
   const updateNote = useUpdateNote(noteId || '')
+  const deleteNote = useDeleteNote()
   const parseLinks = useParseLinks()
 
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const lastSavedRef = useRef<{ title: string; body: string } | null>(null)
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const saveInFlight = useRef(false)
+  const pendingSave = useRef(false)
 
   const handleSelectNote = (id: string) => {
     const nextParams = new URLSearchParams(searchParams.toString())
@@ -58,13 +62,16 @@ function NotesPageContent() {
       return
     }
 
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
+    const runSave = async () => {
+      if (saveInFlight.current) {
+        pendingSave.current = true
+        return
+      }
 
-    saveTimeoutRef.current = setTimeout(async () => {
+      saveInFlight.current = true
+      setIsSaving(true)
+
       try {
-        setIsSaving(true)
         await updateNote.mutateAsync({ title, body })
         await parseLinks.mutateAsync({ noteId, body })
         lastSavedRef.current = { title, body }
@@ -72,22 +79,40 @@ function NotesPageContent() {
         console.error('Auto save error:', error)
         toast.error('자동 저장에 실패했습니다')
       } finally {
+        saveInFlight.current = false
         setIsSaving(false)
-      }
-    }, 600)
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
+        if (pendingSave.current) {
+          pendingSave.current = false
+          runSave()
+        }
       }
     }
+
+    runSave()
   }, [title, body, noteId, note, updateNote, parseLinks])
+
+  const handleDelete = async () => {
+    if (!noteId) return
+    const confirmed = window.confirm('이 노트를 삭제하시겠습니까?')
+    if (!confirmed) return
+
+    try {
+      await deleteNote.mutateAsync(noteId)
+      toast.success('노트가 삭제되었습니다')
+      const nextParams = new URLSearchParams(searchParams.toString())
+      nextParams.delete('noteId')
+      router.push(`/notes?${nextParams.toString()}`, { scroll: false })
+    } catch (error) {
+      console.error('Delete note error:', error)
+      toast.error('노트 삭제에 실패했습니다')
+    }
+  }
 
   return (
     <div className="page-shell">
       <QuickAddButton />
 
-      <div className="page-content grid grid-cols-12 gap-6">
+      <div className="page-content grid grid-cols-12 gap-8">
         {/* 좌측: 폴더 트리 */}
         <aside className="col-span-2 panel p-4">
           <FolderTree />
@@ -107,7 +132,7 @@ function NotesPageContent() {
         </section>
 
         {/* 우측: 노트 편집 */}
-        <section className="col-span-6 panel p-6 min-h-[540px]">
+        <section className="col-span-6 panel p-6 min-h-[600px]">
           {!noteId ? (
             <div className="h-full flex items-center justify-center text-indigo-600 dark:text-indigo-300">
               오른쪽에서 편집할 노트를 선택하세요.
@@ -122,6 +147,15 @@ function NotesPageContent() {
                     {isSaving ? 'Saving...' : 'All changes saved'}
                   </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDelete}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
               </div>
               <Input
                 value={title}
