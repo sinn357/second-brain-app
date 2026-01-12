@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useFilterStore } from '@/lib/stores/filterStore'
 import { useProperties } from '@/lib/hooks/useProperties'
+import { useTags } from '@/lib/hooks/useTags'
+import { useFolders } from '@/lib/hooks/useFolders'
 import { useSavedViews, useCreateSavedView, useDeleteSavedView } from '@/lib/hooks/useFilters'
 import { PropertyFilterItem } from '@/components/PropertyFilterItem'
 import { FilterConditionToggle } from '@/components/FilterConditionToggle'
@@ -27,28 +29,83 @@ export function FilterBuilder() {
   } = useFilterStore()
 
   const { data: properties = [] } = useProperties()
+  const { data: tags = [] } = useTags()
+  const { data: folders = [] } = useFolders()
   const { data: savedViews = [] } = useSavedViews()
   const createSavedView = useCreateSavedView()
   const deleteSavedView = useDeleteSavedView()
 
   const [activeViewId, setActiveViewId] = useState<string | null>(null)
 
+  const systemProperties = [
+    {
+      id: 'sys:title',
+      name: '제목',
+      type: 'text',
+      group: 'system' as const,
+    },
+    {
+      id: 'sys:body',
+      name: '본문',
+      type: 'text',
+      group: 'system' as const,
+    },
+    {
+      id: 'sys:folder',
+      name: '폴더',
+      type: 'folder',
+      options: folders.map((folder) => folder.name),
+      group: 'system' as const,
+    },
+    {
+      id: 'sys:tag',
+      name: '태그',
+      type: 'tag',
+      options: tags.map((tag) => tag.name),
+      group: 'system' as const,
+    },
+    {
+      id: 'sys:createdAt',
+      name: '생성일',
+      type: 'date',
+      group: 'system' as const,
+    },
+    {
+      id: 'sys:updatedAt',
+      name: '수정일',
+      type: 'date',
+      group: 'system' as const,
+    },
+    {
+      id: 'sys:hasLinks',
+      name: '링크 있음',
+      type: 'boolean',
+      group: 'system' as const,
+    },
+  ]
+
+  const availableProperties = [
+    ...systemProperties,
+    ...properties.map((prop) => ({ ...prop, group: 'property' as const })),
+  ]
+
   // 새 필터 조건 추가 (기본값)
   const handleAddCondition = () => {
-    if (properties.length === 0) {
-      toast.error('먼저 속성을 생성하세요')
+    const firstProperty = availableProperties.find((prop) => prop.group === 'property')
+      ?? availableProperties[0]
+
+    if (!firstProperty) {
+      toast.error('필터를 추가할 수 없습니다')
       return
     }
 
-    const firstProperty = properties[0]
-
     let newCondition: FilterCondition
 
-    if (firstProperty.type === 'multi_select') {
+    if (firstProperty.type === 'multi_select' || firstProperty.type === 'tag') {
       newCondition = { propertyId: firstProperty.id, operator: 'contains', value: '' }
     } else if (firstProperty.type === 'date') {
       newCondition = { propertyId: firstProperty.id, operator: 'after', value: '' }
-    } else if (firstProperty.type === 'checkbox') {
+    } else if (firstProperty.type === 'checkbox' || firstProperty.type === 'boolean') {
       newCondition = { propertyId: firstProperty.id, operator: 'is_checked', value: undefined }
     } else {
       newCondition = { propertyId: firstProperty.id, operator: 'equals', value: '' }
@@ -135,7 +192,7 @@ export function FilterBuilder() {
             <PropertyFilterItem
               key={index}
               condition={condition}
-              properties={properties}
+              properties={availableProperties}
               onChange={(nextCondition) => updateCondition(index, nextCondition)}
               onRemove={() => removeCondition(index)}
               className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded"

@@ -3,24 +3,28 @@ import { z } from 'zod'
 // 필터 연산자
 export const filterOperatorEnum = z.enum([
   'equals',
+  'not_equals',
   'contains',
+  'not_contains',
   'before',
   'after',
   'is_checked',
   'is_not_checked',
+  'is_empty',
+  'is_not_empty',
 ])
 
 // 값이 필요한 조건
 const valueConditionSchema = z.object({
   propertyId: z.string().min(1, '속성을 선택하세요'),
-  operator: z.enum(['equals', 'contains', 'before', 'after']),
+  operator: z.enum(['equals', 'not_equals', 'contains', 'not_contains', 'before', 'after']),
   value: z.any(),
 })
 
-// 값이 필요 없는 조건 (체크박스)
+// 값이 필요 없는 조건
 const checkboxConditionSchema = z.object({
   propertyId: z.string().min(1, '속성을 선택하세요'),
-  operator: z.enum(['is_checked', 'is_not_checked']),
+  operator: z.enum(['is_checked', 'is_not_checked', 'is_empty', 'is_not_empty']),
   value: z.any().optional(),
 })
 

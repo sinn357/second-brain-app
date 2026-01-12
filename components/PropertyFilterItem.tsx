@@ -3,7 +3,7 @@
 import type { FilterCondition } from '@/lib/filterEngine'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectLabel, SelectSeparator } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { X } from 'lucide-react'
 
@@ -12,6 +12,7 @@ interface PropertyOption {
   name: string
   type: string
   options?: string[] | null
+  group?: 'system' | 'property'
 }
 
 interface PropertyFilterItemProps {
@@ -24,18 +25,26 @@ interface PropertyFilterItemProps {
 
 const operatorLabels: Record<FilterCondition['operator'], string> = {
   equals: '같음',
+  not_equals: '다름',
   contains: '포함',
+  not_contains: '불포함',
   before: '이전',
   after: '이후',
   is_checked: '체크됨',
   is_not_checked: '체크 안됨',
+  is_empty: '비어있음',
+  is_not_empty: '비어있지 않음',
 }
 
 const operatorsByType: Record<string, FilterCondition['operator'][]> = {
-  select: ['equals'],
-  multi_select: ['contains'],
+  select: ['equals', 'not_equals', 'is_empty', 'is_not_empty'],
+  multi_select: ['contains', 'not_contains', 'is_empty', 'is_not_empty'],
   date: ['before', 'after'],
   checkbox: ['is_checked', 'is_not_checked'],
+  text: ['contains', 'not_contains', 'equals', 'not_equals', 'is_empty', 'is_not_empty'],
+  tag: ['contains', 'not_contains', 'is_empty', 'is_not_empty'],
+  folder: ['equals', 'not_equals', 'contains', 'not_contains', 'is_empty', 'is_not_empty'],
+  boolean: ['is_checked', 'is_not_checked'],
 }
 
 function getOperators(type?: string) {
@@ -44,6 +53,8 @@ function getOperators(type?: string) {
 
 function requiresValue(operator: FilterCondition['operator']) {
   return operator !== 'is_checked' && operator !== 'is_not_checked'
+    && operator !== 'is_empty'
+    && operator !== 'is_not_empty'
 }
 
 export function PropertyFilterItem({
@@ -93,7 +104,11 @@ export function PropertyFilterItem({
       )
     }
 
-    if ((selectedProperty.type === 'select' || selectedProperty.type === 'multi_select') && selectedProperty.options) {
+    if (
+      (selectedProperty.type === 'select' || selectedProperty.type === 'multi_select' || selectedProperty.type === 'tag' || selectedProperty.type === 'folder')
+      && selectedProperty.options
+      && selectedProperty.options.length > 0
+    ) {
       return (
         <Select
           value={condition.value ?? ''}
@@ -126,17 +141,28 @@ export function PropertyFilterItem({
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       <Select value={condition.propertyId} onValueChange={handlePropertyChange}>
-        <SelectTrigger className="w-44 text-sm">
-          <SelectValue placeholder="속성 선택" />
-        </SelectTrigger>
-        <SelectContent>
-          {properties.map((prop) => (
-            <SelectItem key={prop.id} value={prop.id}>
-              {prop.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <SelectTrigger className="w-44 text-sm">
+        <SelectValue placeholder="속성 선택" />
+      </SelectTrigger>
+      <SelectContent>
+        {properties.some((prop) => prop.group === 'system') && (
+          <>
+            <SelectLabel>System</SelectLabel>
+            {properties.filter((prop) => prop.group === 'system').map((prop) => (
+              <SelectItem key={prop.id} value={prop.id}>
+                {prop.name}
+              </SelectItem>
+            ))}
+            <SelectSeparator />
+          </>
+        )}
+        {properties.filter((prop) => prop.group !== 'system').map((prop) => (
+          <SelectItem key={prop.id} value={prop.id}>
+            {prop.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
 
       <Select value={normalizedOperator} onValueChange={(value) => handleOperatorChange(value as FilterCondition['operator'])}>
         <SelectTrigger className="w-28 text-sm">
