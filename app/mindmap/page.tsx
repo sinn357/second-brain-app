@@ -104,12 +104,14 @@ export default function MindmapPage() {
       .x((d) => d.y)
       .y((d) => d.x)
 
+    const links = root.links() as d3.HierarchyPointLink<TreeNode>[]
+
     g.append('g')
       .selectAll('path')
-      .data(root.links())
+      .data(links)
       .enter()
       .append('path')
-      .attr('d', linkGenerator)
+      .attr('d', (d) => linkGenerator(d) ?? '')
       .attr('fill', 'none')
       .attr('stroke', isDark ? '#64748b' : '#94a3b8')
       .attr('stroke-width', 1.5)
