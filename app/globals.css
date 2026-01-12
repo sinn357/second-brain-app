@@ -205,3 +205,136 @@ h1, h2, h3, h4, h5, h6 {
 .card-elevated:hover {
   transform: translateY(-2px);
 }
+
+/* === Editor Typography === */
+.note-content,
+.ProseMirror {
+  color: rgb(var(--text-primary));
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.note-content h1,
+.ProseMirror h1 {
+  font-size: 2rem;
+  margin: 1.2rem 0 0.75rem;
+}
+
+.note-content h2,
+.ProseMirror h2 {
+  font-size: 1.6rem;
+  margin: 1.1rem 0 0.65rem;
+}
+
+.note-content h3,
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  margin: 1rem 0 0.6rem;
+}
+
+.note-content p,
+.ProseMirror p {
+  margin: 0.6rem 0;
+}
+
+.note-content ul,
+.note-content ol,
+.ProseMirror ul,
+.ProseMirror ol {
+  margin: 0.6rem 0 0.6rem 1.5rem;
+  padding: 0;
+}
+
+.note-content ul,
+.ProseMirror ul {
+  list-style: disc;
+}
+
+.note-content ol,
+.ProseMirror ol {
+  list-style: decimal;
+}
+
+.note-content li,
+.ProseMirror li {
+  margin: 0.2rem 0;
+}
+
+.note-content blockquote,
+.ProseMirror blockquote {
+  border-left: 3px solid rgba(var(--accent-1), 0.5);
+  padding-left: 1rem;
+  margin: 0.8rem 0;
+  color: rgb(var(--text-secondary));
+}
+
+.note-content code,
+.ProseMirror code {
+  background: rgba(148, 163, 184, 0.2);
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.note-content pre,
+.ProseMirror pre {
+  background: rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+}
+
+.note-content pre code,
+.ProseMirror pre code {
+  background: none;
+  padding: 0;
+}
+
+.note-content hr,
+.ProseMirror hr {
+  border: none;
+  border-top: 1px solid rgba(var(--text-tertiary), 0.4);
+  margin: 1rem 0;
+}
+
+.note-content table,
+.ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+
+.note-content th,
+.note-content td,
+.ProseMirror th,
+.ProseMirror td {
+  border: 1px solid rgba(var(--text-tertiary), 0.4);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+
+.note-content th,
+.ProseMirror th {
+  background: rgba(var(--text-tertiary), 0.15);
+  font-weight: 600;
+}
+
+.note-content [type='checkbox'],
+.ProseMirror [type='checkbox'] {
+  margin-right: 0.4rem;
+}
+
+.note-content ul[data-type='taskList'],
+.ProseMirror ul[data-type='taskList'] {
+  list-style: none;
+  margin-left: 0.5rem;
+}
+
+.note-content li[data-type='taskItem'],
+.ProseMirror li[data-type='taskItem'] {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}

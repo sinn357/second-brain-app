@@ -4,10 +4,19 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
+import TaskList from '@tiptap/extension-task-list'
+import TaskItem from '@tiptap/extension-task-item'
+import Table from '@tiptap/extension-table'
+import TableRow from '@tiptap/extension-table-row'
+import TableHeader from '@tiptap/extension-table-header'
+import TableCell from '@tiptap/extension-table-cell'
+import Underline from '@tiptap/extension-underline'
+import Highlight from '@tiptap/extension-highlight'
+import Typography from '@tiptap/extension-typography'
 import { WikiLink } from '@/lib/tiptap-extensions/WikiLink'
 import { HashTag } from '@/lib/tiptap-extensions/HashTag'
 import { WikiLinkAutocomplete } from '@/lib/tiptap-extensions/WikiLinkAutocomplete'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNotes } from '@/lib/hooks/useNotes'
 import { useCreateTag } from '@/lib/hooks/useTags'
 import { useRouter } from 'next/navigation'
@@ -17,6 +26,7 @@ import { NoteLinkPreview } from './NoteLinkPreview'
 import { WikiLinkSuggestionList } from './WikiLinkSuggestionList'
 import { createRoot } from 'react-dom/client'
 import { toast } from 'sonner'
+import { htmlToMarkdown, isProbablyHtml, markdownToHtml } from '@/lib/markdown'
 
 interface NoteEditorAdvancedProps {
   content: string
@@ -35,16 +45,32 @@ export function NoteEditorAdvanced({
   const { data: allNotes = [] } = useNotes()
   const createTag = useCreateTag()
   const [hoveredLink, setHoveredLink] = useState<string | null>(null)
+  const lastSyncedMarkdown = useRef<string | null>(null)
+
+  const getEditorContent = (value: string) => {
+    return isProbablyHtml(value) ? value : markdownToHtml(value)
+  }
 
   const editor = useEditor({
     extensions: [
       StarterKit,
+      Underline,
+      Highlight,
+      Typography,
       Link.configure({
         openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
         HTMLAttributes: {
           class: 'text-blue-600 underline cursor-pointer',
         },
       }),
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableHeader,
+      TableCell,
       Placeholder.configure({
         placeholder,
       }),
@@ -81,21 +107,27 @@ export function NoteEditorAdvanced({
         suggestion: {},
       }),
     ],
-    content,
+    content: getEditorContent(content),
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none focus:outline-none min-h-[400px] p-4',
+        class: 'note-content max-w-none focus:outline-none min-h-[400px] p-4',
       },
     },
     onUpdate: ({ editor }) => {
-      onUpdate(editor.getHTML())
+      const html = editor.getHTML()
+      const markdown = htmlToMarkdown(html)
+      lastSyncedMarkdown.current = markdown
+      onUpdate(markdown)
     },
   })
 
   // content가 외부에서 변경되면 에디터 업데이트
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content)
+    if (!editor) return
+    if (content === lastSyncedMarkdown.current) return
+    const nextHtml = getEditorContent(content)
+    if (nextHtml !== editor.getHTML()) {
+      editor.commands.setContent(nextHtml)
     }
   }, [content, editor])
 
@@ -230,12 +262,50 @@ export function NoteEditorAdvanced({
           List
         </button>
         <button
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={`px-2 py-1 rounded text-sm ${
+            editor.isActive('orderedList') ? 'bg-gray-300' : 'hover:bg-gray-200'
+          }`}
+        >
+          Numbered
+        </button>
+        <button
+          onClick={() => editor.chain().focus().toggleTaskList().run()}
+          className={`px-2 py-1 rounded text-sm ${
+            editor.isActive('taskList') ? 'bg-gray-300' : 'hover:bg-gray-200'
+          }`}
+        >
+          Task
+        </button>
+        <button
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
           className={`px-2 py-1 rounded text-sm ${
             editor.isActive('codeBlock') ? 'bg-gray-300' : 'hover:bg-gray-200'
           }`}
         >
           Code Block
+        </button>
+        <button
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          className={`px-2 py-1 rounded text-sm ${
+            editor.isActive('blockquote') ? 'bg-gray-300' : 'hover:bg-gray-200'
+          }`}
+        >
+          Quote
+        </button>
+        <button
+          onClick={() => editor.chain().focus().setHorizontalRule().run()}
+          className="px-2 py-1 rounded text-sm hover:bg-gray-200"
+        >
+          Divider
+        </button>
+        <button
+          onClick={() =>
+            editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+          }
+          className="px-2 py-1 rounded text-sm hover:bg-gray-200"
+        >
+          Table
         </button>
       </div>
 
