@@ -100,12 +100,12 @@ export default function FoldersPage() {
         {/* 새 폴더 생성 */}
         <Card className="panel hover-lift hover-glow p-4 space-y-3">
           <div className="flex flex-wrap gap-2">
-            <Select value={parentId ?? ''} onValueChange={(value) => setParentId(value || null)}>
+            <Select value={parentId ?? '__root__'} onValueChange={(value) => setParentId(value === '__root__' ? null : value)}>
               <SelectTrigger className="min-w-[200px] text-sm">
                 <SelectValue placeholder="상위 폴더 (선택)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">최상위</SelectItem>
+                <SelectItem value="__root__">최상위</SelectItem>
                 {folders.map((folder) => {
                   const depth = getDepth(folder.id)
                   return (
