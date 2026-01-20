@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { NoteList } from '@/components/NoteList'
 import { QuickAddButton } from '@/components/QuickAddButton'
 import { FolderTree } from '@/components/FolderTree'
@@ -9,9 +9,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { NoteEditorAdvanced } from '@/components/NoteEditorAdvanced'
 import { Input } from '@/components/ui/input'
 import { useDeleteNote, useNote, useParseLinks, useUpdateNote } from '@/lib/hooks/useNotes'
+import { useDebounce } from '@/lib/hooks/useDebounce'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Trash2 } from 'lucide-react'
+
+const AUTO_SAVE_DELAY = 500 // ms
 
 function NotesPageContent() {
   const searchParams = useSearchParams()
@@ -26,9 +29,14 @@ function NotesPageContent() {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
   const [isSaving, setIsSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const lastSavedRef = useRef<{ title: string; body: string } | null>(null)
   const saveInFlight = useRef(false)
-  const pendingSave = useRef(false)
+  const pendingSave = useRef<{ title: string; body: string } | null>(null)
+
+  // Debounce title and body
+  const debouncedTitle = useDebounce(title, AUTO_SAVE_DELAY)
+  const debouncedBody = useDebounce(body, AUTO_SAVE_DELAY)
 
   const handleSelectNote = (id: string) => {
     const nextParams = new URLSearchParams(searchParams.toString())
@@ -51,45 +59,62 @@ function NotesPageContent() {
     lastSavedRef.current = { title: note.title, body: note.body }
   }, [note?.id])
 
+  // 디바운스된 값으로 자동 저장
   useEffect(() => {
     if (!noteId || !note) return
 
+    // 마지막 저장된 값과 같으면 저장하지 않음
     if (
       lastSavedRef.current &&
-      lastSavedRef.current.title === title &&
-      lastSavedRef.current.body === body
+      lastSavedRef.current.title === debouncedTitle &&
+      lastSavedRef.current.body === debouncedBody
     ) {
       return
     }
 
     const runSave = async () => {
+      // 이미 저장 중이면 대기열에 추가
       if (saveInFlight.current) {
-        pendingSave.current = true
+        pendingSave.current = { title: debouncedTitle, body: debouncedBody }
         return
       }
 
       saveInFlight.current = true
       setIsSaving(true)
+      setSaveStatus('saving')
 
       try {
-        await updateNote.mutateAsync({ title, body })
-        await parseLinks.mutateAsync({ noteId, body })
-        lastSavedRef.current = { title, body }
+        await updateNote.mutateAsync({ title: debouncedTitle, body: debouncedBody })
+        await parseLinks.mutateAsync({ noteId, body: debouncedBody })
+        lastSavedRef.current = { title: debouncedTitle, body: debouncedBody }
+        setSaveStatus('saved')
       } catch (error) {
         console.error('Auto save error:', error)
+        setSaveStatus('error')
         toast.error('자동 저장에 실패했습니다')
       } finally {
         saveInFlight.current = false
         setIsSaving(false)
+
+        // 대기 중인 저장이 있으면 실행
         if (pendingSave.current) {
-          pendingSave.current = false
-          runSave()
+          const pending = pendingSave.current
+          pendingSave.current = null
+          // 다음 틱에서 저장 실행
+          setTimeout(() => {
+            if (
+              lastSavedRef.current?.title !== pending.title ||
+              lastSavedRef.current?.body !== pending.body
+            ) {
+              runSave()
+            }
+          }, 0)
         }
       }
     }
 
     runSave()
-  }, [title, body, noteId, note, updateNote, parseLinks])
+  }, [debouncedTitle, debouncedBody, noteId, note, updateNote, parseLinks])
 
   const handleDelete = async () => {
     if (!noteId) return
@@ -144,7 +169,10 @@ function NotesPageContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs text-indigo-500 dark:text-indigo-300">
-                    {isSaving ? 'Saving...' : 'All changes saved'}
+                    {saveStatus === 'saving' && '저장 중...'}
+                    {saveStatus === 'saved' && '✓ 모든 변경사항 저장됨'}
+                    {saveStatus === 'error' && '⚠ 저장 실패'}
+                    {saveStatus === 'idle' && ''}
                   </div>
                 </div>
                 <Button

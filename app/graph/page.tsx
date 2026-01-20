@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useGraph } from '@/lib/hooks/useGraph'
+import { useGraph, type SimulationNode, type SimulationLink, type GraphNode } from '@/lib/hooks/useGraph'
 import { Skeleton } from '@/components/ui/skeleton'
 import * as d3 from 'd3'
 import { useRouter } from 'next/navigation'
@@ -89,7 +89,7 @@ export default function GraphPage() {
     )
 
     // 노드 색상 결정 함수
-    const getNodeColor = (node: any) => {
+    const getNodeColor = (node: SimulationNode) => {
       if (!connectedNodeIds.has(node.id)) return ISOLATED_NODE_COLOR
       if (node.folderId) return folderColorMap.get(node.folderId) || DEFAULT_NODE_COLOR
       return DEFAULT_NODE_COLOR
@@ -113,13 +113,16 @@ export default function GraphPage() {
     svg.call(zoom)
 
     // Force simulation
+    const simulationNodes = filteredNodes as SimulationNode[]
+    const simulationLinks = filteredEdges.map(e => ({ ...e })) as SimulationLink[]
+
     const simulation = d3
-      .forceSimulation(filteredNodes as any)
+      .forceSimulation<SimulationNode>(simulationNodes)
       .force(
         'link',
         d3
-          .forceLink(filteredEdges)
-          .id((d: any) => d.id)
+          .forceLink<SimulationNode, SimulationLink>(simulationLinks)
+          .id((d) => d.id)
           .distance(100)
       )
       .force('charge', d3.forceManyBody().strength(-300))
@@ -130,7 +133,7 @@ export default function GraphPage() {
     const link = g
       .append('g')
       .selectAll('line')
-      .data(filteredEdges)
+      .data(simulationLinks)
       .enter()
       .append('line')
       .attr('stroke', '#999')
@@ -140,30 +143,30 @@ export default function GraphPage() {
     // Nodes
     const node = g
       .append('g')
-      .selectAll('circle')
-      .data(filteredNodes)
+      .selectAll<SVGCircleElement, SimulationNode>('circle')
+      .data(simulationNodes)
       .enter()
       .append('circle')
       .attr('r', 8)
-      .attr('fill', (d: any) => getNodeColor(d))
+      .attr('fill', (d) => getNodeColor(d))
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .style('cursor', 'pointer')
-      .on('click', (event, d: any) => {
+      .on('click', (_, d) => {
         router.push(`/notes/${d.id}`)
       })
       .call(
-        d3.drag<any, any>()
-          .on('start', (event, d: any) => {
+        d3.drag<SVGCircleElement, SimulationNode>()
+          .on('start', (event, d) => {
             if (!event.active) simulation.alphaTarget(0.3).restart()
             d.fx = d.x
             d.fy = d.y
           })
-          .on('drag', (event, d: any) => {
+          .on('drag', (event, d) => {
             d.fx = event.x
             d.fy = event.y
           })
-          .on('end', (event, d: any) => {
+          .on('end', (event, d) => {
             if (!event.active) simulation.alphaTarget(0)
             d.fx = null
             d.fy = null
@@ -173,11 +176,11 @@ export default function GraphPage() {
     // Labels
     const label = g
       .append('g')
-      .selectAll('text')
-      .data(filteredNodes)
+      .selectAll<SVGTextElement, SimulationNode>('text')
+      .data(simulationNodes)
       .enter()
       .append('text')
-      .text((d: any) => d.title)
+      .text((d) => d.title)
       .attr('font-size', 10)
       .attr('dx', 12)
       .attr('dy', 4)
@@ -188,14 +191,14 @@ export default function GraphPage() {
     // Simulation tick
     simulation.on('tick', () => {
       link
-        .attr('x1', (d: any) => d.source.x)
-        .attr('y1', (d: any) => d.source.y)
-        .attr('x2', (d: any) => d.target.x)
-        .attr('y2', (d: any) => d.target.y)
+        .attr('x1', (d) => (d.source as SimulationNode).x ?? 0)
+        .attr('y1', (d) => (d.source as SimulationNode).y ?? 0)
+        .attr('x2', (d) => (d.target as SimulationNode).x ?? 0)
+        .attr('y2', (d) => (d.target as SimulationNode).y ?? 0)
 
-      node.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y)
+      node.attr('cx', (d) => d.x ?? 0).attr('cy', (d) => d.y ?? 0)
 
-      label.attr('x', (d: any) => d.x).attr('y', (d: any) => d.y)
+      label.attr('x', (d) => d.x ?? 0).attr('y', (d) => d.y ?? 0)
     })
 
     return () => {
