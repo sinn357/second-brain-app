@@ -7,46 +7,26 @@
 
 ## ✅ 이번 세션 완료 작업
 
-### Phase 0: 안정화 ✅ 완료
+### Phase 5: UX 개선 & 최적화 - 모바일 UX 일부 완료
 
-**P0-2: 타입 안전성 확보** ✅
-- Dashboard: recharts 타입 호환성 개선
-- useParseTags 훅 신규 생성
+**모바일 단일 컬럼 레이아웃** ✅
+- Notes 페이지: lg 미만에서 단일 컬럼 + 뷰 전환 (리스트 ↔ 에디터)
+- Notes [id] 페이지: 모바일/데스크톱 완전 분리 레이아웃
 
-**P0-3: API 호출 통일** ✅
-- Note Detail: parseTags → useMutation 적용
-
-**P0-4: 에러/빈 상태 처리** ✅
-- 7개 페이지 한글 에러 메시지 적용
-- Settings toast 메시지 한글화
-- db 페이지 빈 상태 UI 추가
-- ErrorBoundary 적용 (error.tsx, global-error.tsx 신규)
-
-**P0-5: 코드 정리** ✅
-- Folders: depthMap → useMemo 최적화
-- Settings: downloadFile/handleExport 함수 추상화
-- Timeline: 버튼 스타일 함수화 (RANGE_OPTIONS)
-
-### Phase 4: 옵시디언 Core 확장 ✅ 확인 완료
-
-**이미 구현된 기능 확인:**
-- Export/Import: Markdown ZIP, JSON, Obsidian vault 모두 구현 완료
-- 고급 검색: 정규식, 폴더/태그 필터, 날짜 범위, 검색 히스토리 모두 구현 완료
-
-**추가 개선:**
-- 템플릿 페이지: 변수 가이드 + 본문 미리보기 추가
+**Bottom Sheet** ✅
+- Sheet 컴포넌트 추가 (shadcn/ui 스타일)
+- Notes 페이지: 폴더 선택 Bottom Sheet
+- Notes [id] 페이지: 폴더, 백링크, 속성 Bottom Sheet
 
 ---
 
 ## 🎯 다음 세션 작업 목록
 
-### Phase 5: UX 개선 & 최적화
+### Phase 5: UX 개선 & 최적화 (계속)
 
-**모바일 UX:**
+**모바일 UX (남은 작업):**
 ```
-- [ ] 단일 컬럼 레이아웃 (모바일)
-- [ ] Bottom Sheet (폴더/백링크)
-- [ ] 스와이프 제스처
+- [ ] 스와이프 제스처 (노트 삭제 등)
 - [ ] PWA 설정 (선택)
 ```
 
@@ -69,20 +49,9 @@
 ## 📁 이번 세션 수정/생성 파일
 
 ```
-lib/hooks/useDashboard.ts       # 수정 - FolderDistribution export
-lib/hooks/useNotes.ts           # 수정 - useParseTags 훅 추가
-app/dashboard/page.tsx          # 수정 - 타입, 한글 에러, 빈 상태
-app/notes/[id]/page.tsx         # 수정 - useParseTags 적용, 한글 에러
-app/graph/page.tsx              # 수정 - 한글 에러
-app/timeline/page.tsx           # 수정 - 한글 에러, 버튼 스타일 함수화
-app/calendar/page.tsx           # 수정 - 한글 에러
-app/mindmap/page.tsx            # 수정 - 한글 에러
-app/templates/page.tsx          # 수정 - 한글 에러, 변수 가이드, 미리보기
-app/settings/page.tsx           # 수정 - 한글 메시지, 함수 추상화
-app/db/page.tsx                 # 수정 - 빈 상태 UI 추가
-app/folders/page.tsx            # 수정 - depthMap useMemo
-app/error.tsx                   # 신규 - ErrorBoundary
-app/global-error.tsx            # 신규 - Global ErrorBoundary
+app/notes/page.tsx              # 수정 - 모바일 반응형 레이아웃
+app/notes/[id]/page.tsx         # 수정 - 모바일 반응형 + Bottom Sheet
+components/ui/sheet.tsx         # 신규 - Sheet(Bottom Sheet) 컴포넌트
 ```
 
 ---
@@ -99,10 +68,10 @@ npm run dev
 npm run build
 ```
 
-**테스트 페이지:**
-- http://localhost:3004/templates - 변수 가이드, 미리보기 확인
-- http://localhost:3004/settings - 한글 메시지 확인
-- http://localhost:3004/db - 빈 상태 UI 확인
+**모바일 테스트:**
+- http://localhost:3004/notes - 모바일 뷰에서 리스트 ↔ 에디터 전환 확인
+- http://localhost:3004/notes/[id] - 하단 폴더/백링크/속성 Bottom Sheet 확인
+- Chrome DevTools > Toggle device toolbar (Ctrl+Shift+M)
 
 ---
 
@@ -110,7 +79,7 @@ npm run build
 
 ```
 "second brain app 작업 계속할게.
-NEXT_SESSION.md 읽고, Phase 5 모바일 UX부터 시작해줘."
+NEXT_SESSION.md 읽고, Phase 5 성능 최적화부터 시작해줘."
 ```
 
 ---
@@ -122,12 +91,13 @@ NEXT_SESSION.md 읽고, Phase 5 모바일 UX부터 시작해줘."
 | Phase 0: 안정화 | ✅ 완료 | P0-1 ~ P0-5 |
 | Phase 1-3: MVP~노션 Core | ✅ 완료 | 이전 세션 |
 | Phase 4: 옵시디언 Core | ✅ 완료 | 대부분 이미 구현 |
-| Phase 5: UX 개선 | ⏳ 대기 | 다음 세션 |
+| Phase 5: UX 개선 | 🔄 진행중 | 모바일 UX 일부 완료 |
 
-**예상 남은 시간**: Phase 5 약 4-5시간
+**완료:** 단일 컬럼 레이아웃, Bottom Sheet
+**남음:** 스와이프 제스처, 성능 최적화, 키보드 단축키
 
 ---
 
 **Last Updated**: 2026-01-22
 **Next Session Ready**: ✅
-**Recommended Next**: Phase 5 모바일 UX → 성능 최적화 → 키보드 단축키
+**Recommended Next**: 성능 최적화 (가상 스크롤, lazy loading) → 키보드 단축키 가이드
