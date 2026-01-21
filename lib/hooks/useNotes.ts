@@ -175,3 +175,25 @@ export function useParseLinks() {
     },
   })
 }
+
+// 태그 파싱
+export function useParseTags() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ noteId, body }: { noteId: string; body: string }) => {
+      const response = await fetch(`/api/notes/${noteId}/tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body }),
+      })
+      const data = await response.json()
+      if (!data.success) throw new Error(data.error)
+      return data
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['notes', variables.noteId] })
+      queryClient.invalidateQueries({ queryKey: ['tags'] })
+    },
+  })
+}

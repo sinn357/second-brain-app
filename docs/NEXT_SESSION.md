@@ -1,230 +1,133 @@
 # Next Session Guide
 
-**작성일**: 2025-12-31
+**작성일**: 2026-01-22
 **목적**: 다음 세션에서 바로 작업을 시작할 수 있도록 컨텍스트 제공
 
 ---
 
-## ✅ 방금 완료한 작업 (현재 세션)
+## ✅ 이번 세션 완료 작업
 
-### Phase 3-4: 속성 필터 강화 완료
-- **커밋**: `ce91a41` - feat: add property filter system with saved views
-- **상태**: ✅ 빌드 성공, 커밋 완료, 문서화 완료
-- **협업**: Claude + Codex
+### Phase 0: 안정화 ✅ 완료
 
-**구현 내용:**
-- 다중 속성 필터 (Select, Multi-Select, Date, Checkbox)
-- AND/OR 조건 지원
-- 저장된 뷰 (Saved Views)
-- FilterBuilder + 4개 보조 컴포넌트 (Codex)
+**P0-2: 타입 안전성 확보** ✅
+- Dashboard: recharts 타입 호환성 개선
+- useParseTags 훅 신규 생성
 
-**파일**: 20 files changed, 1,610 insertions(+)
+**P0-3: API 호출 통일** ✅
+- Note Detail: parseTags → useMutation 적용
 
----
+**P0-4: 에러/빈 상태 처리** ✅
+- 7개 페이지 한글 에러 메시지 적용
+- Settings toast 메시지 한글화
+- db 페이지 빈 상태 UI 추가
+- ErrorBoundary 적용 (error.tsx, global-error.tsx 신규)
 
-## 🎯 다음 작업 추천 (Phase 4)
+**P0-5: 코드 정리** ✅
+- Folders: depthMap → useMemo 최적화
+- Settings: downloadFile/handleExport 함수 추상화
+- Timeline: 버튼 스타일 함수화 (RANGE_OPTIONS)
 
-### ROADMAP 기준 우선순위:
+### Phase 4: 옵시디언 Core 확장 ✅ 확인 완료
 
-**1. Export/Import (높음 🔥)**
-```
-- Export Markdown ZIP (폴더 구조 유지)
-- Export JSON (전체 DB 덤프)
-- Import Obsidian vault (MD 파일 + 폴더)
-- Import Notion CSV
-- 자동 백업 (주간, Neon DB)
-```
+**이미 구현된 기능 확인:**
+- Export/Import: Markdown ZIP, JSON, Obsidian vault 모두 구현 완료
+- 고급 검색: 정규식, 폴더/태그 필터, 날짜 범위, 검색 히스토리 모두 구현 완료
 
-**2. 고급 검색 (중간 ⭐)**
-```
-- 정규식 검색
-- 검색 필터 조합 (태그 AND 폴더)
-- 검색 결과 정렬 옵션
-- 저장된 검색 (Saved Searches)
-```
-
-**3. 노트 템플릿 관리 페이지 (중간 ⭐)**
-```
-- /templates 페이지
-- 템플릿 CRUD UI
-- 템플릿 미리보기
-- 템플릿 변수 가이드
-```
+**추가 개선:**
+- 템플릿 페이지: 변수 가이드 + 본문 미리보기 추가
 
 ---
 
-## 📁 현재 프로젝트 상태
+## 🎯 다음 세션 작업 목록
 
-### 완료된 Phase
-- ✅ Phase 1: MVP (Wiki Links, Property DB, Graph View)
-- ✅ Phase 2-1: Daily Notes, Templates, Enhanced Search
-- ✅ Phase 2-2: Enhanced Backlinks, Unlinked Mentions
-- ✅ Phase 2-3: Graph View 개선
-- ✅ Phase 3-1: Calendar View
-- ✅ Phase 3-2: Dashboard
-- ✅ Phase 3-3: Timeline View
-- ✅ Phase 3-4: 속성 필터 강화 ← **방금 완료**
+### Phase 5: UX 개선 & 최적화
 
-### 다음 Phase
-- ⏳ Phase 4: 옵시디언 Core 확장 (Export/Import, 고급 검색, 템플릿 관리)
-
----
-
-## 🗂️ 주요 파일 위치
-
-### 필터 시스템 (방금 구현)
+**모바일 UX:**
 ```
-lib/
-├── filterEngine.ts              # 필터 쿼리 엔진
-├── stores/filterStore.ts        # 상태 관리
-├── hooks/useFilters.ts          # Hooks
-├── validations/
-│   ├── filter.ts                # Zod 스키마
-│   └── savedView.ts             # SavedView 스키마
-
-app/api/
-├── notes/filter/route.ts        # 필터 API
-└── saved-views/
-    ├── route.ts                 # GET/POST
-    └── [id]/route.ts            # GET/PATCH/DELETE
-
-components/
-├── FilterBuilder.tsx            # 핵심 UI
-├── PropertyFilterItem.tsx       # Codex
-├── FilterConditionToggle.tsx    # Codex
-├── SavedViewDialog.tsx          # Codex
-└── SavedViewButton.tsx          # Codex
+- [ ] 단일 컬럼 레이아웃 (모바일)
+- [ ] Bottom Sheet (폴더/백링크)
+- [ ] 스와이프 제스처
+- [ ] PWA 설정 (선택)
 ```
 
-### 기존 시스템
+**성능 최적화:**
 ```
-app/
-├── daily/page.tsx               # Daily Notes
-├── dashboard/page.tsx           # Dashboard
-├── timeline/page.tsx            # Timeline
-├── calendar/page.tsx            # Calendar
-├── graph/page.tsx               # Graph View
-├── db/page.tsx                  # Database View (필터 통합됨)
-└── templates/page.tsx           # Templates
+- [ ] 노트 목록 가상 스크롤
+- [ ] 이미지 lazy loading
+- [ ] Graph View 성능 개선 (큰 그래프)
+```
 
-components/
-├── NoteEditor.tsx               # Tiptap 에디터
-├── TableView.tsx                # DB 테이블 뷰
-├── ListView.tsx                 # DB 리스트 뷰
-└── ...
+**키보드 단축키:**
+```
+- [ ] 단축키 가이드 페이지
+- [ ] 커스터마이징 가능한 단축키 (이미 Settings에 구현됨 - 확인 필요)
+- [ ] Vim 모드 (선택)
 ```
 
 ---
 
-## 🧪 빠른 테스트 방법
+## 📁 이번 세션 수정/생성 파일
+
+```
+lib/hooks/useDashboard.ts       # 수정 - FolderDistribution export
+lib/hooks/useNotes.ts           # 수정 - useParseTags 훅 추가
+app/dashboard/page.tsx          # 수정 - 타입, 한글 에러, 빈 상태
+app/notes/[id]/page.tsx         # 수정 - useParseTags 적용, 한글 에러
+app/graph/page.tsx              # 수정 - 한글 에러
+app/timeline/page.tsx           # 수정 - 한글 에러, 버튼 스타일 함수화
+app/calendar/page.tsx           # 수정 - 한글 에러
+app/mindmap/page.tsx            # 수정 - 한글 에러
+app/templates/page.tsx          # 수정 - 한글 에러, 변수 가이드, 미리보기
+app/settings/page.tsx           # 수정 - 한글 메시지, 함수 추상화
+app/db/page.tsx                 # 수정 - 빈 상태 UI 추가
+app/folders/page.tsx            # 수정 - depthMap useMemo
+app/error.tsx                   # 신규 - ErrorBoundary
+app/global-error.tsx            # 신규 - Global ErrorBoundary
+```
+
+---
+
+## 🧪 빠른 테스트
 
 ```bash
 cd /Users/woocheolshin/Documents/Vibecoding/projects/second-brain-app
 
-# 개발 서버 시작
+# 개발 서버
 npm run dev
 
 # 빌드 테스트
 npm run build
-
-# DB 푸시 (스키마 변경 시)
-npx prisma db push
 ```
 
 **테스트 페이지:**
-- http://localhost:3004/db - 필터 기능 테스트
-- http://localhost:3004/dashboard - 대시보드
-- http://localhost:3004/timeline - 타임라인
-- http://localhost:3004/calendar - 캘린더
+- http://localhost:3004/templates - 변수 가이드, 미리보기 확인
+- http://localhost:3004/settings - 한글 메시지 확인
+- http://localhost:3004/db - 빈 상태 UI 확인
 
 ---
 
-## 📋 다음 세션 시작 시 할 일
+## 📋 다음 세션 시작 시
 
-### 1. 컨텍스트 로드
 ```
-"readme 읽고 시작해줘"
-```
-
-### 2. 최신 커밋 확인
-```bash
-git log --oneline -5
-git status
-```
-
-### 3. 작업 선택
-사용자에게 다음 중 선택 요청:
-1. Export/Import 구현 (높은 우선순위)
-2. 고급 검색 구현
-3. 템플릿 관리 페이지
-4. 기타 사용자 요청 작업
-
-### 4. Codex 협업 여부
-- 복잡한 작업이면 Claude 단독
-- 반복 작업 많으면 Codex 협업 제안
-
----
-
-## 🔍 참고 문서
-
-### 필수 읽기
-- `README.md` - 프로젝트 개요
-- `CLAUDE.md` - Claude 작업 프로토콜
-- `AI_WORKFLOW.md` - Claude + Codex 협업 전략
-- `docs/ROADMAP.md` - 전체 로드맵
-
-### 최근 구현 문서
-- `docs/FILTER_IMPLEMENTATION.md` - 필터 시스템 구현 상세
-- `docs/CHANGELOG.md` - 변경 내역
-
-### 프로젝트 스펙
-- `docs/PROJECT_SPEC.md` - 전체 프로젝트 스펙
-
----
-
-## 💡 Tip: 토큰 효율적인 세션 시작
-
-```markdown
-다음 세션 시작 시 이렇게 요청:
-
 "second brain app 작업 계속할게.
-NEXT_SESSION.md 읽고, 다음 작업 뭐 할지 추천해줘."
+NEXT_SESSION.md 읽고, Phase 5 모바일 UX부터 시작해줘."
 ```
 
-이렇게 하면:
-- ✅ 전체 README/CLAUDE.md 읽지 않고 빠른 시작
-- ✅ 최소 토큰으로 컨텍스트 로드
-- ✅ 바로 작업 선택 및 시작 가능
+---
+
+## 📊 전체 진행률
+
+| Phase | 상태 | 비고 |
+|-------|------|------|
+| Phase 0: 안정화 | ✅ 완료 | P0-1 ~ P0-5 |
+| Phase 1-3: MVP~노션 Core | ✅ 완료 | 이전 세션 |
+| Phase 4: 옵시디언 Core | ✅ 완료 | 대부분 이미 구현 |
+| Phase 5: UX 개선 | ⏳ 대기 | 다음 세션 |
+
+**예상 남은 시간**: Phase 5 약 4-5시간
 
 ---
 
-## 🚀 추천 다음 작업: Export/Import
-
-**이유:**
-1. ROADMAP 높은 우선순위 (🔥)
-2. 사용자 요구 많음 (백업 필수)
-3. 독립적 기능 (다른 부분 영향 적음)
-4. Claude + Codex 협업 가능
-
-**작업 범위:**
-- Export Markdown ZIP
-- Export JSON
-- Import Obsidian (.md files)
-- Import Notion CSV
-
-**예상 시간:** 2-3시간 (Claude + Codex 협업)
-
----
-
-## 📞 협업 준비
-
-**Codex 대기 중이라면:**
-- Export/Import는 Claude 설계 + Codex 보조 작업 가능
-- ZIP 생성, 파일 파싱 등 반복 작업 → Codex
-- 복잡한 데이터 변환 로직 → Claude
-
----
-
-**Last Updated**: 2025-12-31
+**Last Updated**: 2026-01-22
 **Next Session Ready**: ✅
-**Recommended Next**: Export/Import 구현
+**Recommended Next**: Phase 5 모바일 UX → 성능 최적화 → 키보드 단축키

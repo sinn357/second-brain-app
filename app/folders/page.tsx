@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useFolders, useCreateFolder, useDeleteFolder } from '@/lib/hooks/useFolders'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,16 +18,29 @@ export default function FoldersPage() {
   const [parentId, setParentId] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
 
-  const depthMap = new Map<string, number>()
-  const getDepth = (id: string | null): number => {
+  // 폴더 깊이 맵을 useMemo로 최적화
+  const depthMap = useMemo(() => {
+    const map = new Map<string, number>()
+
+    const calculateDepth = (id: string | null): number => {
+      if (!id) return 0
+      if (map.has(id)) return map.get(id) ?? 0
+      const folder = folders.find((f) => f.id === id)
+      if (!folder) return 0
+      const depth = calculateDepth(folder.parentId) + 1
+      map.set(id, depth)
+      return depth
+    }
+
+    // 모든 폴더의 깊이를 미리 계산
+    folders.forEach((folder) => calculateDepth(folder.id))
+    return map
+  }, [folders])
+
+  const getDepth = useCallback((id: string | null): number => {
     if (!id) return 0
-    if (depthMap.has(id)) return depthMap.get(id) ?? 0
-    const folder = folders.find((f) => f.id === id)
-    if (!folder) return 0
-    const depth = getDepth(folder.parentId) + 1
-    depthMap.set(id, depth)
-    return depth
-  }
+    return depthMap.get(id) ?? 0
+  }, [depthMap])
 
   const parentDepth = parentId ? getDepth(parentId) : 0
   const nextDepth = parentDepth + 1

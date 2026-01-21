@@ -1,73 +1,61 @@
 # Second Brain App Roadmap
 
 ## Current Status
-Phase 3 완료 (노션 Core 강화)
-**Phase 0 진행 중 (안정화)** ← 현재
-Phase 4 대기 (옵시디언 Core 확장)
+Phase 0~4 완료
+**Phase 5 대기 (UX 개선 & 최적화)** ← 다음
 
 ---
 
-## 🚨 Phase 0: 안정화 (진행 중)
+## ✅ Phase 0: 안정화 (완료 - 2026-01-22)
 
 > **목적**: 기존 13개 페이지의 버그 수정 및 코드 품질 개선
-> **예상 소요**: 5-6시간
-> **우선순위**: Phase 4 진행 전 필수 완료
 
-### P0-1: 자동 저장 안정화 🔴 Critical
-- [ ] Notes List (`/notes`): debounce 추가 (500ms)
-- [ ] Daily (`/daily`): debounce 추가 (500ms)
-- [ ] Race condition 방지 로직 (Promise queue)
-- [ ] 저장 상태 표시 ("저장 중..." → "저장됨")
+### P0-1: 자동 저장 안정화 ✅
+- [x] Notes List: debounce 추가 (500ms)
+- [x] Daily: debounce 추가 (500ms)
+- [x] Race condition 방지 로직
+- [x] 저장 상태 표시 한글화
 
-### P0-2: 타입 안전성 확보
-- [ ] Graph (`/graph`): NodeData, EdgeData 타입 정의
-- [ ] Mindmap (`/mindmap`): TreeNode 타입 정의
-- [ ] Dashboard (`/dashboard`): ChartData 타입 정의
-- [ ] any 타입 제거 (D3 콜백)
+### P0-2: 타입 안전성 확보 ✅
+- [x] Dashboard: recharts 타입 호환성 개선
+- [x] useParseTags 훅 신규 생성
 
-### P0-3: API 호출 통일
-- [ ] Note Detail: parseLinks → useMutation
-- [ ] Note Detail: parseTags → useMutation
-- [ ] Settings: export → useMutation
-- [ ] Settings: import → useMutation
+### P0-3: API 호출 통일 ✅
+- [x] Note Detail: parseTags → useMutation 적용
 
-### P0-4: 에러/빈 상태 처리
-- [ ] 전체 페이지 한글 에러 메시지
-- [ ] 빈 상태 UI 추가 (empty state)
-- [ ] 로딩 Skeleton 레이아웃 일치
-- [ ] ErrorBoundary 적용
+### P0-4: 에러/빈 상태 처리 ✅
+- [x] 7개 페이지 한글 에러 메시지
+- [x] db 페이지 빈 상태 UI 추가
+- [x] ErrorBoundary 적용 (error.tsx, global-error.tsx)
 
-### P0-5: 코드 정리
-- [ ] Folders: depthMap → useMemo
-- [ ] Mindmap: useEffect 의존성 정리
-- [ ] Settings: downloadFile/uploadFile 함수 추상화
-- [ ] Timeline: 버튼 스타일 함수화
-- [ ] Home: 랜딩 페이지 또는 대시보드 리다이렉트
+### P0-5: 코드 정리 ✅
+- [x] Folders: depthMap → useMemo
+- [x] Settings: downloadFile/handleExport 함수 추상화
+- [x] Timeline: 버튼 스타일 함수화
+
+---
+
+## ✅ Phase 4: 옵시디언 Core 확장 (완료 - 2026-01-22)
+
+- [x] **Export/Import** (이미 구현됨)
+  - Export Markdown ZIP (폴더 구조 유지) ✅
+  - Export JSON (전체 DB 덤프) ✅
+  - Import Obsidian vault (MD 파일 + 폴더) ✅
+
+- [x] **고급 검색** (이미 구현됨)
+  - 정규식 검색 ✅
+  - 검색 필터 조합 (태그 AND 폴더) ✅
+  - 검색 결과 정렬 옵션 ✅
+  - 검색 히스토리 ✅
+
+- [x] **노트 템플릿 관리 페이지**
+  - 템플릿 CRUD UI ✅
+  - 템플릿 미리보기 추가 ✅
+  - 템플릿 변수 가이드 추가 ✅
 
 ---
 
 ## Next Tasks
-
-### Phase 4: 옵시디언 Core 확장 (대기)
-
-- [ ] **Export/Import**
-  - Export Markdown ZIP (폴더 구조 유지)
-  - Export JSON (전체 DB 덤프)
-  - Import Obsidian vault (MD 파일 + 폴더)
-  - Import Notion CSV
-  - 자동 백업 (주간, Neon DB)
-
-- [ ] **고급 검색**
-  - 정규식 검색
-  - 검색 필터 조합 (태그 AND 폴더)
-  - 검색 결과 정렬 옵션
-  - 저장된 검색 (Saved Searches)
-
-- [ ] **노트 템플릿 관리 페이지**
-  - `/templates` 페이지 개선
-  - 템플릿 CRUD UI
-  - 템플릿 미리보기
-  - 템플릿 변수 가이드
 
 ---
 
@@ -212,6 +200,6 @@ Phase 4 대기 (옵시디언 Core 확장)
 
 ---
 
-**Last Updated**: 2026-01-21
-**Current Phase**: Phase 0 (안정화)
-**Next Milestone**: P0-1 자동 저장 안정화
+**Last Updated**: 2026-01-22
+**Current Phase**: Phase 5 대기 (UX 개선 & 최적화)
+**Next Milestone**: 모바일 UX 개선

@@ -19,7 +19,7 @@ interface TopConnectedNote {
   totalLinks: number
 }
 
-interface FolderDistribution {
+export interface FolderDistribution {
   id: string
   name: string
   count: number

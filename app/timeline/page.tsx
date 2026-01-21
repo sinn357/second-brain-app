@@ -8,9 +8,20 @@ import { Badge } from '@/components/ui/badge'
 import { Clock, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
+type RangeType = 'all' | 'week' | 'month'
+
+const RANGE_OPTIONS: { value: RangeType; label: string }[] = [
+  { value: 'all', label: 'All Time' },
+  { value: 'week', label: 'This Week' },
+  { value: 'month', label: 'This Month' },
+]
+
 export default function TimelinePage() {
-  const [range, setRange] = useState<'all' | 'week' | 'month'>('all')
+  const [range, setRange] = useState<RangeType>('all')
   const { data: timelineData, isLoading, error } = useTimeline(range)
+
+  const getRangeButtonClass = (buttonRange: RangeType) =>
+    range === buttonRange ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''
 
   if (isLoading) {
     return (
@@ -32,8 +43,8 @@ export default function TimelinePage() {
       <div className="page-shell">
         <div className="page-content max-w-4xl">
           <div className="panel p-6">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-          <p className="dark:text-indigo-100">{error.message}</p>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">오류</h1>
+          <p className="dark:text-indigo-100">타임라인을 불러오는데 실패했습니다: {error.message}</p>
           </div>
         </div>
       </div>
@@ -60,27 +71,16 @@ export default function TimelinePage() {
 
         {/* 필터 */}
         <div className="flex gap-2 mb-6">
-          <Button
-            variant={range === 'all' ? 'default' : 'outline'}
-            onClick={() => setRange('all')}
-            className={range === 'all' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}
-          >
-            All Time
-          </Button>
-          <Button
-            variant={range === 'week' ? 'default' : 'outline'}
-            onClick={() => setRange('week')}
-            className={range === 'week' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}
-          >
-            This Week
-          </Button>
-          <Button
-            variant={range === 'month' ? 'default' : 'outline'}
-            onClick={() => setRange('month')}
-            className={range === 'month' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}
-          >
-            This Month
-          </Button>
+          {RANGE_OPTIONS.map(({ value, label }) => (
+            <Button
+              key={value}
+              variant={range === value ? 'default' : 'outline'}
+              onClick={() => setRange(value)}
+              className={getRangeButtonClass(value)}
+            >
+              {label}
+            </Button>
+          ))}
         </div>
 
         {/* Timeline */}

@@ -45,65 +45,51 @@ export default function SettingsPage() {
     return () => window.removeEventListener('keydown', handler)
   }, [recordingId, setShortcut])
 
-  // Export Markdown ZIP
-  const handleExportMarkdown = async () => {
+  // 파일 다운로드 유틸리티
+  const downloadFile = (blob: Blob, filename: string) => {
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  }
+
+  // Export 공통 로직
+  const handleExport = async (
+    endpoint: string,
+    extension: string,
+    successMessage: string,
+    errorMessage: string
+  ) => {
     try {
       setIsExporting(true)
-      const response = await fetch('/api/export/markdown')
+      const response = await fetch(endpoint)
 
       if (!response.ok) {
         throw new Error('Export failed')
       }
 
-      // 파일 다운로드
       const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `second-brain-${new Date().toISOString().split('T')[0]}.zip`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
+      const filename = `second-brain-${new Date().toISOString().split('T')[0]}.${extension}`
+      downloadFile(blob, filename)
 
-      toast.success('Markdown ZIP exported successfully')
+      toast.success(successMessage)
     } catch (error) {
-      console.error('Export markdown error:', error)
-      toast.error('Failed to export markdown')
+      console.error(`Export ${extension} error:`, error)
+      toast.error(errorMessage)
     } finally {
       setIsExporting(false)
     }
   }
 
-  // Export JSON
-  const handleExportJSON = async () => {
-    try {
-      setIsExporting(true)
-      const response = await fetch('/api/export/json')
+  const handleExportMarkdown = () =>
+    handleExport('/api/export/markdown', 'zip', 'Markdown ZIP 내보내기 완료', 'Markdown 내보내기 실패')
 
-      if (!response.ok) {
-        throw new Error('Export failed')
-      }
-
-      // 파일 다운로드
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `second-brain-${new Date().toISOString().split('T')[0]}.json`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
-
-      toast.success('JSON exported successfully')
-    } catch (error) {
-      console.error('Export JSON error:', error)
-      toast.error('Failed to export JSON')
-    } finally {
-      setIsExporting(false)
-    }
-  }
+  const handleExportJSON = () =>
+    handleExport('/api/export/json', 'json', 'JSON 내보내기 완료', 'JSON 내보내기 실패')
 
   // Import Obsidian Vault
   const handleImportObsidian = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,14 +112,14 @@ export default function SettingsPage() {
         throw new Error(result.error || 'Import failed')
       }
 
-      toast.success(`Imported ${result.imported} notes from Obsidian vault`)
+      toast.success(`Obsidian에서 ${result.imported}개 노트 가져오기 완료`)
 
       if (result.errors && result.errors.length > 0) {
         console.warn('Import errors:', result.errors)
       }
     } catch (error) {
       console.error('Import Obsidian error:', error)
-      toast.error('Failed to import Obsidian vault')
+      toast.error('Obsidian 가져오기 실패')
     } finally {
       setIsImporting(false)
       if (obsidianInputRef.current) {
@@ -150,7 +136,7 @@ export default function SettingsPage() {
     // Confirm replace mode
     if (importMode === 'replace') {
       const confirmed = window.confirm(
-        '⚠️ This will DELETE all existing data and replace with imported data. Are you sure?'
+        '⚠️ 기존 데이터가 모두 삭제되고 가져온 데이터로 대체됩니다. 계속하시겠습니까?'
       )
       if (!confirmed) {
         if (jsonInputRef.current) {
@@ -177,11 +163,11 @@ export default function SettingsPage() {
         throw new Error(result.error || 'Import failed')
       }
 
-      toast.success(`JSON data imported successfully (${importMode} mode)`)
+      toast.success(`JSON 가져오기 완료 (${importMode === 'merge' ? '병합' : '교체'} 모드)`)
       console.log('Import stats:', result.stats)
     } catch (error) {
       console.error('Import JSON error:', error)
-      toast.error('Failed to import JSON data')
+      toast.error('JSON 가져오기 실패')
     } finally {
       setIsImporting(false)
       if (jsonInputRef.current) {

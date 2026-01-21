@@ -12,7 +12,8 @@ import { useDeleteNote, useNote, useParseLinks, useUpdateNote } from '@/lib/hook
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Trash2 } from 'lucide-react'
+import { Trash2, FolderOpen, ChevronLeft, X } from 'lucide-react'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
 const AUTO_SAVE_DELAY = 500 // ms
 
@@ -133,11 +134,118 @@ function NotesPageContent() {
     }
   }
 
+  // 모바일: 노트 선택 시 에디터 뷰로 전환
+  const [mobileView, setMobileView] = useState<'list' | 'editor'>('list')
+
+  // 노트 선택 시 모바일에서 에디터 뷰로 전환
+  const handleMobileSelectNote = (id: string) => {
+    handleSelectNote(id)
+    setMobileView('editor')
+  }
+
+  // 모바일 뒤로가기
+  const handleMobileBack = () => {
+    setMobileView('list')
+    const nextParams = new URLSearchParams(searchParams.toString())
+    nextParams.delete('noteId')
+    router.push(`/notes?${nextParams.toString()}`, { scroll: false })
+  }
+
   return (
     <div className="page-shell">
       <QuickAddButton />
 
-      <div className="page-content grid grid-cols-12 gap-8">
+      {/* 모바일: 단일 컬럼 레이아웃 */}
+      <div className="page-content lg:hidden">
+        {mobileView === 'list' ? (
+          <div className="space-y-4">
+            {/* 모바일 헤더 + 폴더 버튼 */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="page-title text-indigo-900 dark:text-indigo-100">
+                  {folderId ? '폴더 노트' : '모든 노트'}
+                </h1>
+                <p className="page-subtitle">노트를 탐색하고 연결하세요.</p>
+              </div>
+              {/* 폴더 Bottom Sheet */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <FolderOpen className="h-4 w-4 mr-2" />
+                    폴더
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
+                  <SheetHeader>
+                    <SheetTitle>폴더 선택</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4 overflow-y-auto max-h-[calc(70vh-80px)]">
+                    <FolderTree />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+            {/* 노트 리스트 */}
+            <div className="panel p-4">
+              <NoteList folderId={folderId} selectedId={noteId} onSelect={handleMobileSelectNote} />
+            </div>
+          </div>
+        ) : (
+          /* 모바일 에디터 뷰 */
+          <div className="space-y-4">
+            {/* 뒤로가기 + 저장 상태 */}
+            <div className="flex items-center justify-between">
+              <Button variant="ghost" size="sm" onClick={handleMobileBack}>
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                목록
+              </Button>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-indigo-500 dark:text-indigo-300">
+                  {saveStatus === 'saving' && '저장 중...'}
+                  {saveStatus === 'saved' && '✓ 저장됨'}
+                  {saveStatus === 'error' && '⚠ 실패'}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDelete}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            {/* 에디터 */}
+            <div className="panel p-4">
+              {isNoteLoading ? (
+                <Skeleton className="h-96" />
+              ) : note ? (
+                <div className="space-y-4">
+                  <Input
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    placeholder="노트 제목"
+                    className="text-xl font-bold border-none p-0 focus-visible:ring-0 dark:bg-indigo-900 dark:text-indigo-100"
+                  />
+                  <NoteEditorAdvanced
+                    content={body}
+                    onUpdate={setBody}
+                    currentNoteId={noteId}
+                    placeholder="내용을 입력하세요..."
+                  />
+                </div>
+              ) : (
+                <div className="text-center text-indigo-600 dark:text-indigo-300 py-8">
+                  노트를 불러올 수 없습니다.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 데스크톱: 3컬럼 레이아웃 */}
+      <div className="page-content hidden lg:grid grid-cols-12 gap-8">
         {/* 좌측: 폴더 트리 */}
         <aside className="col-span-2 panel p-4">
           <FolderTree />

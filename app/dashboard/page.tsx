@@ -33,8 +33,8 @@ export default function DashboardPage() {
       <div className="page-shell">
         <div className="page-content">
         <div className="panel p-6">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-          <p className="dark:text-indigo-100">{error.message}</p>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">오류</h1>
+          <p className="dark:text-indigo-100">대시보드를 불러오는데 실패했습니다: {error.message}</p>
         </div>
         </div>
       </div>
@@ -170,7 +170,7 @@ export default function DashboardPage() {
                   ))
                 ) : (
                   <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                    No connected notes yet
+                    연결된 노트가 없습니다
                   </p>
                 )}
               </div>
@@ -187,13 +187,13 @@ export default function DashboardPage() {
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={folderDistribution as any}
+                      data={folderDistribution as unknown as Record<string, unknown>[]}
                       dataKey="count"
                       nameKey="name"
                       cx="50%"
                       cy="50%"
                       outerRadius={80}
-                      label={(entry: any) => `${entry.name} (${entry.count})`}
+                      label={({ name, value }) => `${name} (${value})`}
                     >
                       {folderDistribution.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -211,7 +211,7 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               ) : (
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                  No folders yet
+                  폴더가 없습니다
                 </p>
               )}
             </CardContent>

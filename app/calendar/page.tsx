@@ -27,8 +27,8 @@ export default function CalendarPage() {
       <div className="page-shell">
         <div className="page-content">
           <div className="panel p-6">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-          <p className="dark:text-indigo-100">{error.message}</p>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">오류</h1>
+          <p className="dark:text-indigo-100">캘린더를 불러오는데 실패했습니다: {error.message}</p>
           </div>
         </div>
       </div>

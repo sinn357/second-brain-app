@@ -7,7 +7,7 @@ import { FilterBuilder } from '@/components/FilterBuilder'
 import { useFilterStore } from '@/lib/stores/filterStore'
 import { useFilteredNotes } from '@/lib/hooks/useFilters'
 import { Button } from '@/components/ui/button'
-import { Table, List } from 'lucide-react'
+import { Table, List, FileText } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function DatabasePage() {
@@ -64,6 +64,16 @@ export default function DatabasePage() {
         <div className="panel p-6">
           {isLoading ? (
             <Skeleton className="h-96" />
+          ) : filteredNotes.length === 0 ? (
+            <div className="text-center py-12">
+              <FileText className="w-16 h-16 text-indigo-300 dark:text-indigo-700 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100 mb-2">
+                {isEmpty() ? '노트가 없습니다' : '필터 결과가 없습니다'}
+              </h3>
+              <p className="text-sm text-indigo-700 dark:text-indigo-300">
+                {isEmpty() ? '첫 번째 노트를 만들어보세요' : '다른 필터 조건을 시도해보세요'}
+              </p>
+            </div>
           ) : (
             <>
               {view === 'table' ? (

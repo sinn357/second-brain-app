@@ -3,7 +3,7 @@
 import { useTemplates } from '@/lib/hooks/useTemplates'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { FileText, Plus, Edit2, Trash2, Star } from 'lucide-react'
+import { FileText, Plus, Edit2, Trash2, Star, Info } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { CreateTemplateDialog } from '@/components/CreateTemplateDialog'
 import { EditTemplateDialog } from '@/components/EditTemplateDialog'
@@ -32,8 +32,8 @@ export default function TemplatesPage() {
       <div className="page-shell">
         <div className="page-content">
           <div className="panel p-6">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
-          <p className="dark:text-indigo-100">{error.message}</p>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">오류</h1>
+          <p className="dark:text-indigo-100">템플릿을 불러오는데 실패했습니다: {error.message}</p>
           </div>
         </div>
       </div>
@@ -56,6 +56,25 @@ export default function TemplatesPage() {
             </Button>
           </CreateTemplateDialog>
         </div>
+
+        {/* 템플릿 변수 가이드 */}
+        <Card className="panel">
+          <CardHeader className="py-3">
+            <CardTitle className="flex items-center gap-2 text-sm text-indigo-900 dark:text-indigo-100">
+              <Info className="w-4 h-4" />
+              템플릿 변수 가이드
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="py-2">
+            <div className="flex flex-wrap gap-3 text-xs">
+              <code className="px-2 py-1 bg-indigo-100 dark:bg-indigo-800 rounded">{'{{date}}'} - 오늘 날짜</code>
+              <code className="px-2 py-1 bg-indigo-100 dark:bg-indigo-800 rounded">{'{{time}}'} - 현재 시간</code>
+              <code className="px-2 py-1 bg-indigo-100 dark:bg-indigo-800 rounded">{'{{datetime}}'} - 날짜+시간</code>
+              <code className="px-2 py-1 bg-indigo-100 dark:bg-indigo-800 rounded">{'{{title}}'} - 노트 제목</code>
+              <code className="px-2 py-1 bg-indigo-100 dark:bg-indigo-800 rounded">{'{{cursor}}'} - 커서 위치</code>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* 템플릿 그리드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -80,7 +99,12 @@ export default function TemplatesPage() {
                   </CardDescription>
                 )}
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
+                {/* 미리보기 */}
+                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/50 rounded text-xs text-indigo-700 dark:text-indigo-300 line-clamp-3 font-mono whitespace-pre-wrap">
+                  {template.content?.substring(0, 150) || '(빈 템플릿)'}
+                  {template.content?.length > 150 && '...'}
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-indigo-600 dark:text-indigo-400">
                     {new Date(template.createdAt).toLocaleDateString()}
@@ -118,10 +142,10 @@ export default function TemplatesPage() {
           <div className="text-center py-12">
             <FileText className="w-16 h-16 text-indigo-300 dark:text-indigo-700 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100 mb-2">
-              No templates yet
+              템플릿이 없습니다
             </h3>
             <p className="text-sm text-indigo-700 dark:text-indigo-300 mb-4">
-              Create your first template to get started
+              첫 번째 템플릿을 만들어보세요
             </p>
             <CreateTemplateDialog>
               <Button className="gradient-mesh hover-glow text-white">
