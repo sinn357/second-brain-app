@@ -1,26 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useCreateNote } from '@/lib/hooks/useNotes'
 import { useFolders } from '@/lib/hooks/useFolders'
 import { useTemplates } from '@/lib/hooks/useTemplates'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 
 export function QuickAddButton() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const createNote = useCreateNote()
   const { data: folders } = useFolders()
   const { data: templates = [] } = useTemplates()
   const [isOpen, setIsOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
 
-  // Inbox 폴더 찾기 (없으면 null)
-  const inboxFolder = folders?.find((f) => f.name.toLowerCase() === 'inbox')
+  const defaultFolder = useMemo(
+    () => folders?.find((folder) => folder.isDefault),
+    [folders]
+  )
+  const selectedFolderId = searchParams.get('folderId') || defaultFolder?.id || null
 
   const handleCreateWithTemplate = async (templateId: string | null) => {
     setIsCreating(true)
@@ -42,13 +46,13 @@ export function QuickAddButton() {
       const note = await createNote.mutateAsync({
         title,
         body: content,
-        folderId: inboxFolder?.id || null,
+        folderId: selectedFolderId,
       })
 
       setIsOpen(false)
       const nextParams = new URLSearchParams({ noteId: note.id })
-      if (inboxFolder?.id) {
-        nextParams.set('folderId', inboxFolder.id)
+      if (selectedFolderId) {
+        nextParams.set('folderId', selectedFolderId)
       }
       router.push(`/notes?${nextParams.toString()}`)
     } catch (error) {
@@ -63,7 +67,7 @@ export function QuickAddButton() {
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="fixed top-24 right-6 z-40 gradient-mesh hover-glow text-white shadow-lg"
+        className="fixed bottom-6 right-6 lg:right-10 z-40 gradient-mesh hover-glow text-white shadow-lg"
         size="lg"
       >
         <Plus className="h-5 w-5 mr-2" />

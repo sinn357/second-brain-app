@@ -6,6 +6,7 @@ interface Folder {
   name: string
   parentId: string | null
   position: number
+  isDefault: boolean
   children?: Folder[]
   _count?: {
     notes: number

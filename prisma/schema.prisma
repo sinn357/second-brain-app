@@ -16,6 +16,8 @@ model Note {
   title     String   @db.VarChar(500)
   body      String   @db.Text
   folderId  String?
+  isPinned  Boolean  @default(false)
+  pinnedAt  DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -38,6 +40,7 @@ model Folder {
   name     String   @db.VarChar(200)
   parentId String?
   position Int      @default(0)
+  isDefault Boolean @default(false)
 
   // Relations
   parent   Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)

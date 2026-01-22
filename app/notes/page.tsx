@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { NoteList } from '@/components/NoteList'
 import { QuickAddButton } from '@/components/QuickAddButton'
 import { FolderTree } from '@/components/FolderTree'
@@ -12,8 +12,12 @@ import { useDeleteNote, useNote, useParseLinks, useUpdateNote } from '@/lib/hook
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Trash2, FolderOpen, ChevronLeft, X } from 'lucide-react'
+import { Trash2, FolderOpen, ChevronLeft } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { useFolders } from '@/lib/hooks/useFolders'
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 const AUTO_SAVE_DELAY = 500 // ms
 const MIN_FOLDER_WIDTH = 160
@@ -26,10 +30,64 @@ function NotesPageContent() {
   const router = useRouter()
   const folderId = searchParams.get('folderId') || undefined
   const noteId = searchParams.get('noteId') || undefined
+  const { data: folders = [] } = useFolders()
   const { data: note, isLoading: isNoteLoading } = useNote(noteId || '')
   const updateNote = useUpdateNote(noteId || '')
   const deleteNote = useDeleteNote()
   const parseLinks = useParseLinks()
+  const queryClient = useQueryClient()
+
+  const defaultFolder = useMemo(
+    () => folders.find((folder) => folder.isDefault) ?? null,
+    [folders]
+  )
+  const selectedFolder = useMemo(
+    () => folders.find((folder) => folder.id === folderId) ?? defaultFolder,
+    [folders, folderId, defaultFolder]
+  )
+  const selectedFolderId = selectedFolder?.id
+
+  useEffect(() => {
+    if (!folderId && defaultFolder?.id) {
+      const nextParams = new URLSearchParams(searchParams.toString())
+      nextParams.set('folderId', defaultFolder.id)
+      router.replace(`/notes?${nextParams.toString()}`, { scroll: false })
+    }
+  }, [folderId, defaultFolder?.id, searchParams, router])
+
+  const moveNoteMutation = useMutation({
+    mutationFn: async ({ id, folderId: nextFolderId }: { id: string; folderId: string | null }) => {
+      const response = await fetch(`/api/notes/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderId: nextFolderId }),
+      })
+      const data = await response.json()
+      if (!data.success) throw new Error(data.error)
+      return data.note
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes'] })
+    },
+  })
+
+  const updateFolderMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { parentId?: string | null; position?: number } }) => {
+      const response = await fetch(`/api/folders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      const resData = await response.json()
+      if (!resData.success) throw new Error(resData.error)
+      return resData.folder
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['folders'] })
+    },
+  })
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
@@ -53,8 +111,8 @@ function NotesPageContent() {
   const handleSelectNote = (id: string) => {
     const nextParams = new URLSearchParams(searchParams.toString())
     nextParams.set('noteId', id)
-    if (folderId) {
-      nextParams.set('folderId', folderId)
+    if (selectedFolderId) {
+      nextParams.set('folderId', selectedFolderId)
     }
     router.push(`/notes?${nextParams.toString()}`, { scroll: false })
   }
@@ -163,6 +221,139 @@ function NotesPageContent() {
     router.push(`/notes?${nextParams.toString()}`, { scroll: false })
   }
 
+  const folderById = useMemo(() => {
+    return new Map(folders.map((folder) => [folder.id, folder]))
+  }, [folders])
+
+  const getSiblings = (parentId: string | null) => {
+    return folders
+      .filter((folder) => folder.parentId === parentId)
+      .sort((a, b) => a.position - b.position)
+  }
+
+  const getMovableSiblings = (parentId: string | null) => {
+    const siblings = getSiblings(parentId)
+    const hasDefault = siblings.some((folder) => folder.isDefault)
+    return {
+      movable: siblings.filter((folder) => !folder.isDefault),
+      offset: hasDefault ? 1 : 0,
+    }
+  }
+
+  const isDescendant = (parentId: string, targetId: string) => {
+    let current = folderById.get(targetId)?.parentId ?? null
+    while (current) {
+      if (current === parentId) return true
+      current = folderById.get(current)?.parentId ?? null
+    }
+    return false
+  }
+
+  const applyFolderUpdates = async (
+    updates: Array<{ id: string; data: { parentId?: string | null; position?: number } }>
+  ) => {
+    await Promise.all(updates.map((update) => updateFolderMutation.mutateAsync(update)))
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over) return
+
+    const activeType = active.data.current?.type
+    const overType = over.data.current?.type
+
+    if (activeType === 'note' && (overType === 'folder-drop' || overType === 'folder')) {
+      const noteId = active.data.current?.id as string | undefined
+      const nextFolderId = over.data.current?.id as string | undefined
+      if (!noteId || !nextFolderId) return
+      if (active.data.current?.folderId === nextFolderId) return
+      moveNoteMutation.mutate({ id: noteId, folderId: nextFolderId })
+      return
+    }
+
+    if (activeType !== 'folder') return
+
+    const activeFolderId = active.data.current?.id as string | undefined
+    if (!activeFolderId) return
+    const activeFolder = folderById.get(activeFolderId)
+    if (!activeFolder || activeFolder.isDefault) return
+
+    if (overType === 'folder-drop') {
+      const nextParentId = over.data.current?.id as string | null
+      if (nextParentId === activeFolder.parentId) return
+      if (nextParentId && isDescendant(activeFolderId, nextParentId)) return
+
+      const oldGroup = getMovableSiblings(activeFolder.parentId)
+      const newGroup = getMovableSiblings(nextParentId)
+      const oldSiblings = oldGroup.movable.filter((folder) => folder.id !== activeFolderId)
+      const newSiblings = newGroup.movable.filter((folder) => folder.id !== activeFolderId)
+      const updatedNew = [...newSiblings, activeFolder]
+
+      const updates = [
+        ...oldSiblings.map((folder, index) => ({
+          id: folder.id,
+          data: { position: index + oldGroup.offset },
+        })),
+        ...updatedNew.map((folder, index) => ({
+          id: folder.id,
+          data: {
+            parentId: folder.id === activeFolderId ? nextParentId : folder.parentId,
+            position: index + newGroup.offset,
+          },
+        })),
+      ]
+
+      void applyFolderUpdates(updates)
+      return
+    }
+
+    if (overType === 'folder') {
+      const overFolderId = over.data.current?.id as string | undefined
+      if (!overFolderId) return
+      const overFolder = folderById.get(overFolderId)
+      if (!overFolder) return
+      if (overFolder.parentId !== activeFolder.parentId) {
+        if (isDescendant(activeFolderId, overFolderId)) return
+        const nextParentId = overFolderId
+        const oldGroup = getMovableSiblings(activeFolder.parentId)
+        const newGroup = getMovableSiblings(nextParentId)
+        const oldSiblings = oldGroup.movable.filter((folder) => folder.id !== activeFolderId)
+        const newSiblings = newGroup.movable.filter((folder) => folder.id !== activeFolderId)
+        const updatedNew = [...newSiblings, activeFolder]
+
+        const updates = [
+          ...oldSiblings.map((folder, index) => ({
+            id: folder.id,
+            data: { position: index + oldGroup.offset },
+          })),
+          ...updatedNew.map((folder, index) => ({
+            id: folder.id,
+            data: {
+              parentId: folder.id === activeFolderId ? nextParentId : folder.parentId,
+              position: index + newGroup.offset,
+            },
+          })),
+        ]
+
+        void applyFolderUpdates(updates)
+        return
+      }
+
+      const { movable, offset } = getMovableSiblings(activeFolder.parentId)
+      const siblings = movable
+      const oldIndex = siblings.findIndex((folder) => folder.id === activeFolderId)
+      const newIndex = siblings.findIndex((folder) => folder.id === overFolderId)
+      if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return
+
+      const reordered = arrayMove(siblings, oldIndex, newIndex)
+      const updates = reordered.map((folder, index) => ({
+        id: folder.id,
+        data: { position: index + offset },
+      }))
+      void applyFolderUpdates(updates)
+    }
+  }
+
   const [folderWidth, setFolderWidth] = useState(180)
   const [listWidth, setListWidth] = useState(300)
 
@@ -221,6 +412,7 @@ function NotesPageContent() {
 
   return (
     <div className="page-shell">
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <QuickAddButton />
 
       {/* 모바일: 단일 컬럼 레이아웃 */}
@@ -231,7 +423,7 @@ function NotesPageContent() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="page-title text-indigo-900 dark:text-indigo-100">
-                  {folderId ? '폴더 노트' : '모든 노트'}
+                  {selectedFolder ? selectedFolder.name : '모든 노트'}
                 </h1>
                 <p className="page-subtitle">노트를 탐색하고 연결하세요.</p>
               </div>
@@ -248,14 +440,14 @@ function NotesPageContent() {
                     <SheetTitle>폴더 선택</SheetTitle>
                   </SheetHeader>
                   <div className="mt-4 overflow-y-auto max-h-[calc(70vh-80px)]">
-                    <FolderTree />
+                    <FolderTree selectedFolderId={selectedFolderId} />
                   </div>
                 </SheetContent>
               </Sheet>
             </div>
             {/* 노트 리스트 (스와이프 삭제 지원) */}
             <div className="panel p-4">
-              <NoteList folderId={folderId} selectedId={noteId} onSelect={handleMobileSelectNote} enableSwipe />
+              <NoteList folderId={selectedFolderId} selectedId={noteId} onSelect={handleMobileSelectNote} enableSwipe />
             </div>
           </div>
         ) : (
@@ -322,7 +514,7 @@ function NotesPageContent() {
       >
         {/* 좌측: 폴더 트리 */}
         <aside className="panel p-3">
-          <FolderTree />
+          <FolderTree selectedFolderId={selectedFolderId} />
         </aside>
 
         {/* 리사이즈 핸들: 폴더 */}
@@ -340,12 +532,12 @@ function NotesPageContent() {
           <div className="page-header">
             <div>
               <h1 className="page-title text-indigo-900 dark:text-indigo-100">
-                {folderId ? '폴더 노트' : '모든 노트'}
+                {selectedFolder ? selectedFolder.name : '모든 노트'}
               </h1>
               <p className="page-subtitle">노트를 빠르게 탐색하고 연결하세요.</p>
             </div>
           </div>
-          <NoteList folderId={folderId} selectedId={noteId} onSelect={handleSelectNote} />
+          <NoteList folderId={selectedFolderId} selectedId={noteId} onSelect={handleSelectNote} />
         </section>
 
         {/* 리사이즈 핸들: 노트 리스트 */}
@@ -407,6 +599,7 @@ function NotesPageContent() {
           )}
         </section>
       </div>
+      </DndContext>
     </div>
   )
 }

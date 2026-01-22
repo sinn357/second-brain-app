@@ -6,6 +6,8 @@ interface Note {
   title: string
   body: string
   folderId: string | null
+  isPinned: boolean
+  pinnedAt: Date | null
   createdAt: Date
   updatedAt: Date
   folder?: {

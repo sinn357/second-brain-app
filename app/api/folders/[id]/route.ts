@@ -16,6 +16,21 @@ export async function PATCH(
     const { id } = await params
     const body = await request.json()
 
+    const existing = await prisma.folder.findUnique({ where: { id } })
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: 'Folder not found' },
+        { status: 404 }
+      )
+    }
+
+    if (existing.isDefault) {
+      return NextResponse.json(
+        { success: false, error: 'Default folder cannot be updated' },
+        { status: 400 }
+      )
+    }
+
     // Zod 검증
     const validated = folderUpdateSchema.safeParse(body)
     if (!validated.success) {
@@ -69,6 +84,21 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+
+    const existing = await prisma.folder.findUnique({ where: { id } })
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: 'Folder not found' },
+        { status: 404 }
+      )
+    }
+
+    if (existing.isDefault) {
+      return NextResponse.json(
+        { success: false, error: 'Default folder cannot be deleted' },
+        { status: 400 }
+      )
+    }
 
     await prisma.folder.delete({
       where: { id },

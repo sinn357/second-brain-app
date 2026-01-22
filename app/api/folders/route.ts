@@ -2,11 +2,57 @@ import { NextResponse } from 'next/server'
 import { folderSchema } from '@/lib/validations/folder'
 import { prisma } from '@/lib/db'
 
+async function ensureDefaultFolder() {
+  const existingDefault = await prisma.folder.findFirst({
+    where: { isDefault: true },
+  })
+
+  if (existingDefault) {
+    return existingDefault
+  }
+
+  const existingMemo = await prisma.folder.findFirst({
+    where: { name: '메모', parentId: null },
+  })
+
+  if (existingMemo) {
+    await prisma.$transaction([
+      prisma.folder.updateMany({
+        where: { parentId: null, id: { not: existingMemo.id } },
+        data: { position: { increment: 1 } },
+      }),
+      prisma.folder.update({
+        where: { id: existingMemo.id },
+        data: { isDefault: true, position: 0 },
+      }),
+    ])
+    return prisma.folder.findUnique({ where: { id: existingMemo.id } })
+  }
+
+  const [, defaultFolder] = await prisma.$transaction([
+    prisma.folder.updateMany({
+      where: { parentId: null },
+      data: { position: { increment: 1 } },
+    }),
+    prisma.folder.create({
+      data: {
+        name: '메모',
+        parentId: null,
+        position: 0,
+        isDefault: true,
+      },
+    }),
+  ])
+
+  return defaultFolder
+}
+
 // GET /api/folders - 폴더 트리 조회
 export async function GET() {
   try {
+    await ensureDefaultFolder()
     const folders = await prisma.folder.findMany({
-      orderBy: { position: 'asc' },
+      orderBy: [{ isDefault: 'desc' }, { position: 'asc' }],
       include: {
         children: true,
         _count: {

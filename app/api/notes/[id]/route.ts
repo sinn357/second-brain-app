@@ -93,10 +93,17 @@ export async function PATCH(
 
     const data = validated.data
 
+    const updateData = {
+      ...data,
+      ...(typeof data.isPinned === 'boolean'
+        ? { pinnedAt: data.isPinned ? new Date() : null }
+        : {}),
+    }
+
     // 노트 업데이트
     const note = await prisma.note.update({
       where: { id },
-      data,
+      data: updateData,
       include: {
         folder: true,
         tags: {

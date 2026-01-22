@@ -20,9 +20,9 @@ export function ShortcutManager() {
   const createNote = useCreateNote()
   const { data: folders = [] } = useFolders()
 
-  const inboxFolderId = useMemo(() => {
-    const inbox = folders.find((folder) => folder.name.toLowerCase() === 'inbox')
-    return inbox?.id ?? null
+  const defaultFolderId = useMemo(() => {
+    const defaultFolder = folders.find((folder) => folder.isDefault)
+    return defaultFolder?.id ?? null
   }, [folders])
 
   useEffect(() => {
@@ -44,11 +44,11 @@ export function ShortcutManager() {
               const note = await createNote.mutateAsync({
                 title: 'Untitled',
                 body: '',
-                folderId: inboxFolderId,
+                folderId: defaultFolderId,
               })
               const nextParams = new URLSearchParams({ noteId: note.id })
-              if (inboxFolderId) {
-                nextParams.set('folderId', inboxFolderId)
+              if (defaultFolderId) {
+                nextParams.set('folderId', defaultFolderId)
               }
               router.push(`/notes?${nextParams.toString()}`)
             } catch (error) {
@@ -89,7 +89,7 @@ export function ShortcutManager() {
 
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [shortcuts, router, createNote, inboxFolderId])
+  }, [shortcuts, router, createNote, defaultFolderId])
 
   return null
 }

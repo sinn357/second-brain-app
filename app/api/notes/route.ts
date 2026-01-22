@@ -12,7 +12,11 @@ export async function GET(request: Request) {
 
     const notes = await prisma.note.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [
+        { isPinned: 'desc' },
+        { pinnedAt: 'desc' },
+        { updatedAt: 'desc' },
+      ],
       include: {
         folder: true,
         tags: {

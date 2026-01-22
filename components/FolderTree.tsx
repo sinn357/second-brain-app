@@ -2,19 +2,23 @@
 
 import { useFolders, useCreateFolder, useDeleteFolder, useUpdateFolder } from '@/lib/hooks/useFolders'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Folder, ChevronRight, ChevronDown, Plus } from 'lucide-react'
+import { Folder, ChevronRight, ChevronDown, Plus, Minus } from 'lucide-react'
 import { useCallback, useMemo, useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { useDroppable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
+import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 
 interface FolderNode {
   id: string
   name: string
   parentId: string | null
   position: number
+  isDefault: boolean
   children?: FolderNode[]
   _count?: {
     notes: number
@@ -33,6 +37,7 @@ function FolderItem({
   onRenameCancel,
   onContextMenu,
   onNavigate,
+  selectedFolderId,
 }: {
   folder: FolderNode
   level?: number
@@ -45,18 +50,46 @@ function FolderItem({
   onRenameCancel: () => void
   onContextMenu: (event: React.MouseEvent, folder: FolderNode) => void
   onNavigate: (folderId: string) => void
+  selectedFolderId?: string
 }) {
   const [isOpen, setIsOpen] = useState(true)
   const hasChildren = folder.children && folder.children.length > 0
   const isEditing = editingFolderId === folder.id
   const clickTimerRef = useRef<number | null>(null)
+  const isSelected = selectedFolderId === folder.id
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortableNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: `folder:${folder.id}`,
+    data: { type: 'folder', id: folder.id, parentId: folder.parentId, isDefault: folder.isDefault },
+    disabled: folder.isDefault,
+  })
+
+  const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({
+    id: `folder-drop:${folder.id}`,
+    data: { type: 'folder-drop', id: folder.id },
+  })
 
   return (
     <div>
       <div
-        className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800/60"
+        ref={setSortableNodeRef}
+        style={{
+          paddingLeft: `${level * 10 + 8}px`,
+          transform: CSS.Transform.toString(transform),
+          transition,
+          opacity: isDragging ? 0.5 : 1,
+        }}
+        className={`flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors ${
+          isSelected ? 'bg-indigo-100 dark:bg-indigo-800/70' : 'hover:bg-indigo-50 dark:hover:bg-indigo-800/60'
+        }`}
         onContextMenu={(event) => onContextMenu(event, folder)}
-        style={{ paddingLeft: `${level * 10 + 8}px` }}
       >
         {hasChildren ? (
           <button onClick={() => setIsOpen(!isOpen)} className="p-0.5 text-indigo-500 dark:text-indigo-300">
@@ -70,7 +103,16 @@ function FolderItem({
           <div className="w-4" />
         )}
 
-        <Folder className="h-4 w-4 text-indigo-500 dark:text-indigo-300" />
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          disabled={folder.isDefault}
+          className="text-indigo-500 dark:text-indigo-300 disabled:opacity-40"
+          aria-label="폴더 이동"
+        >
+          <Folder className="h-4 w-4" />
+        </button>
         {isEditing ? (
           <div className="flex-1">
             <Input
@@ -98,7 +140,9 @@ function FolderItem({
                 if (clickTimerRef.current) {
                   window.clearTimeout(clickTimerRef.current)
                   clickTimerRef.current = null
-                  onRenameStart(folder)
+                  if (!folder.isDefault) {
+                    onRenameStart(folder)
+                  }
                   return
                 }
                 clickTimerRef.current = window.setTimeout(() => {
@@ -114,33 +158,46 @@ function FolderItem({
         {folder._count && (
           <span className="text-[11px] text-indigo-500 dark:text-indigo-300">{folder._count.notes}</span>
         )}
+        <div
+          ref={setDroppableNodeRef}
+          className={`ml-1 h-3.5 w-3.5 rounded-full border border-dashed ${
+            isOver ? 'border-indigo-500 bg-indigo-100 dark:bg-indigo-900/60' : 'border-indigo-200 dark:border-indigo-700'
+          }`}
+          title="폴더 안으로 이동"
+        />
       </div>
 
       {hasChildren && isOpen && (
-        <div>
-          {folder.children?.map((child) => (
-            <FolderItem
-              key={child.id}
-              folder={child}
-              level={level + 1}
-              onDelete={onDelete}
-              onRenameStart={onRenameStart}
-              editingFolderId={editingFolderId}
-              editingName={editingName}
-              onEditingNameChange={onEditingNameChange}
-              onRenameConfirm={onRenameConfirm}
-              onRenameCancel={onRenameCancel}
-              onContextMenu={onContextMenu}
-              onNavigate={onNavigate}
-            />
-          ))}
-        </div>
+        <SortableContext
+          items={(folder.children ?? []).map((child) => `folder:${child.id}`)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div>
+            {folder.children?.map((child) => (
+              <FolderItem
+                key={child.id}
+                folder={child}
+                level={level + 1}
+                onDelete={onDelete}
+                onRenameStart={onRenameStart}
+                editingFolderId={editingFolderId}
+                editingName={editingName}
+                onEditingNameChange={onEditingNameChange}
+                onRenameConfirm={onRenameConfirm}
+                onRenameCancel={onRenameCancel}
+                onContextMenu={onContextMenu}
+                onNavigate={onNavigate}
+                selectedFolderId={selectedFolderId}
+              />
+            ))}
+          </div>
+        </SortableContext>
       )}
     </div>
   )
 }
 
-export function FolderTree() {
+export function FolderTree({ selectedFolderId }: { selectedFolderId?: string }) {
   const router = useRouter()
   const { data: folders = [], isLoading, error } = useFolders()
   const createFolder = useCreateFolder()
@@ -151,12 +208,17 @@ export function FolderTree() {
   const [showCreate, setShowCreate] = useState(false)
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
   const [editingFolderName, setEditingFolderName] = useState('')
+  const newFolderInputRef = useRef<HTMLInputElement | null>(null)
   const updateFolder = useUpdateFolder(editingFolderId ?? '')
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
     folder: FolderNode
   } | null>(null)
+  const { setNodeRef: setRootDropRef, isOver: isRootOver } = useDroppable({
+    id: 'folder-drop:root',
+    data: { type: 'folder-drop', id: null },
+  })
 
   useEffect(() => {
     const handleClick = () => setContextMenu(null)
@@ -241,6 +303,7 @@ export function FolderTree() {
   }
 
   const handleRenameStart = (folder: FolderNode) => {
+    if (folder.isDefault) return
     setEditingFolderId(folder.id)
     setEditingFolderName(folder.name)
     setContextMenu(null)
@@ -279,27 +342,18 @@ export function FolderTree() {
 
   const handleCreateChildFolder = async (folder: FolderNode) => {
     setContextMenu(null)
-    const name = prompt('새 폴더 이름을 입력하세요')
-    if (!name?.trim()) return
-
     const parentDepth = getDepth(folder.id)
     if (parentDepth + 1 > 5) {
       toast.error('폴더는 최대 5단계까지만 만들 수 있습니다')
       return
     }
 
-    try {
-      const siblingCount = folders.filter((f) => f.parentId === folder.id).length
-      await createFolder.mutateAsync({
-        name: name.trim(),
-        parentId: folder.id,
-        position: siblingCount,
-      })
-      toast.success('폴더가 생성되었습니다')
-    } catch (createError) {
-      console.error('Create child folder error:', createError)
-      toast.error('폴더 생성에 실패했습니다')
-    }
+    setParentId(folder.id)
+    setNewFolderName('')
+    setShowCreate(true)
+    setTimeout(() => {
+      newFolderInputRef.current?.focus()
+    }, 0)
   }
 
   const handleNavigate = (folderId: string) => {
@@ -339,7 +393,7 @@ export function FolderTree() {
           className="h-7 w-7 text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
           aria-label="새 폴더 추가"
         >
-          <Plus className="h-4 w-4" />
+          {showCreate ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
         </Button>
       </div>
 
@@ -363,6 +417,7 @@ export function FolderTree() {
           </Select>
           <div className="flex items-center gap-2">
             <Input
+              ref={newFolderInputRef}
               value={newFolderName}
               onChange={(event) => setNewFolderName(event.target.value)}
               placeholder="새 폴더 이름"
@@ -386,27 +441,38 @@ export function FolderTree() {
         </div>
       )}
 
-      {rootFolders.length === 0 ? (
-        <p className="text-sm text-indigo-500 dark:text-indigo-300">폴더가 없습니다</p>
-      ) : (
-        <div className="space-y-1">
-          {rootFolders.map((folder) => (
-            <FolderItem
-              key={folder.id}
-              folder={folder}
-              onDelete={handleDelete}
-              onRenameStart={handleRenameStart}
-              editingFolderId={editingFolderId}
-              editingName={editingFolderName}
-              onEditingNameChange={setEditingFolderName}
-              onRenameConfirm={handleRenameConfirm}
-              onRenameCancel={handleRenameCancel}
-              onContextMenu={handleContextMenu}
-              onNavigate={handleNavigate}
-            />
-          ))}
+      <SortableContext
+        items={rootFolders.map((folder) => `folder:${folder.id}`)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div
+          ref={setRootDropRef}
+          className={`space-y-1 rounded-md transition-colors ${
+            isRootOver ? 'bg-indigo-50/70 dark:bg-indigo-900/40' : ''
+          }`}
+        >
+          {rootFolders.length === 0 ? (
+            <p className="text-sm text-indigo-500 dark:text-indigo-300">폴더가 없습니다</p>
+          ) : (
+            rootFolders.map((folder) => (
+              <FolderItem
+                key={folder.id}
+                folder={folder}
+                onDelete={handleDelete}
+                onRenameStart={handleRenameStart}
+                editingFolderId={editingFolderId}
+                editingName={editingFolderName}
+                onEditingNameChange={setEditingFolderName}
+                onRenameConfirm={handleRenameConfirm}
+                onRenameCancel={handleRenameCancel}
+                onContextMenu={handleContextMenu}
+                onNavigate={handleNavigate}
+                selectedFolderId={selectedFolderId}
+              />
+            ))
+          )}
         </div>
-      )}
+      </SortableContext>
       {contextMenu && (
         <div
           className="fixed z-50 w-44 rounded-md border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-indigo-950 shadow-lg py-1 text-sm"
@@ -422,14 +488,16 @@ export function FolderTree() {
           <button
             type="button"
             onClick={() => handleRenameStart(contextMenu.folder)}
-            className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200"
+            disabled={contextMenu.folder.isDefault}
+            className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             폴더 이름변경
           </button>
           <button
             type="button"
             onClick={() => handleDelete(contextMenu.folder.id, contextMenu.folder.name)}
-            className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-red-600"
+            disabled={contextMenu.folder.isDefault}
+            className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             폴더 삭제
           </button>
