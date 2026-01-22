@@ -19,7 +19,7 @@ interface NoteListProps {
   enableSwipe?: boolean
 }
 
-const ESTIMATED_ITEM_HEIGHT = 120
+const ESTIMATED_ITEM_HEIGHT = 104
 
 export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }: NoteListProps) {
   const { data: notes = [], isLoading, error } = useNotes(folderId)
@@ -83,7 +83,7 @@ export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }
   return (
     <div
       ref={parentRef}
-      className="h-[calc(100vh-280px)] overflow-auto"
+      className="h-[calc(100vh-260px)] overflow-auto pr-1"
     >
       <div
         style={{
@@ -107,7 +107,7 @@ export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }
                 height: `${virtualItem.size}px`,
                 transform: `translateY(${virtualItem.start}px)`,
               }}
-              className="pb-4"
+              className="pb-3"
             >
               {showSwipe ? (
                 <SwipeableNoteItem
@@ -147,21 +147,21 @@ interface NoteItemProps {
 function NoteItem({ note, isSelected, onSelect }: NoteItemProps) {
   const content = (
     <Card
-      className={`panel hover-lift hover-glow p-4 cursor-pointer h-full ${
+      className={`panel hover-lift hover-glow p-3 cursor-pointer h-full ${
         isSelected ? 'border border-indigo-400/70 shadow-lg' : ''
       }`}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h3 className="font-semibold text-lg mb-1 text-indigo-900 dark:text-indigo-100">
+          <h3 className="font-semibold text-base mb-1 text-indigo-900 dark:text-indigo-100">
             {note.title}
           </h3>
-          <p className="text-sm text-indigo-700 dark:text-indigo-300 line-clamp-2 mb-2">
+          <p className="text-xs text-indigo-700 dark:text-indigo-300 line-clamp-2 mb-2">
             {note.body.slice(0, 150) || '내용 없음'}
           </p>
-          <div className="flex items-center gap-2 text-xs text-indigo-500 dark:text-indigo-300">
+          <div className="flex items-center gap-2 text-[11px] text-indigo-500 dark:text-indigo-300">
             {note.folder && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-[11px]">
                 {note.folder.name}
               </Badge>
             )}
@@ -171,7 +171,7 @@ function NoteItem({ note, isSelected, onSelect }: NoteItemProps) {
                   <Badge
                     key={nt.tag.id}
                     variant="secondary"
-                    className="text-xs"
+                    className="text-[11px]"
                     style={{
                       backgroundColor: nt.tag.color || undefined,
                     }}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { NoteList } from '@/components/NoteList'
 import { QuickAddButton } from '@/components/QuickAddButton'
 import { FolderTree } from '@/components/FolderTree'
@@ -16,6 +16,10 @@ import { Trash2, FolderOpen, ChevronLeft, X } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
 const AUTO_SAVE_DELAY = 500 // ms
+const MIN_FOLDER_WIDTH = 160
+const MIN_LIST_WIDTH = 240
+const MIN_EDITOR_WIDTH = 360
+const RESIZE_HANDLE_WIDTH = 8
 
 function NotesPageContent() {
   const searchParams = useSearchParams()
@@ -34,6 +38,13 @@ function NotesPageContent() {
   const lastSavedRef = useRef<{ title: string; body: string } | null>(null)
   const saveInFlight = useRef(false)
   const pendingSave = useRef<{ title: string; body: string } | null>(null)
+  const desktopGridRef = useRef<HTMLDivElement>(null)
+  const resizeStateRef = useRef<{
+    type: 'folder' | 'list' | null
+    startX: number
+    startFolder: number
+    startList: number
+  }>({ type: null, startX: 0, startFolder: 0, startList: 0 })
 
   // Debounce title and body
   const debouncedTitle = useDebounce(title, AUTO_SAVE_DELAY)
@@ -151,6 +162,62 @@ function NotesPageContent() {
     router.push(`/notes?${nextParams.toString()}`, { scroll: false })
   }
 
+  const [folderWidth, setFolderWidth] = useState(180)
+  const [listWidth, setListWidth] = useState(300)
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      const resizeState = resizeStateRef.current
+      if (!resizeState.type) return
+
+      const containerWidth = desktopGridRef.current?.clientWidth ?? 0
+      if (!containerWidth) return
+
+      const delta = event.clientX - resizeState.startX
+      const clampWithin = (value: number, min: number, max: number) => {
+        if (max < min) return min
+        return Math.min(max, Math.max(min, value))
+      }
+
+      if (resizeState.type === 'folder') {
+        const maxFolder =
+          containerWidth - listWidth - MIN_EDITOR_WIDTH - RESIZE_HANDLE_WIDTH * 2
+        setFolderWidth(clampWithin(resizeState.startFolder + delta, MIN_FOLDER_WIDTH, maxFolder))
+        return
+      }
+
+      const maxList =
+        containerWidth - folderWidth - MIN_EDITOR_WIDTH - RESIZE_HANDLE_WIDTH * 2
+      setListWidth(clampWithin(resizeState.startList + delta, MIN_LIST_WIDTH, maxList))
+    }
+
+    const handleMouseUp = () => {
+      if (!resizeStateRef.current.type) return
+      resizeStateRef.current.type = null
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [folderWidth, listWidth])
+
+  const startResize = (type: 'folder' | 'list') => (event: React.MouseEvent) => {
+    event.preventDefault()
+    resizeStateRef.current = {
+      type,
+      startX: event.clientX,
+      startFolder: folderWidth,
+      startList: listWidth,
+    }
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
+
   return (
     <div className="page-shell">
       <QuickAddButton />
@@ -245,14 +312,30 @@ function NotesPageContent() {
       </div>
 
       {/* 데스크톱: 3컬럼 레이아웃 */}
-      <div className="page-content hidden lg:grid grid-cols-12 gap-8">
+      <div
+        ref={desktopGridRef}
+        className="page-content hidden lg:grid gap-0"
+        style={{
+          gridTemplateColumns: `${folderWidth}px ${RESIZE_HANDLE_WIDTH}px ${listWidth}px ${RESIZE_HANDLE_WIDTH}px minmax(0, 1fr)`,
+        }}
+      >
         {/* 좌측: 폴더 트리 */}
-        <aside className="col-span-2 panel p-4">
+        <aside className="panel p-3">
           <FolderTree />
         </aside>
 
+        {/* 리사이즈 핸들: 폴더 */}
+        <div
+          onMouseDown={startResize('folder')}
+          role="separator"
+          aria-orientation="vertical"
+          className="group cursor-col-resize"
+        >
+          <div className="mx-auto h-full w-px bg-indigo-200/70 dark:bg-indigo-700/60 group-hover:bg-indigo-400/80 transition-colors" />
+        </div>
+
         {/* 중앙: 노트 리스트 */}
-        <section className="col-span-4 panel p-4">
+        <section className="panel p-3">
           <div className="page-header">
             <div>
               <h1 className="page-title text-indigo-900 dark:text-indigo-100">
@@ -264,8 +347,18 @@ function NotesPageContent() {
           <NoteList folderId={folderId} selectedId={noteId} onSelect={handleSelectNote} />
         </section>
 
+        {/* 리사이즈 핸들: 노트 리스트 */}
+        <div
+          onMouseDown={startResize('list')}
+          role="separator"
+          aria-orientation="vertical"
+          className="group cursor-col-resize"
+        >
+          <div className="mx-auto h-full w-px bg-indigo-200/70 dark:bg-indigo-700/60 group-hover:bg-indigo-400/80 transition-colors" />
+        </div>
+
         {/* 우측: 노트 편집 */}
-        <section className="col-span-6 panel p-6 min-h-[600px]">
+        <section className="panel p-6 min-h-[600px]">
           {!noteId ? (
             <div className="h-full flex items-center justify-center text-indigo-600 dark:text-indigo-300">
               오른쪽에서 편집할 노트를 선택하세요.

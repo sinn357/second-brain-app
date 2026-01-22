@@ -24,11 +24,11 @@ function FolderItem({ folder, level = 0 }: { folder: FolderNode; level?: number 
   return (
     <div>
       <div
-        className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 rounded cursor-pointer"
-        style={{ paddingLeft: `${level * 12 + 8}px` }}
+        className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800/60"
+        style={{ paddingLeft: `${level * 10 + 8}px` }}
       >
         {hasChildren ? (
-          <button onClick={() => setIsOpen(!isOpen)} className="p-0.5">
+          <button onClick={() => setIsOpen(!isOpen)} className="p-0.5 text-indigo-500 dark:text-indigo-300">
             {isOpen ? (
               <ChevronDown className="h-3 w-3" />
             ) : (
@@ -39,12 +39,12 @@ function FolderItem({ folder, level = 0 }: { folder: FolderNode; level?: number 
           <div className="w-4" />
         )}
 
-        <Folder className="h-4 w-4 text-gray-600" />
+        <Folder className="h-4 w-4 text-indigo-500 dark:text-indigo-300" />
         <Link href={`/notes?folderId=${folder.id}`} className="flex-1">
-          <span className="text-sm">{folder.name}</span>
+          <span className="text-sm text-indigo-900 dark:text-indigo-100">{folder.name}</span>
         </Link>
         {folder._count && (
-          <span className="text-xs text-gray-500">{folder._count.notes}</span>
+          <span className="text-[11px] text-indigo-500 dark:text-indigo-300">{folder._count.notes}</span>
         )}
       </div>
 
@@ -86,10 +86,10 @@ export function FolderTree() {
 
   return (
     <div>
-      <h3 className="font-semibold text-sm mb-3">Folders</h3>
+      <h3 className="font-semibold text-sm mb-3 text-indigo-900 dark:text-indigo-100">Folders</h3>
 
       {rootFolders.length === 0 ? (
-        <p className="text-sm text-gray-500">폴더가 없습니다</p>
+        <p className="text-sm text-indigo-500 dark:text-indigo-300">폴더가 없습니다</p>
       ) : (
         <div className="space-y-1">
           {rootFolders.map((folder) => (

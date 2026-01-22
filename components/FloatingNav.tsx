@@ -21,8 +21,8 @@ export function FloatingNav() {
   }, [])
 
   const navItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/notes', label: 'Notes', icon: FileText },
+    { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/graph', label: 'Graph', icon: Network },
     { href: '/db', label: 'Database', icon: Table },
     { href: '/mindmap', label: 'Mindmap', icon: Brain },
