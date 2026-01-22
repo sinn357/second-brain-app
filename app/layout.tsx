@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import { FloatingNav } from "@/components/FloatingNav";
+import { SidebarNav } from "@/components/SidebarNav";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Toaster } from "sonner";
 import { ShortcutManager } from "@/components/ShortcutManager";
@@ -49,11 +49,15 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <FloatingNav />
           <CommandPalette />
           <ShortcutManager />
           <Toaster position="top-right" richColors />
-          {children}
+          <div className="min-h-screen flex flex-col lg:flex-row">
+            <SidebarNav />
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
         </Providers>
       </body>
     </html>
