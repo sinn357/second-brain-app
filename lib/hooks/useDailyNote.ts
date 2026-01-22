@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { Note } from '@prisma/client'
 
 interface DailyNoteResponse {
   success: boolean
-  note: any
+  note: Note
   error?: string
 }
 
@@ -30,11 +31,12 @@ export function useDailyNote(date?: string) {
 }
 
 // Daily Note 업데이트
-export function useUpdateDailyNote(noteId: string) {
+export function useUpdateDailyNote(noteId?: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (data: { title?: string; body?: string }) => {
+      if (!noteId) throw new Error('Note ID is required')
       const res = await fetch(`/api/notes/${noteId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

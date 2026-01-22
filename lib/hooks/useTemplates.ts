@@ -1,15 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { TemplateInput, TemplateUpdateInput } from '@/lib/validations/template'
+import type { Template } from '@prisma/client'
 
 interface TemplatesResponse {
   success: boolean
-  templates: any[]
+  templates: Template[]
   error?: string
 }
 
 interface TemplateResponse {
   success: boolean
-  template: any
+  template: Template
   error?: string
 }
 

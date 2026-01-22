@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { tagUpdateSchema } from '@/lib/validations/tag'
 import { prisma } from '@/lib/db'
+
+function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError
+}
 
 // GET /api/tags/[id]/notes - 태그별 노트 조회
 export async function GET(
@@ -70,10 +75,10 @@ export async function PATCH(
     })
 
     return NextResponse.json({ success: true, tag })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PATCH /api/tags/[id] error:', error)
 
-    if (error.code === 'P2025') {
+    if (isPrismaError(error) && error.code === 'P2025') {
       return NextResponse.json(
         { success: false, error: 'Tag not found' },
         { status: 404 }
@@ -100,10 +105,10 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('DELETE /api/tags/[id] error:', error)
 
-    if (error.code === 'P2025') {
+    if (isPrismaError(error) && error.code === 'P2025') {
       return NextResponse.json(
         { success: false, error: 'Tag not found' },
         { status: 404 }

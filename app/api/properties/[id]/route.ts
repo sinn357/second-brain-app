@@ -3,6 +3,10 @@ import { Prisma } from '@prisma/client'
 import { propertyUpdateSchema } from '@/lib/validations/property'
 import { prisma } from '@/lib/db'
 
+function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError
+}
+
 // PATCH /api/properties/[id] - 속성 수정
 export async function PATCH(
   request: Request,
@@ -49,10 +53,10 @@ export async function PATCH(
     })
 
     return NextResponse.json({ success: true, property })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PATCH /api/properties/[id] error:', error)
 
-    if (error.code === 'P2025') {
+    if (isPrismaError(error) && error.code === 'P2025') {
       return NextResponse.json(
         { success: false, error: 'Property not found' },
         { status: 404 }
@@ -79,10 +83,10 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('DELETE /api/properties/[id] error:', error)
 
-    if (error.code === 'P2025') {
+    if (isPrismaError(error) && error.code === 'P2025') {
       return NextResponse.json(
         { success: false, error: 'Property not found' },
         { status: 404 }

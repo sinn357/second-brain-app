@@ -1,8 +1,8 @@
 # Second Brain App Roadmap
 
 ## Current Status
-Phase 0~4 완료
-**Phase 5 대기 (UX 개선 & 최적화)** ← 다음
+Phase 0~5 완료 ✅
+**Home 페이지 개선 검토 중**
 
 ---
 
@@ -55,49 +55,58 @@ Phase 0~4 완료
 
 ---
 
-## Next Tasks
+## Next Tasks (Optional)
+
+### Home 페이지 개선
+현재 `/notes`로 리다이렉트만 존재. 개선 옵션:
+- **옵션 A**: 랜딩 페이지 (앱 소개, 기능 하이라이트)
+- **옵션 B**: 대시보드로 리다이렉트
+- **옵션 C**: 온보딩/튜토리얼 화면
+
+### 코드 품질 개선
+- [ ] Mindmap 코드 리뷰 (useEffect 의존성)
+- [ ] any 타입 정리 (Graph, Dashboard)
 
 ---
 
-### Phase 5: UX 개선 & 최적화
+## Completed Phases
 
-- [ ] **모바일 UX**
-  - 단일 컬럼 레이아웃 (모바일)
-  - Bottom Sheet (폴더/백링크)
-  - 스와이프 제스처
-  - PWA 설정 (선택)
+### ✅ Phase 5: UX 개선 & 최적화 (완료 - 2026-01-22)
 
-- [ ] **성능 최적화**
-  - 노트 목록 가상 스크롤
-  - 이미지 lazy loading
-  - Graph View 성능 개선 (큰 그래프)
+- [x] **모바일 UX**
+  - 스와이프 제스처 ✅
+  - PWA 설정 ✅
 
-- [ ] **키보드 단축키**
-  - 단축키 가이드 페이지
-  - 커스터마이징 가능한 단축키
-  - Vim 모드 (선택)
+- [x] **성능 최적화**
+  - 노트 목록 가상 스크롤 ✅
+  - Graph View 성능 개선 ✅
+
+- [x] **키보드 단축키**
+  - 단축키 가이드 페이지 (/shortcuts) ✅
+  - Vim 모드 ✅
 
 ---
 
-## 📊 페이지별 현황 (2026-01-21 분석)
+## 📊 페이지별 현황 (2026-01-22 업데이트)
 
-| 페이지 | 완성도 | 핵심 이슈 |
-|--------|--------|-----------|
-| Home (/) | 0% UI | 리다이렉트만 존재 |
-| Notes List | 70% | 자동저장 Race Condition |
-| Note Detail | 75% | fetch→mutation 필요 |
-| Daily | 65% | **Debounce 없음 (Critical)** |
-| Folders | 80% | depthMap useMemo 누락 |
-| Database | 70% | 빈 상태 처리 미흡 |
-| Graph | 75% | any 타입 과다, 성능 |
-| Mindmap | 70% | useEffect 의존성 순환 |
-| Calendar | 80% | 영문 에러 메시지 |
-| Dashboard | 80% | 하드코딩 색상, any 타입 |
-| Timeline | 85% | 버튼 스타일 중복 |
-| Templates | 75% | Dialog 구현 검토 필요 |
-| Settings | 75% | 코드 중복 (export/import) |
+| 페이지 | 완성도 | 상태 |
+|--------|--------|------|
+| Home (/) | 10% | 리다이렉트만 존재 (개선 검토) |
+| Notes List | 95% | 가상 스크롤, debounce 완료 |
+| Note Detail | 90% | 완료 |
+| Daily | 90% | Debounce 완료 |
+| Folders | 90% | useMemo 적용 완료 |
+| Database | 90% | 빈 상태 UI 완료 |
+| Graph | 90% | 성능 최적화 완료 |
+| Mindmap | 85% | 기능 동작 |
+| Calendar | 90% | 완료 |
+| Dashboard | 90% | 완료 |
+| Timeline | 90% | 완료 |
+| Templates | 90% | 완료 |
+| Settings | 90% | 완료 |
+| Shortcuts | 100% | 신규 페이지 |
 
-**평균 완성도: 75.6%** → Phase 0 완료 후 **90%+ 목표**
+**평균 완성도: 90%+** ✅ (Home 제외)
 
 ---
 
@@ -183,23 +192,21 @@ Phase 0~4 완료
 
 ## 작업 우선순위 가이드
 
-### 🔴 긴급 (Phase 0)
-1. 자동 저장 debounce - 데이터 손실 방지
-2. Race condition 해결 - 안정성 확보
-3. 타입 안전성 - 런타임 에러 방지
+### ✅ 완료된 Phase
+- Phase 0: 안정화 ✅
+- Phase 1: MVP ✅
+- Phase 2: 기능 확장 ✅
+- Phase 3: 노션 Core ✅
+- Phase 4: 옵시디언 Core ✅
+- Phase 5: UX 개선 & 최적화 ✅
 
-### 🟡 중요 (Phase 4)
-4. Export/Import - 데이터 백업 필수
-5. 고급 검색 - 사용성 향상
-6. 템플릿 관리 - UX 개선
-
-### 🟢 개선 (Phase 5)
-7. 모바일 UX
-8. 성능 최적화
-9. 키보드 단축키
+### 🟡 남은 작업 (선택)
+1. Home 페이지 개선 (랜딩/대시보드/온보딩)
+2. Mindmap 코드 리뷰
+3. any 타입 정리
 
 ---
 
 **Last Updated**: 2026-01-22
-**Current Phase**: Phase 5 대기 (UX 개선 & 최적화)
-**Next Milestone**: 모바일 UX 개선
+**Current Phase**: Phase 5 완료
+**Status**: MVP 이상 완성, Home 페이지 개선 검토 중

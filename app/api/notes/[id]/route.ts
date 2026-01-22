@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { noteUpdateSchema } from '@/lib/validations/note'
 import { prisma } from '@/lib/db'
+
+function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError
+}
 
 // GET /api/notes/[id] - 노트 상세 조회
 export async function GET(
@@ -103,10 +108,10 @@ export async function PATCH(
     })
 
     return NextResponse.json({ success: true, note })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PATCH /api/notes/[id] error:', error)
 
-    if (error.code === 'P2025') {
+    if (isPrismaError(error) && error.code === 'P2025') {
       return NextResponse.json(
         { success: false, error: 'Note not found' },
         { status: 404 }
@@ -133,10 +138,10 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('DELETE /api/notes/[id] error:', error)
 
-    if (error.code === 'P2025') {
+    if (isPrismaError(error) && error.code === 'P2025') {
       return NextResponse.json(
         { success: false, error: 'Note not found' },
         { status: 404 }

@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { folderUpdateSchema } from '@/lib/validations/folder'
 import { prisma } from '@/lib/db'
+
+function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
+  return error instanceof Prisma.PrismaClientKnownRequestError
+}
 
 // PATCH /api/folders/[id] - 폴더 수정
 export async function PATCH(
@@ -40,10 +45,10 @@ export async function PATCH(
     })
 
     return NextResponse.json({ success: true, folder })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('PATCH /api/folders/[id] error:', error)
 
-    if (error.code === 'P2025') {
+    if (isPrismaError(error) && error.code === 'P2025') {
       return NextResponse.json(
         { success: false, error: 'Folder not found' },
         { status: 404 }
@@ -70,10 +75,10 @@ export async function DELETE(
     })
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('DELETE /api/folders/[id] error:', error)
 
-    if (error.code === 'P2025') {
+    if (isPrismaError(error) && error.code === 'P2025') {
       return NextResponse.json(
         { success: false, error: 'Folder not found' },
         { status: 404 }
