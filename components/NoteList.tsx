@@ -261,7 +261,7 @@ interface NoteItemProps {
 }
 
 function NoteItem({ note, isSelected, onSelect, onContextMenu }: NoteItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `note:${note.id}`,
     data: { type: 'note', id: note.id, folderId: note.folderId ?? null },
   })
@@ -271,7 +271,6 @@ function NoteItem({ note, isSelected, onSelect, onContextMenu }: NoteItemProps) 
       ref={setNodeRef}
       style={{
         transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-        transition,
         opacity: isDragging ? 0.5 : 1,
       }}
       className={`panel hover-lift hover-glow p-3 cursor-pointer h-full ${
