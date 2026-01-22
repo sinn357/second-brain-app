@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNote, useUpdateNote, useParseLinks, useParseTags, useDeleteNote } from '@/lib/hooks/useNotes'
 import { useAutoPresence } from '@/lib/hooks/usePresence'
 import { NoteEditorAdvanced } from '@/components/NoteEditorAdvanced'
@@ -27,11 +27,11 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
 interface Props {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export default function NoteDetailPage({ params }: Props) {
-  const { id } = use(params)
+  const { id } = params
   const { data: note, isLoading, error } = useNote(id)
   const updateNote = useUpdateNote(id)
   const deleteNote = useDeleteNote()
