@@ -1,14 +1,14 @@
 'use client'
 
-import { useFolders, useCreateFolder, useDeleteFolder } from '@/lib/hooks/useFolders'
+import { useFolders, useCreateFolder, useDeleteFolder, useUpdateFolder } from '@/lib/hooks/useFolders'
 import { Skeleton } from '@/components/ui/skeleton'
-import Link from 'next/link'
-import { Folder, ChevronRight, ChevronDown, Plus, Trash2 } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { Folder, ChevronRight, ChevronDown, Plus } from 'lucide-react'
+import { useCallback, useMemo, useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 interface FolderNode {
   id: string
@@ -25,18 +25,37 @@ function FolderItem({
   folder,
   level = 0,
   onDelete,
+  onRenameStart,
+  editingFolderId,
+  editingName,
+  onEditingNameChange,
+  onRenameConfirm,
+  onRenameCancel,
+  onContextMenu,
+  onNavigate,
 }: {
   folder: FolderNode
   level?: number
   onDelete: (id: string, name: string) => void
+  onRenameStart: (folder: FolderNode) => void
+  editingFolderId: string | null
+  editingName: string
+  onEditingNameChange: (value: string) => void
+  onRenameConfirm: (folder: FolderNode) => void
+  onRenameCancel: () => void
+  onContextMenu: (event: React.MouseEvent, folder: FolderNode) => void
+  onNavigate: (folderId: string) => void
 }) {
   const [isOpen, setIsOpen] = useState(true)
   const hasChildren = folder.children && folder.children.length > 0
+  const isEditing = editingFolderId === folder.id
+  const clickTimerRef = useRef<number | null>(null)
 
   return (
     <div>
       <div
         className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800/60"
+        onContextMenu={(event) => onContextMenu(event, folder)}
         style={{ paddingLeft: `${level * 10 + 8}px` }}
       >
         {hasChildren ? (
@@ -52,30 +71,68 @@ function FolderItem({
         )}
 
         <Folder className="h-4 w-4 text-indigo-500 dark:text-indigo-300" />
-        <Link href={`/notes?folderId=${folder.id}`} className="flex-1">
-          <span className="text-sm text-indigo-900 dark:text-indigo-100">{folder.name}</span>
-        </Link>
+        {isEditing ? (
+          <div className="flex-1">
+            <Input
+              value={editingName}
+              onChange={(event) => onEditingNameChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  onRenameConfirm(folder)
+                }
+                if (event.key === 'Escape') {
+                  event.preventDefault()
+                  onRenameCancel()
+                }
+              }}
+              onBlur={() => onRenameConfirm(folder)}
+              className="h-7 text-xs dark:bg-indigo-900 dark:text-indigo-100"
+              autoFocus
+            />
+          </div>
+        ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if (clickTimerRef.current) {
+                  window.clearTimeout(clickTimerRef.current)
+                  clickTimerRef.current = null
+                  onRenameStart(folder)
+                  return
+                }
+                clickTimerRef.current = window.setTimeout(() => {
+                  onNavigate(folder.id)
+                  clickTimerRef.current = null
+                }, 180)
+              }}
+              className="text-left w-full text-sm text-indigo-900 dark:text-indigo-100"
+            >
+              {folder.name}
+            </button>
+        )}
         {folder._count && (
           <span className="text-[11px] text-indigo-500 dark:text-indigo-300">{folder._count.notes}</span>
         )}
-        <button
-          type="button"
-          onClick={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-            onDelete(folder.id, folder.name)
-          }}
-          className="text-indigo-400 hover:text-red-500 transition-colors"
-          aria-label={`${folder.name} 폴더 삭제`}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
       </div>
 
       {hasChildren && isOpen && (
         <div>
           {folder.children?.map((child) => (
-            <FolderItem key={child.id} folder={child} level={level + 1} onDelete={onDelete} />
+            <FolderItem
+              key={child.id}
+              folder={child}
+              level={level + 1}
+              onDelete={onDelete}
+              onRenameStart={onRenameStart}
+              editingFolderId={editingFolderId}
+              editingName={editingName}
+              onEditingNameChange={onEditingNameChange}
+              onRenameConfirm={onRenameConfirm}
+              onRenameCancel={onRenameCancel}
+              onContextMenu={onContextMenu}
+              onNavigate={onNavigate}
+            />
           ))}
         </div>
       )}
@@ -84,6 +141,7 @@ function FolderItem({
 }
 
 export function FolderTree() {
+  const router = useRouter()
   const { data: folders = [], isLoading, error } = useFolders()
   const createFolder = useCreateFolder()
   const deleteFolder = useDeleteFolder()
@@ -91,6 +149,25 @@ export function FolderTree() {
   const [parentId, setParentId] = useState<string | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
+  const [editingFolderName, setEditingFolderName] = useState('')
+  const updateFolder = useUpdateFolder(editingFolderId ?? '')
+  const [contextMenu, setContextMenu] = useState<{
+    x: number
+    y: number
+    folder: FolderNode
+  } | null>(null)
+
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null)
+    const handleScroll = () => setContextMenu(null)
+    document.addEventListener('click', handleClick)
+    window.addEventListener('scroll', handleScroll, true)
+    return () => {
+      document.removeEventListener('click', handleClick)
+      window.removeEventListener('scroll', handleScroll, true)
+    }
+  }, [])
 
   const depthMap = useMemo(() => {
     const map = new Map<string, number>()
@@ -161,6 +238,72 @@ export function FolderTree() {
       console.error('Delete folder error:', deleteError)
       toast.error('폴더 삭제에 실패했습니다')
     }
+  }
+
+  const handleRenameStart = (folder: FolderNode) => {
+    setEditingFolderId(folder.id)
+    setEditingFolderName(folder.name)
+    setContextMenu(null)
+  }
+
+  const handleRenameCancel = () => {
+    setEditingFolderId(null)
+    setEditingFolderName('')
+  }
+
+  const handleRenameConfirm = async (folder: FolderNode) => {
+    if (!editingFolderId) return
+    const nextName = editingFolderName.trim()
+    if (!nextName || nextName === folder.name) {
+      handleRenameCancel()
+      return
+    }
+
+    try {
+      await updateFolder.mutateAsync({
+        name: nextName,
+      })
+      toast.success('폴더 이름이 변경되었습니다')
+    } catch (renameError) {
+      console.error('Rename folder error:', renameError)
+      toast.error('폴더 이름 변경에 실패했습니다')
+    } finally {
+      handleRenameCancel()
+    }
+  }
+
+  const handleContextMenu = (event: React.MouseEvent, folder: FolderNode) => {
+    event.preventDefault()
+    setContextMenu({ x: event.clientX, y: event.clientY, folder })
+  }
+
+  const handleCreateChildFolder = async (folder: FolderNode) => {
+    setContextMenu(null)
+    const name = prompt('새 폴더 이름을 입력하세요')
+    if (!name?.trim()) return
+
+    const parentDepth = getDepth(folder.id)
+    if (parentDepth + 1 > 5) {
+      toast.error('폴더는 최대 5단계까지만 만들 수 있습니다')
+      return
+    }
+
+    try {
+      const siblingCount = folders.filter((f) => f.parentId === folder.id).length
+      await createFolder.mutateAsync({
+        name: name.trim(),
+        parentId: folder.id,
+        position: siblingCount,
+      })
+      toast.success('폴더가 생성되었습니다')
+    } catch (createError) {
+      console.error('Create child folder error:', createError)
+      toast.error('폴더 생성에 실패했습니다')
+    }
+  }
+
+  const handleNavigate = (folderId: string) => {
+    router.push(`/notes?folderId=${folderId}`)
   }
 
   if (isLoading) {
@@ -248,8 +391,48 @@ export function FolderTree() {
       ) : (
         <div className="space-y-1">
           {rootFolders.map((folder) => (
-            <FolderItem key={folder.id} folder={folder} onDelete={handleDelete} />
+            <FolderItem
+              key={folder.id}
+              folder={folder}
+              onDelete={handleDelete}
+              onRenameStart={handleRenameStart}
+              editingFolderId={editingFolderId}
+              editingName={editingFolderName}
+              onEditingNameChange={setEditingFolderName}
+              onRenameConfirm={handleRenameConfirm}
+              onRenameCancel={handleRenameCancel}
+              onContextMenu={handleContextMenu}
+              onNavigate={handleNavigate}
+            />
           ))}
+        </div>
+      )}
+      {contextMenu && (
+        <div
+          className="fixed z-50 w-44 rounded-md border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-indigo-950 shadow-lg py-1 text-sm"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          <button
+            type="button"
+            onClick={() => handleCreateChildFolder(contextMenu.folder)}
+            className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200"
+          >
+            새로운 폴더
+          </button>
+          <button
+            type="button"
+            onClick={() => handleRenameStart(contextMenu.folder)}
+            className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200"
+          >
+            폴더 이름변경
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDelete(contextMenu.folder.id, contextMenu.folder.name)}
+            className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-red-600"
+          >
+            폴더 삭제
+          </button>
         </div>
       )}
     </div>
