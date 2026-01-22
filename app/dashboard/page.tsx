@@ -152,7 +152,7 @@ export default function DashboardPage() {
               <div className="space-y-2">
                 {topConnectedNotes.length > 0 ? (
                   topConnectedNotes.map((note, idx) => (
-                    <Link key={note.id} href={`/notes/${note.id}`}>
+                    <Link key={note.id} href={`/notes?noteId=${note.id}`}>
                       <div className="flex items-center justify-between p-3 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors cursor-pointer">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">

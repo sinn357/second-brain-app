@@ -190,7 +190,7 @@ export default function GraphPage() {
       .attr('stroke-width', isLargeGraph ? 1 : 2)
       .style('cursor', 'pointer')
       .on('click', (_, d) => {
-        router.push(`/notes/${d.id}`)
+        router.push(`/notes?noteId=${d.id}`)
       })
       .call(
         d3.drag<SVGCircleElement, SimulationNode>()

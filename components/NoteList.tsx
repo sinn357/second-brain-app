@@ -206,7 +206,7 @@ function NoteItem({ note, isSelected, onSelect }: NoteItemProps) {
   }
 
   return (
-    <Link href={`/notes/${note.id}`} className="block h-full">
+    <Link href={`/notes?noteId=${note.id}`} className="block h-full">
       {content}
     </Link>
   )

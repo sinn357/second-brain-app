@@ -5,7 +5,7 @@ import { useCreateNote } from '@/lib/hooks/useNotes'
 import { useFolders } from '@/lib/hooks/useFolders'
 import { useTemplates } from '@/lib/hooks/useTemplates'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useRouter } from 'next/navigation'
 import { Plus, FileText } from 'lucide-react'
 import { toast } from 'sonner'
@@ -46,7 +46,11 @@ export function QuickAddButton() {
       })
 
       setIsOpen(false)
-      router.push(`/notes/${note.id}`)
+      const nextParams = new URLSearchParams({ noteId: note.id })
+      if (inboxFolder?.id) {
+        nextParams.set('folderId', inboxFolder.id)
+      }
+      router.push(`/notes?${nextParams.toString()}`)
     } catch (error) {
       console.error('Quick add error:', error)
       toast.error('노트 생성에 실패했습니다')
@@ -70,6 +74,7 @@ export function QuickAddButton() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>새 노트 만들기</DialogTitle>
+            <DialogDescription>템플릿을 선택해 새 노트를 생성합니다.</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-3 py-4">

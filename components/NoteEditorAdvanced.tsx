@@ -88,7 +88,7 @@ export function NoteEditorAdvanced({
           // [[링크]] 클릭 시 해당 노트로 이동
           const targetNote = allNotes.find(n => n.title === title)
           if (targetNote) {
-            router.push(`/notes/${targetNote.id}`)
+            router.push(`/notes?noteId=${targetNote.id}`)
             return
           }
 
@@ -102,7 +102,7 @@ export function NoteEditorAdvanced({
               folderId: null,
             })
             toast.success(`"${title}" 노트를 생성했습니다`)
-            router.push(`/notes/${newNote.id}`)
+            router.push(`/notes?noteId=${newNote.id}`)
           } catch (error) {
             console.error('Create note from link failed:', error)
             toast.error(`"${title}" 노트 생성에 실패했습니다`)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
@@ -85,14 +85,14 @@ export function CommandPalette() {
 
     // Add search results (notes) with context
     searchResults.slice(0, 10).forEach((note) => {
-      results.push({
-        id: note.id,
-        type: 'note',
-        title: note.title,
-        subtitle: note.folder?.name || 'No folder',
-        context: note.context,
-        url: `/notes/${note.id}`,
-      })
+        results.push({
+          id: note.id,
+          type: 'note',
+          title: note.title,
+          subtitle: note.folder?.name || 'No folder',
+          context: note.context,
+          url: `/notes?noteId=${note.id}`,
+        })
     })
 
     // Search tags
@@ -197,6 +197,9 @@ export function CommandPalette() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="p-0 max-w-2xl">
+        <DialogDescription className="sr-only">
+          검색어로 노트, 태그, 폴더를 찾아 이동합니다.
+        </DialogDescription>
         <div className="flex flex-col">
           {/* Search input */}
           <div className="flex items-center border-b px-3">

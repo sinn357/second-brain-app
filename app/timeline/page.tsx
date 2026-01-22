@@ -103,7 +103,7 @@ export default function TimelinePage() {
                 {/* 노트 리스트 */}
                 <div className="space-y-4 pl-6 border-l-2 border-indigo-300 dark:border-indigo-700">
                   {group.notes.map((note) => (
-                    <Link key={note.id} href={`/notes/${note.id}`}>
+                    <Link key={note.id} href={`/notes?noteId=${note.id}`}>
                       <div className="relative panel hover-lift hover-glow p-4 cursor-pointer">
                         {/* Timeline 점 */}
                         <div className="absolute -left-[29px] top-6 w-3 h-3 bg-indigo-600 dark:bg-indigo-400 rounded-full border-2 border-indigo-50 dark:border-indigo-950" />

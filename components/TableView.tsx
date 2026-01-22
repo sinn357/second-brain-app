@@ -78,7 +78,7 @@ export function TableView({ notes = [] }: TableViewProps) {
             notes.map((note) => (
               <tr key={note.id}>
                 <td>
-                  <Link href={`/notes/${note.id}`} className="text-indigo-700 dark:text-indigo-200 hover:underline font-medium">
+                  <Link href={`/notes?noteId=${note.id}`} className="text-indigo-700 dark:text-indigo-200 hover:underline font-medium">
                     {note.title}
                   </Link>
                 </td>

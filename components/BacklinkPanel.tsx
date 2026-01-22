@@ -65,7 +65,7 @@ export function BacklinkPanel({ noteId }: BacklinkPanelProps) {
       ) : (
         <div className="space-y-3">
           {items.map((note: any) => (
-            <Link key={note.id} href={`/notes/${note.id}`}>
+            <Link key={note.id} href={`/notes?noteId=${note.id}`}>
               <Card className="p-3 hover:bg-gray-50 dark:hover:bg-indigo-900/50 transition-colors cursor-pointer">
                 <div className="flex items-start justify-between mb-2">
                   <h4 className="font-medium text-sm">{note.title}</h4>

@@ -46,7 +46,11 @@ export function ShortcutManager() {
                 body: '',
                 folderId: inboxFolderId,
               })
-              router.push(`/notes/${note.id}`)
+              const nextParams = new URLSearchParams({ noteId: note.id })
+              if (inboxFolderId) {
+                nextParams.set('folderId', inboxFolderId)
+              }
+              router.push(`/notes?${nextParams.toString()}`)
             } catch (error) {
               console.error('Shortcut new note failed:', error)
             }

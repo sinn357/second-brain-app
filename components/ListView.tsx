@@ -69,7 +69,7 @@ export function ListView({ notes = [] }: ListViewProps) {
         const noteProperties = getNoteProperties(note.id)
 
         return (
-          <Link key={note.id} href={`/notes/${note.id}`}>
+          <Link key={note.id} href={`/notes?noteId=${note.id}`}>
             <Card className="panel hover-lift hover-glow p-4 cursor-pointer">
               <div className="flex items-start justify-between mb-2">
                 <h3 className="font-semibold text-lg text-indigo-900 dark:text-indigo-100">{note.title}</h3>
