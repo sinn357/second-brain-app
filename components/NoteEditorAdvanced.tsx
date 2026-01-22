@@ -16,6 +16,8 @@ import Typography from '@tiptap/extension-typography'
 import { WikiLink } from '@/lib/tiptap-extensions/WikiLink'
 import { HashTag } from '@/lib/tiptap-extensions/HashTag'
 import { WikiLinkAutocomplete } from '@/lib/tiptap-extensions/WikiLinkAutocomplete'
+import { VimMode } from '@/lib/tiptap-extensions/VimMode'
+import { useEditorStore } from '@/lib/stores/editorStore'
 import { useEffect, useRef, useState } from 'react'
 import { useCreateNote, useNotes } from '@/lib/hooks/useNotes'
 import { useCreateTag } from '@/lib/hooks/useTags'
@@ -48,6 +50,8 @@ export function NoteEditorAdvanced({
   const [hoveredLink, setHoveredLink] = useState<string | null>(null)
   const [creatingLinkTitle, setCreatingLinkTitle] = useState<string | null>(null)
   const lastSyncedMarkdown = useRef<string | null>(null)
+  const { vimMode } = useEditorStore()
+  const [vimModeState, setVimModeState] = useState<'normal' | 'insert'>('insert')
 
   const getEditorContent = (value: string) => {
     return isProbablyHtml(value) ? value : markdownToHtml(value)
@@ -124,6 +128,10 @@ export function NoteEditorAdvanced({
       WikiLinkAutocomplete.configure({
         notes: allNotes.map(note => ({ id: note.id, title: note.title })),
         suggestion: {},
+      }),
+      VimMode.configure({
+        enabled: vimMode,
+        onModeChange: (mode) => setVimModeState(mode as 'normal' | 'insert'),
       }),
     ],
     content: getEditorContent(content),
@@ -215,10 +223,30 @@ export function NoteEditorAdvanced({
     )
   }
 
+  // Vim 모드 변경 시 에디터 업데이트
+  useEffect(() => {
+    if (!editor) return
+    if (vimMode) {
+      editor.commands.enableVimMode()
+    } else {
+      editor.commands.disableVimMode()
+    }
+  }, [vimMode, editor])
+
   return (
     <div className="border rounded">
       {/* 에디터 툴바 */}
-      <div className="border-b p-2 flex gap-2 bg-gray-50 flex-wrap">
+      <div className="border-b p-2 flex gap-2 bg-gray-50 flex-wrap items-center">
+        {/* Vim 모드 표시 */}
+        {vimMode && (
+          <div className={`px-2 py-1 rounded text-xs font-mono ${
+            vimModeState === 'normal'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-blue-100 text-blue-800'
+          }`}>
+            {vimModeState === 'normal' ? '-- NORMAL --' : '-- INSERT --'}
+          </div>
+        )}
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
           disabled={!editor.can().chain().focus().toggleBold().run()}

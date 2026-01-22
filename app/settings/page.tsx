@@ -3,10 +3,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Download, Upload, FileJson, FolderArchive, AlertCircle, CheckCircle2, Keyboard, RotateCcw } from 'lucide-react'
+import { Download, Upload, FileJson, FolderArchive, AlertCircle, CheckCircle2, Keyboard, RotateCcw, Settings2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { SHORTCUT_DEFINITIONS, formatShortcut, type ShortcutId } from '@/lib/shortcuts'
 import { useShortcutStore } from '@/lib/stores/shortcutStore'
+import { useEditorStore } from '@/lib/stores/editorStore'
 
 export default function SettingsPage() {
   const [isExporting, setIsExporting] = useState(false)
@@ -16,6 +17,7 @@ export default function SettingsPage() {
   const obsidianInputRef = useRef<HTMLInputElement>(null)
   const jsonInputRef = useRef<HTMLInputElement>(null)
   const { shortcuts, setShortcut, resetShortcut, resetAll } = useShortcutStore()
+  const { vimMode, setVimMode } = useEditorStore()
   const [isMac, setIsMac] = useState(false)
 
   useEffect(() => {
@@ -351,6 +353,47 @@ export default function SettingsPage() {
                   cursor-pointer"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Editor Settings */}
+        <Card className="panel hover-lift hover-glow">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-indigo-900 dark:text-indigo-100">
+              <Settings2 className="w-5 h-5" />
+              에디터 설정
+            </CardTitle>
+            <CardDescription className="dark:text-indigo-300">
+              에디터 동작 방식을 커스터마이즈하세요
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Vim Mode */}
+            <div className="panel-soft flex items-center justify-between px-4 py-3 rounded-lg">
+              <div>
+                <div className="font-semibold text-indigo-900 dark:text-indigo-100">
+                  Vim 모드
+                </div>
+                <div className="text-sm text-indigo-600 dark:text-indigo-300">
+                  에디터에서 Vim 스타일 키바인딩 사용 (h/j/k/l 이동, i 삽입, dd 삭제 등)
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={vimMode}
+                  onChange={(e) => setVimMode(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+            {vimMode && (
+              <div className="text-xs text-indigo-500 dark:text-indigo-400 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 rounded">
+                <strong>Vim 모드 활성화됨</strong>: ESC로 Normal 모드, i/a/o로 Insert 모드 진입.
+                h/j/k/l 이동, dd 줄 삭제, yy 복사, p 붙여넣기, u Undo
+              </div>
+            )}
           </CardContent>
         </Card>
 

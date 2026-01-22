@@ -185,9 +185,9 @@ function NotesPageContent() {
                 </SheetContent>
               </Sheet>
             </div>
-            {/* 노트 리스트 */}
+            {/* 노트 리스트 (스와이프 삭제 지원) */}
             <div className="panel p-4">
-              <NoteList folderId={folderId} selectedId={noteId} onSelect={handleMobileSelectNote} />
+              <NoteList folderId={folderId} selectedId={noteId} onSelect={handleMobileSelectNote} enableSwipe />
             </div>
           </div>
         ) : (

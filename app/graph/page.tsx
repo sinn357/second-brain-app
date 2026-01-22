@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useGraph, type SimulationNode, type SimulationLink, type GraphNode } from '@/lib/hooks/useGraph'
 import { Skeleton } from '@/components/ui/skeleton'
 import * as d3 from 'd3'
@@ -23,6 +23,10 @@ const FOLDER_COLORS = [
 const ISOLATED_NODE_COLOR = '#9CA3AF' // gray-400
 const DEFAULT_NODE_COLOR = '#4F46E5' // indigo-600
 
+// 성능 임계값
+const LARGE_GRAPH_THRESHOLD = 100
+const MAX_VISIBLE_LABELS = 50
+
 export default function GraphPage() {
   const { data: graphData, isLoading, error } = useGraph()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -31,6 +35,8 @@ export default function GraphPage() {
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 })
   const [selectedFolders, setSelectedFolders] = useState<Set<string>>(new Set())
   const [showIsolated, setShowIsolated] = useState(true)
+  const [showLabels, setShowLabels] = useState(true)
+  const [limitNodes, setLimitNodes] = useState(false)
 
   // 컨테이너 크기 감지 (반응형)
   useEffect(() => {
@@ -112,45 +118,76 @@ export default function GraphPage() {
 
     svg.call(zoom)
 
-    // Force simulation
+    // Force simulation - 성능 최적화
     const simulationNodes = filteredNodes as SimulationNode[]
     const simulationLinks = filteredEdges.map(e => ({ ...e })) as SimulationLink[]
 
+    const isLargeGraph = simulationNodes.length > LARGE_GRAPH_THRESHOLD
+
+    // 대규모 그래프에서 노드 제한 (상위 연결 노드만)
+    let finalNodes = simulationNodes
+    let finalLinks = simulationLinks
+
+    if (limitNodes && isLargeGraph) {
+      // 연결 수로 정렬하여 상위 노드만 선택
+      const connectionCount = new Map<string, number>()
+      simulationLinks.forEach(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id
+        connectionCount.set(sourceId, (connectionCount.get(sourceId) || 0) + 1)
+        connectionCount.set(targetId, (connectionCount.get(targetId) || 0) + 1)
+      })
+
+      finalNodes = [...simulationNodes]
+        .sort((a, b) => (connectionCount.get(b.id) || 0) - (connectionCount.get(a.id) || 0))
+        .slice(0, LARGE_GRAPH_THRESHOLD)
+
+      const nodeIdSet = new Set(finalNodes.map(n => n.id))
+      finalLinks = simulationLinks.filter(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id
+        return nodeIdSet.has(sourceId) && nodeIdSet.has(targetId)
+      })
+    }
+
     const simulation = d3
-      .forceSimulation<SimulationNode>(simulationNodes)
+      .forceSimulation<SimulationNode>(finalNodes)
       .force(
         'link',
         d3
-          .forceLink<SimulationNode, SimulationLink>(simulationLinks)
+          .forceLink<SimulationNode, SimulationLink>(finalLinks)
           .id((d) => d.id)
-          .distance(100)
+          .distance(isLargeGraph ? 80 : 100)
       )
-      .force('charge', d3.forceManyBody().strength(-300))
+      .force('charge', d3.forceManyBody().strength(isLargeGraph ? -150 : -300))
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius(30))
+      .force('collision', d3.forceCollide().radius(isLargeGraph ? 20 : 30))
+      // 성능 최적화: 빠른 수렴
+      .alphaDecay(isLargeGraph ? 0.05 : 0.0228)
+      .velocityDecay(isLargeGraph ? 0.6 : 0.4)
 
     // Links (edges)
     const link = g
       .append('g')
       .selectAll('line')
-      .data(simulationLinks)
+      .data(finalLinks)
       .enter()
       .append('line')
       .attr('stroke', '#999')
       .attr('stroke-opacity', 0.6)
-      .attr('stroke-width', 2)
+      .attr('stroke-width', isLargeGraph ? 1 : 2)
 
     // Nodes
     const node = g
       .append('g')
       .selectAll<SVGCircleElement, SimulationNode>('circle')
-      .data(simulationNodes)
+      .data(finalNodes)
       .enter()
       .append('circle')
-      .attr('r', 8)
+      .attr('r', isLargeGraph ? 6 : 8)
       .attr('fill', (d) => getNodeColor(d))
       .attr('stroke', '#fff')
-      .attr('stroke-width', 2)
+      .attr('stroke-width', isLargeGraph ? 1 : 2)
       .style('cursor', 'pointer')
       .on('click', (_, d) => {
         router.push(`/notes/${d.id}`)
@@ -173,11 +210,14 @@ export default function GraphPage() {
           })
       )
 
-    // Labels
+    // Labels - 성능 최적화: 대규모 그래프에서 hover 시만 표시
+    const shouldShowLabel = showLabels && finalNodes.length <= MAX_VISIBLE_LABELS
+
+    // 항상 레이블 요소 생성 (hover 표시용)
     const label = g
       .append('g')
       .selectAll<SVGTextElement, SimulationNode>('text')
-      .data(simulationNodes)
+      .data(finalNodes)
       .enter()
       .append('text')
       .text((d) => d.title)
@@ -185,8 +225,24 @@ export default function GraphPage() {
       .attr('dx', 12)
       .attr('dy', 4)
       .style('pointer-events', 'none')
+      .style('opacity', shouldShowLabel ? 1 : 0)
       .attr('fill', '#1F2937')
       .attr('class', 'dark:fill-indigo-100')
+
+    // Hover 시 레이블 표시 (대규모 그래프)
+    if (!shouldShowLabel) {
+      node
+        .on('mouseenter', function(event, d) {
+          const index = finalNodes.indexOf(d)
+          label.filter((_, i) => i === index).style('opacity', 1)
+          d3.select(this).attr('r', isLargeGraph ? 10 : 12)
+        })
+        .on('mouseleave', function(event, d) {
+          const index = finalNodes.indexOf(d)
+          label.filter((_, i) => i === index).style('opacity', 0)
+          d3.select(this).attr('r', isLargeGraph ? 6 : 8)
+        })
+    }
 
     // Simulation tick
     simulation.on('tick', () => {
@@ -204,7 +260,7 @@ export default function GraphPage() {
     return () => {
       simulation.stop()
     }
-  }, [graphData, router, dimensions, selectedFolders, showIsolated])
+  }, [graphData, router, dimensions, selectedFolders, showIsolated, showLabels, limitNodes])
 
   if (isLoading) {
     return (
@@ -294,7 +350,7 @@ export default function GraphPage() {
               </label>
             ))}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
               <input
                 type="checkbox"
@@ -306,7 +362,38 @@ export default function GraphPage() {
                 Show Isolated Nodes ({isolatedCount})
               </span>
             </label>
+            <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
+              <input
+                type="checkbox"
+                checked={showLabels}
+                onChange={(e) => setShowLabels(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300"
+              />
+              <span className="text-sm text-indigo-700 dark:text-indigo-300">
+                Show Labels
+              </span>
+            </label>
+            {nodes.length > LARGE_GRAPH_THRESHOLD && (
+              <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={limitNodes}
+                  onChange={(e) => setLimitNodes(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300"
+                />
+                <span className="text-sm text-indigo-700 dark:text-indigo-300">
+                  Limit to Top {LARGE_GRAPH_THRESHOLD} Nodes
+                </span>
+              </label>
+            )}
           </div>
+          {/* 대규모 그래프 경고 */}
+          {nodes.length > LARGE_GRAPH_THRESHOLD && !limitNodes && (
+            <div className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+              ⚠️ 노드가 많아 성능이 저하될 수 있습니다 ({nodes.length}개).
+              레이블이 자동으로 숨겨지며 hover 시 표시됩니다.
+            </div>
+          )}
         </div>
 
         {/* Legend */}

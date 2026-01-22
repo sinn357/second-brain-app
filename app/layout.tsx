@@ -18,13 +18,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nexus",
-  description: "Your knowledge, connected - A modern personal knowledge management system",
-  manifest: "/manifest.json",
+  title: "Nexus - Second Brain",
+  description: "개인 지식 관리 앱 - 노트, 위키링크, 그래프 뷰",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "Second Brain",
+    statusBarStyle: "black-translucent",
+    title: "Nexus",
+  },
+  formatDetection: {
+    telephone: false,
   },
 };
 
