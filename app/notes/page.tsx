@@ -74,6 +74,7 @@ function NotesPageContent() {
   // 디바운스된 값으로 자동 저장
   useEffect(() => {
     if (!noteId || !note) return
+    if (!debouncedTitle.trim()) return
 
     // 마지막 저장된 값과 같으면 저장하지 않음
     if (
@@ -126,7 +127,7 @@ function NotesPageContent() {
     }
 
     runSave()
-  }, [debouncedTitle, debouncedBody, noteId, note, updateNote, parseLinks])
+  }, [debouncedTitle, debouncedBody, noteId, updateNote, parseLinks])
 
   const handleDelete = async () => {
     if (!noteId) return
