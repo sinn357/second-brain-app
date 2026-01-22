@@ -31,7 +31,10 @@ export function NoteEditor({ content, onUpdate, placeholder = '내용을 입력�
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: false,
+        underline: false,
+      }),
       Underline,
       Highlight,
       Typography,

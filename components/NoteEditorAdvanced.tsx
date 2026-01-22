@@ -59,7 +59,10 @@ export function NoteEditorAdvanced({
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: false,
+        underline: false,
+      }),
       Underline,
       Highlight,
       Typography,
@@ -215,14 +218,6 @@ export function NoteEditorAdvanced({
     }
   }, [editor])
 
-  if (!editor) {
-    return (
-      <div className="border rounded p-4 min-h-[400px] bg-gray-50 animate-pulse">
-        Loading editor...
-      </div>
-    )
-  }
-
   // Vim 모드 변경 시 에디터 업데이트
   useEffect(() => {
     if (!editor) return
@@ -232,6 +227,14 @@ export function NoteEditorAdvanced({
       editor.commands.disableVimMode()
     }
   }, [vimMode, editor])
+
+  if (!editor) {
+    return (
+      <div className="border rounded p-4 min-h-[400px] bg-gray-50 animate-pulse">
+        Loading editor...
+      </div>
+    )
+  }
 
   return (
     <div className="border rounded">
