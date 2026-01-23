@@ -89,12 +89,13 @@ export const WikiLink = Mark.create<WikiLinkOptions>({
             const target = event.target as HTMLElement | null
             if (!target) return false
 
-            if (target.classList.contains('wiki-link-decoration')) {
-              const title = target.getAttribute('data-title')
-              if (title && this.options.onLinkClick) {
-                this.options.onLinkClick(title)
-                return true
-              }
+            const linkEl = target.closest('.wiki-link-decoration') as HTMLElement | null
+            if (!linkEl) return false
+
+            const title = linkEl.getAttribute('data-title')
+            if (title && this.options.onLinkClick) {
+              this.options.onLinkClick(title)
+              return true
             }
 
             return false
