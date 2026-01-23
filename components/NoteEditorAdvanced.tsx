@@ -18,7 +18,7 @@ import { HashTag } from '@/lib/tiptap-extensions/HashTag'
 import { WikiLinkAutocomplete } from '@/lib/tiptap-extensions/WikiLinkAutocomplete'
 import { VimMode } from '@/lib/tiptap-extensions/VimMode'
 import { useEditorStore } from '@/lib/stores/editorStore'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useCreateNote, useNotes } from '@/lib/hooks/useNotes'
 import { useCreateTag } from '@/lib/hooks/useTags'
 import { useRouter } from 'next/navigation'
@@ -52,6 +52,45 @@ export function NoteEditorAdvanced({
   const [creatingLinkTitle, setCreatingLinkTitle] = useState<string | null>(null)
   const lastSyncedMarkdown = useRef<string | null>(null)
   const { vimMode } = useEditorStore()
+  const notesRef = useRef(allNotes)
+  const creatingLinkRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    notesRef.current = allNotes
+  }, [allNotes])
+
+  useEffect(() => {
+    creatingLinkRef.current = creatingLinkTitle
+  }, [creatingLinkTitle])
+
+  const handleWikiLinkClick = useCallback(
+    async (title: string) => {
+      const existing = notesRef.current.find((note) => note.title === title)
+      if (existing) {
+        router.push(`/notes?noteId=${existing.id}`)
+        return
+      }
+
+      if (creatingLinkRef.current === title) return
+
+      try {
+        setCreatingLinkTitle(title)
+        const newNote = await createNote.mutateAsync({
+          title,
+          body: '',
+          folderId: null,
+        })
+        toast.success(`"${title}" 노트를 생성했습니다`)
+        router.push(`/notes?noteId=${newNote.id}`)
+      } catch (error) {
+        console.error('Create note from link failed:', error)
+        toast.error(`"${title}" 노트 생성에 실패했습니다`)
+      } finally {
+        setCreatingLinkTitle(null)
+      }
+    },
+    [createNote, router]
+  )
 
   const getEditorContent = (value: string) => {
     return isProbablyHtml(value) ? value : markdownToHtml(value)
@@ -112,32 +151,7 @@ export function NoteEditorAdvanced({
         HTMLAttributes: {
           class: 'wiki-link-decoration',
         },
-        onLinkClick: async (title: string) => {
-          // [[링크]] 클릭 시 해당 노트로 이동
-          const targetNote = allNotes.find(n => n.title === title)
-          if (targetNote) {
-            router.push(`/notes?noteId=${targetNote.id}`)
-            return
-          }
-
-          if (creatingLinkTitle === title) return
-
-          try {
-            setCreatingLinkTitle(title)
-            const newNote = await createNote.mutateAsync({
-              title,
-              body: '',
-              folderId: null,
-            })
-            toast.success(`"${title}" 노트를 생성했습니다`)
-            router.push(`/notes?noteId=${newNote.id}`)
-          } catch (error) {
-            console.error('Create note from link failed:', error)
-            toast.error(`"${title}" 노트 생성에 실패했습니다`)
-          } finally {
-            setCreatingLinkTitle(null)
-          }
-        },
+        onLinkClick: handleWikiLinkClick,
       }),
       HashTag.configure({
         HTMLAttributes: {
@@ -193,7 +207,7 @@ export function NoteEditorAdvanced({
     ensureFirstHeading(editor)
   }, [editor, forceFirstHeading])
 
-  // WikiLink hover 미리보기
+  // WikiLink hover 미리보기 + 클릭 핸들러 보강
   useEffect(() => {
     if (!editor) return
 
@@ -238,17 +252,30 @@ export function NoteEditorAdvanced({
       }
     }
 
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      const linkEl = target?.closest?.('.wiki-link-decoration') as HTMLElement | null
+      if (!linkEl) return
+      const title = linkEl.getAttribute('data-title')
+      if (title) {
+        event.preventDefault()
+        void handleWikiLinkClick(title)
+      }
+    }
+
     editorElement.addEventListener('mouseover', handleMouseOver)
     editorElement.addEventListener('mouseout', handleMouseOut)
+    editorElement.addEventListener('click', handleClick)
 
     return () => {
       editorElement.removeEventListener('mouseover', handleMouseOver)
       editorElement.removeEventListener('mouseout', handleMouseOut)
+      editorElement.removeEventListener('click', handleClick)
       if (tippyInstance) {
         tippyInstance.destroy()
       }
     }
-  }, [editor])
+  }, [editor, handleWikiLinkClick])
 
   // Vim 모드 변경 시 에디터 업데이트
   useEffect(() => {

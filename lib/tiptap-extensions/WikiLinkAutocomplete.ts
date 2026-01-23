@@ -110,6 +110,10 @@ export const WikiLinkAutocomplete = Extension.create<WikiLinkAutocompleteOptions
             editor.commands.focus()
           }, 0)
         },
+        allow: ({ state, range }) => {
+          const text = state.doc.textBetween(range.from, range.to, '\n', '\0')
+          return !text.includes(']]')
+        },
       },
     }
   },
