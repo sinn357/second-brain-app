@@ -99,7 +99,7 @@ export function ShortcutHelpButton({
           {!compact && <span className="ml-2 text-sm">Shortcuts</span>}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>단축키 모음</DialogTitle>
           <DialogDescription>자주 쓰는 단축키를 한눈에 확인하세요.</DialogDescription>
