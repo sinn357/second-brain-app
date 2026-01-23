@@ -97,11 +97,38 @@ export const WikiLink = Mark.create<WikiLinkOptions>({
             }
 
             const linkEl = element?.closest('.wiki-link-decoration') as HTMLElement | null
-            if (!linkEl) return false
+            if (linkEl) {
+              const title = linkEl.getAttribute('data-title')
+              if (title && this.options.onLinkClick) {
+                this.options.onLinkClick(title)
+                return true
+              }
+            }
 
-            const title = linkEl.getAttribute('data-title')
-            if (title && this.options.onLinkClick) {
-              this.options.onLinkClick(title)
+            const { doc } = view.state
+            const $pos = doc.resolve(pos)
+            const parent = $pos.parent
+            const parentStart = $pos.start()
+            const regex = /\[\[([^\]]+)\]\]/g
+            let foundTitle: string | null = null
+
+            parent.descendants((node, nodePos) => {
+              if (!node.isText || foundTitle) return false
+              const text = node.text || ''
+              let match
+              while ((match = regex.exec(text)) !== null) {
+                const from = parentStart + nodePos + match.index
+                const to = from + match[0].length
+                if (pos >= from && pos <= to) {
+                  foundTitle = match[1]
+                  return false
+                }
+              }
+              return true
+            })
+
+            if (foundTitle && this.options.onLinkClick) {
+              this.options.onLinkClick(foundTitle)
               return true
             }
 
