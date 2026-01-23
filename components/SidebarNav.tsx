@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/lib/hooks/useTheme'
 import { MobileNav } from '@/components/MobileNav'
+import { ShortcutHelpButton } from '@/components/ShortcutHelpButton'
 
 const primaryItems = [
   { href: '/notes', label: 'Notes', icon: FileText },
@@ -83,6 +84,7 @@ export function SidebarNav() {
                 {isMac ? '⌘K' : 'Ctrl+K'}
               </kbd>
             </Button>
+            <ShortcutHelpButton compact variant="ghost" className="text-indigo-700 dark:text-indigo-300" />
             {mounted && (
               <Button
                 variant="ghost"
@@ -136,6 +138,11 @@ export function SidebarNav() {
                 <ChevronLeft className="h-4 w-4" />
               )}
             </Button>
+            <ShortcutHelpButton
+              compact={isCollapsed}
+              variant="ghost"
+              className="text-indigo-700 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+            />
             {mounted && (
               <Button
                 variant="ghost"

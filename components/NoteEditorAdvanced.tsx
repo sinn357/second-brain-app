@@ -1,6 +1,6 @@
 'use client'
 
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, EditorContent, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -35,26 +35,51 @@ interface NoteEditorAdvancedProps {
   onUpdate: (content: string) => void
   placeholder?: string
   currentNoteId?: string
+  forceFirstHeading?: boolean
 }
 
 export function NoteEditorAdvanced({
   content,
   onUpdate,
   placeholder = '내용을 입력하세요. [[노트제목]]으로 링크, #태그로 태그를 추가할 수 있습니다.',
-  currentNoteId
+  currentNoteId,
+  forceFirstHeading = false
 }: NoteEditorAdvancedProps) {
   const router = useRouter()
   const { data: allNotes = [] } = useNotes()
   const createNote = useCreateNote()
   const createTag = useCreateTag()
-  const [hoveredLink, setHoveredLink] = useState<string | null>(null)
   const [creatingLinkTitle, setCreatingLinkTitle] = useState<string | null>(null)
   const lastSyncedMarkdown = useRef<string | null>(null)
   const { vimMode } = useEditorStore()
-  const [vimModeState, setVimModeState] = useState<'normal' | 'insert'>('insert')
 
   const getEditorContent = (value: string) => {
     return isProbablyHtml(value) ? value : markdownToHtml(value)
+  }
+
+  const ensureFirstHeading = (editorInstance: Editor | null) => {
+    if (!editorInstance) return false
+    const { state } = editorInstance
+    const firstNode = state.doc.firstChild
+    if (!firstNode) return false
+    const headingType = state.schema.nodes.heading
+    if (!headingType) return false
+    if (firstNode.type === headingType && firstNode.attrs.level === 1) return false
+
+    let firstPos: number | null = null
+    state.doc.descendants((node, pos, parent) => {
+      if (parent === state.doc) {
+        firstPos = pos
+        return false
+      }
+      return false
+    })
+
+    if (firstPos === null) return false
+
+    const tr = state.tr.setNodeMarkup(firstPos, headingType, { level: 1 }, firstNode.marks)
+    editorInstance.view.dispatch(tr)
+    return true
   }
 
   const editor = useEditor({
@@ -134,7 +159,6 @@ export function NoteEditorAdvanced({
       }),
       VimMode.configure({
         enabled: vimMode,
-        onModeChange: (mode) => setVimModeState(mode as 'normal' | 'insert'),
       }),
     ],
     content: getEditorContent(content),
@@ -144,6 +168,9 @@ export function NoteEditorAdvanced({
       },
     },
     onUpdate: ({ editor }) => {
+      if (forceFirstHeading && ensureFirstHeading(editor)) {
+        return
+      }
       const html = editor.getHTML()
       const markdown = htmlToMarkdown(html)
       lastSyncedMarkdown.current = markdown
@@ -160,6 +187,11 @@ export function NoteEditorAdvanced({
       editor.commands.setContent(nextHtml)
     }
   }, [content, editor])
+
+  useEffect(() => {
+    if (!editor || !forceFirstHeading) return
+    ensureFirstHeading(editor)
+  }, [editor, forceFirstHeading])
 
   // WikiLink hover 미리보기
   useEffect(() => {
@@ -238,128 +270,6 @@ export function NoteEditorAdvanced({
 
   return (
     <div className="border rounded">
-      {/* 에디터 툴바 */}
-      <div className="border-b p-2 flex gap-2 bg-gray-50 flex-wrap items-center">
-        {/* Vim 모드 표시 */}
-        {vimMode && (
-          <div className={`px-2 py-1 rounded text-xs font-mono ${
-            vimModeState === 'normal'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-blue-100 text-blue-800'
-          }`}>
-            {vimModeState === 'normal' ? '-- NORMAL --' : '-- INSERT --'}
-          </div>
-        )}
-        <button
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          disabled={!editor.can().chain().focus().toggleBold().run()}
-          className={`px-2 py-1 rounded text-sm ${
-            editor.isActive('bold') ? 'bg-gray-300' : 'hover:bg-gray-200'
-          }`}
-        >
-          Bold
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          disabled={!editor.can().chain().focus().toggleItalic().run()}
-          className={`px-2 py-1 rounded text-sm ${
-            editor.isActive('italic') ? 'bg-gray-300' : 'hover:bg-gray-200'
-          }`}
-        >
-          Italic
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          disabled={!editor.can().chain().focus().toggleCode().run()}
-          className={`px-2 py-1 rounded text-sm ${
-            editor.isActive('code') ? 'bg-gray-300' : 'hover:bg-gray-200'
-          }`}
-        >
-          Code
-        </button>
-        <div className="border-l mx-2" />
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`px-2 py-1 rounded text-sm ${
-            editor.isActive('heading', { level: 1 }) ? 'bg-gray-300' : 'hover:bg-gray-200'
-          }`}
-        >
-          H1
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`px-2 py-1 rounded text-sm ${
-            editor.isActive('heading', { level: 2 }) ? 'bg-gray-300' : 'hover:bg-gray-200'
-          }`}
-        >
-          H2
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`px-2 py-1 rounded text-sm ${
-            editor.isActive('heading', { level: 3 }) ? 'bg-gray-300' : 'hover:bg-gray-200'
-          }`}
-        >
-          H3
-        </button>
-        <div className="border-l mx-2" />
-        <button
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`px-2 py-1 rounded text-sm ${
-            editor.isActive('bulletList') ? 'bg-gray-300' : 'hover:bg-gray-200'
-          }`}
-        >
-          List
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`px-2 py-1 rounded text-sm ${
-            editor.isActive('orderedList') ? 'bg-gray-300' : 'hover:bg-gray-200'
-          }`}
-        >
-          Numbered
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleTaskList().run()}
-          className={`px-2 py-1 rounded text-sm ${
-            editor.isActive('taskList') ? 'bg-gray-300' : 'hover:bg-gray-200'
-          }`}
-        >
-          Task
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          className={`px-2 py-1 rounded text-sm ${
-            editor.isActive('codeBlock') ? 'bg-gray-300' : 'hover:bg-gray-200'
-          }`}
-        >
-          Code Block
-        </button>
-        <button
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`px-2 py-1 rounded text-sm ${
-            editor.isActive('blockquote') ? 'bg-gray-300' : 'hover:bg-gray-200'
-          }`}
-        >
-          Quote
-        </button>
-        <button
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
-          className="px-2 py-1 rounded text-sm hover:bg-gray-200"
-        >
-          Divider
-        </button>
-        <button
-          onClick={() =>
-            editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-          }
-          className="px-2 py-1 rounded text-sm hover:bg-gray-200"
-        >
-          Table
-        </button>
-      </div>
-
-      {/* 에디터 영역 */}
       <EditorContent editor={editor} />
 
       {/* 글로벌 스타일 */}

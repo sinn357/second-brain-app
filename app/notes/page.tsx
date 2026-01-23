@@ -7,7 +7,6 @@ import { FolderTree } from '@/components/FolderTree'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
 import { NoteEditorAdvanced } from '@/components/NoteEditorAdvanced'
-import { Input } from '@/components/ui/input'
 import { useDeleteNote, useNote, useParseLinks, useUpdateNote } from '@/lib/hooks/useNotes'
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import { toast } from 'sonner'
@@ -91,6 +90,7 @@ function NotesPageContent() {
 
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
+  const [editorContent, setEditorContent] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const lastSavedRef = useRef<{ title: string; body: string } | null>(null)
@@ -117,15 +117,48 @@ function NotesPageContent() {
     router.push(`/notes?${nextParams.toString()}`, { scroll: false })
   }
 
+  const buildEditorContent = (nextTitle: string, nextBody: string) => {
+    const titleLine = `# ${nextTitle ?? ''}`
+    if (!nextBody) return `${titleLine}\n`
+    return `${titleLine}\n\n${nextBody}`
+  }
+
+  const parseEditorContent = (markdown: string) => {
+    const normalized = markdown.replace(/\r\n/g, '\n')
+    const lines = normalized.split('\n')
+    const firstLine = lines[0] ?? ''
+    const headingMatch = firstLine.match(/^#\s+(.*)$/)
+    if (headingMatch) {
+      return {
+        title: headingMatch[1].trim(),
+        body: lines.slice(1).join('\n').replace(/^\n+/, ''),
+      }
+    }
+
+    return {
+      title: firstLine.trim(),
+      body: lines.slice(1).join('\n').replace(/^\n+/, ''),
+    }
+  }
+
+  const handleEditorUpdate = (markdown: string) => {
+    const parsed = parseEditorContent(markdown)
+    setTitle(parsed.title)
+    setBody(parsed.body)
+    setEditorContent(markdown)
+  }
+
   useEffect(() => {
     if (!note) {
       setTitle('')
       setBody('')
+      setEditorContent('')
       lastSavedRef.current = null
       return
     }
     setTitle(note.title)
     setBody(note.body)
+    setEditorContent(buildEditorContent(note.title, note.body))
     lastSavedRef.current = { title: note.title, body: note.body }
   }, [note?.id])
 
@@ -481,17 +514,12 @@ function NotesPageContent() {
                 <Skeleton className="h-96" />
               ) : note ? (
                 <div className="space-y-4">
-                  <Input
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    placeholder="노트 제목"
-                    className="text-xl font-bold border-none p-0 focus-visible:ring-0 dark:bg-indigo-900 dark:text-indigo-100"
-                  />
                   <NoteEditorAdvanced
-                    content={body}
-                    onUpdate={setBody}
+                    content={editorContent}
+                    onUpdate={handleEditorUpdate}
                     currentNoteId={noteId}
                     placeholder="내용을 입력하세요..."
+                    forceFirstHeading
                   />
                 </div>
               ) : (
@@ -579,17 +607,12 @@ function NotesPageContent() {
                   Delete
                 </Button>
               </div>
-              <Input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="노트 제목"
-                className="text-2xl font-bold border-none p-0 focus-visible:ring-0 dark:bg-indigo-900 dark:text-indigo-100"
-              />
               <NoteEditorAdvanced
-                content={body}
-                onUpdate={setBody}
+                content={editorContent}
+                onUpdate={handleEditorUpdate}
                 currentNoteId={noteId}
                 placeholder="내용을 입력하세요. [[노트제목]]으로 링크, #태그로 태그를 추가할 수 있습니다."
+                forceFirstHeading
               />
             </div>
           ) : (
