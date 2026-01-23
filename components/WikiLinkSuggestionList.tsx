@@ -49,6 +49,7 @@ export const WikiLinkSuggestionList = forwardRef((props: SuggestionListProps, re
       }
 
       if (event.key === 'Enter') {
+        if (props.items.length === 0) return false
         enterHandler()
         return true
       }

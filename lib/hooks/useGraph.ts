@@ -7,6 +7,7 @@ export interface GraphNode {
   title: string
   folderId: string | null
   folderName: string | null
+  isMissing?: boolean
 }
 
 export interface GraphEdge {
@@ -24,6 +25,10 @@ export interface GraphData {
   nodes: GraphNode[]
   edges: GraphEdge[]
   folders: GraphFolder[]
+  unresolved: Array<{
+    title: string
+    sources: Array<{ id: string; title: string }>
+  }>
 }
 
 // D3 시뮬레이션용 확장 타입

@@ -1,10 +1,14 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
-import { useGraph, type SimulationNode, type SimulationLink, type GraphNode } from '@/lib/hooks/useGraph'
+import { useEffect, useRef, useState } from 'react'
+import { useGraph, type SimulationNode, type SimulationLink } from '@/lib/hooks/useGraph'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import * as d3 from 'd3'
 import { useRouter } from 'next/navigation'
+import { useCreateNote } from '@/lib/hooks/useNotes'
+import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 
 // 폴더별 색상 팔레트
 const FOLDER_COLORS = [
@@ -22,6 +26,7 @@ const FOLDER_COLORS = [
 
 const ISOLATED_NODE_COLOR = '#9CA3AF' // gray-400
 const DEFAULT_NODE_COLOR = '#4F46E5' // indigo-600
+const MISSING_NODE_COLOR = '#D1D5DB' // gray-300
 
 // 성능 임계값
 const LARGE_GRAPH_THRESHOLD = 100
@@ -32,11 +37,14 @@ export default function GraphPage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const createNote = useCreateNote()
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 })
   const [selectedFolders, setSelectedFolders] = useState<Set<string>>(new Set())
   const [showIsolated, setShowIsolated] = useState(true)
   const [showLabels, setShowLabels] = useState(true)
   const [limitNodes, setLimitNodes] = useState(false)
+  const [showMissing, setShowMissing] = useState(true)
 
   // 컨테이너 크기 감지 (반응형)
   useEffect(() => {
@@ -77,8 +85,11 @@ export default function GraphPage() {
 
     // 필터링된 노드
     let filteredNodes = nodes
+    if (!showMissing) {
+      filteredNodes = filteredNodes.filter((n) => !n.isMissing)
+    }
     if (selectedFolders.size > 0) {
-      filteredNodes = nodes.filter((n) =>
+      filteredNodes = filteredNodes.filter((n) =>
         n.folderId && selectedFolders.has(n.folderId)
       )
     }
@@ -96,6 +107,7 @@ export default function GraphPage() {
 
     // 노드 색상 결정 함수
     const getNodeColor = (node: SimulationNode) => {
+      if (node.isMissing) return MISSING_NODE_COLOR
       if (!connectedNodeIds.has(node.id)) return ISOLATED_NODE_COLOR
       if (node.folderId) return folderColorMap.get(node.folderId) || DEFAULT_NODE_COLOR
       return DEFAULT_NODE_COLOR
@@ -186,10 +198,12 @@ export default function GraphPage() {
       .append('circle')
       .attr('r', isLargeGraph ? 6 : 8)
       .attr('fill', (d) => getNodeColor(d))
-      .attr('stroke', '#fff')
+      .attr('stroke', (d) => (d.isMissing ? '#9CA3AF' : '#fff'))
       .attr('stroke-width', isLargeGraph ? 1 : 2)
-      .style('cursor', 'pointer')
+      .attr('stroke-dasharray', (d) => (d.isMissing ? '4,3' : null))
+      .style('cursor', (d) => (d.isMissing ? 'default' : 'pointer'))
       .on('click', (_, d) => {
+        if (d.isMissing) return
         router.push(`/notes?noteId=${d.id}`)
       })
       .call(
@@ -287,7 +301,7 @@ export default function GraphPage() {
 
   if (!graphData) return null
 
-  const { folders, nodes, edges } = graphData
+  const { folders, nodes, edges, unresolved } = graphData
 
   // 폴더별 색상 매핑 (레전드용)
   const folderColorMap = new Map<string, string>()
@@ -301,7 +315,8 @@ export default function GraphPage() {
     connectedNodeIds.add(edge.source)
     connectedNodeIds.add(edge.target)
   })
-  const isolatedCount = nodes.filter((n) => !connectedNodeIds.has(n.id)).length
+  const isolatedCount = nodes.filter((n) => !n.isMissing && !connectedNodeIds.has(n.id)).length
+  const missingCount = unresolved.length
 
   // 폴더 필터 토글
   const toggleFolder = (folderId: string) => {
@@ -312,6 +327,21 @@ export default function GraphPage() {
       newSet.add(folderId)
     }
     setSelectedFolders(newSet)
+  }
+
+  const handleCreateMissing = async (title: string) => {
+    try {
+      const note = await createNote.mutateAsync({
+        title,
+        body: '',
+        folderId: null,
+      })
+      await queryClient.invalidateQueries({ queryKey: ['graph'] })
+      router.push(`/notes?noteId=${note.id}`)
+    } catch (error) {
+      console.error('Create missing note error:', error)
+      toast.error('노트 생성에 실패했습니다')
+    }
   }
 
   return (
@@ -360,6 +390,17 @@ export default function GraphPage() {
               />
               <span className="text-sm text-indigo-700 dark:text-indigo-300">
                 Show Isolated Nodes ({isolatedCount})
+              </span>
+            </label>
+            <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
+              <input
+                type="checkbox"
+                checked={showMissing}
+                onChange={(e) => setShowMissing(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300"
+              />
+              <span className="text-sm text-indigo-700 dark:text-indigo-300">
+                Show Missing Links ({missingCount})
               </span>
             </label>
             <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
@@ -415,6 +456,58 @@ export default function GraphPage() {
                 style={{ backgroundColor: ISOLATED_NODE_COLOR }}
               />
               <span className="text-gray-600 dark:text-gray-400">Isolated</span>
+            </div>
+          )}
+          {missingCount > 0 && (
+            <div className="flex items-center gap-2">
+              <div
+                className="w-4 h-4 rounded-full border border-dashed border-gray-400"
+                style={{ backgroundColor: MISSING_NODE_COLOR }}
+              />
+              <span className="text-gray-600 dark:text-gray-400">Missing Link</span>
+            </div>
+          )}
+        </div>
+
+        {/* Missing Links */}
+        <div className="mb-6">
+          <div className="font-semibold text-indigo-900 dark:text-indigo-100 text-sm mb-2">
+            Uncreated Links ({missingCount})
+          </div>
+          {missingCount === 0 ? (
+            <div className="text-sm text-indigo-500 dark:text-indigo-300">
+              모두 생성되었습니다.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {unresolved.map((entry) => {
+                const sourcePreview = entry.sources.slice(0, 3).map((source) => source.title).join(', ')
+                const remainder = entry.sources.length - 3
+                return (
+                  <div
+                    key={entry.title}
+                    className="panel-soft flex items-center justify-between gap-4 px-4 py-3 rounded-lg"
+                  >
+                    <div>
+                      <div className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                        {entry.title}
+                      </div>
+                      <div className="text-xs text-indigo-500 dark:text-indigo-300">
+                        {entry.sources.length} sources
+                        {sourcePreview && ` · ${sourcePreview}`}
+                        {remainder > 0 && ` +${remainder} more`}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleCreateMissing(entry.title)}
+                    >
+                      Create
+                    </Button>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>

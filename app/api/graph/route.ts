@@ -10,21 +10,13 @@ export async function GET() {
         id: true,
         title: true,
         folderId: true,
+        body: true,
         folder: {
           select: {
             id: true,
             name: true,
           },
         },
-      },
-    })
-
-    // 모든 링크 조회 (엣지)
-    const links = await prisma.link.findMany({
-      select: {
-        id: true,
-        sourceId: true,
-        targetId: true,
       },
     })
 
@@ -44,18 +36,69 @@ export async function GET() {
       folderName: note.folder?.name || null,
     }))
 
-    const edges = links.map((link) => ({
-      id: link.id,
-      source: link.sourceId,
-      target: link.targetId,
+    const titleToId = new Map(notes.map((note) => [note.title.trim(), note.id]))
+    const edgeKeys = new Set<string>()
+    const edges: Array<{ id: string; source: string; target: string }> = []
+    const unresolvedMap = new Map<
+      string,
+      { title: string; sources: Array<{ id: string; title: string }> }
+    >()
+
+    const linkPattern = /\[\[(.+?)\]\]/g
+
+    notes.forEach((note) => {
+      const body = note.body || ''
+      const matches = [...body.matchAll(linkPattern)]
+      const uniqueTitles = [...new Set(matches.map((m) => m[1].trim()).filter(Boolean))]
+
+      uniqueTitles.forEach((title) => {
+        const targetId = titleToId.get(title)
+        if (targetId && targetId !== note.id) {
+          const key = `${note.id}:${targetId}`
+          if (!edgeKeys.has(key)) {
+            edgeKeys.add(key)
+            edges.push({
+              id: key,
+              source: note.id,
+              target: targetId,
+            })
+          }
+          return
+        }
+
+        if (!unresolvedMap.has(title)) {
+          unresolvedMap.set(title, { title, sources: [] })
+        }
+        const entry = unresolvedMap.get(title)
+        if (entry && !entry.sources.find((source) => source.id === note.id)) {
+          entry.sources.push({ id: note.id, title: note.title })
+        }
+      })
+    })
+
+    const unresolvedNodes = Array.from(unresolvedMap.values()).map((entry) => ({
+      id: `missing:${entry.title}`,
+      title: entry.title,
+      folderId: null,
+      folderName: null,
+      isMissing: true,
     }))
+
+    const unresolvedEdges = Array.from(unresolvedMap.values()).flatMap((entry) =>
+      entry.sources.map((source) => ({
+        id: `missing:${source.id}:${entry.title}`,
+        source: source.id,
+        target: `missing:${entry.title}`,
+      }))
+    )
 
     return NextResponse.json({
       success: true,
       graph: {
-        nodes,
-        edges,
+        nodes: [...nodes, ...unresolvedNodes],
+        edges: [...edges, ...unresolvedEdges],
         folders,
+        unresolved: Array.from(unresolvedMap.values()),
       }
     })
   } catch (error) {
