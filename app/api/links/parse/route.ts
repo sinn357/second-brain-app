@@ -21,10 +21,11 @@ export async function POST(request: Request) {
     }
 
     const { noteId, body: noteBody } = validated.data
+    const normalizedBody = noteBody.replace(/\\\[\[/g, '[[').replace(/\\\]\]/g, ']]')
 
     // [[문자열]] 패턴 추출
     const linkPattern = /\[\[(.+?)\]\]/g
-    const matches = [...noteBody.matchAll(linkPattern)]
+    const matches = [...normalizedBody.matchAll(linkPattern)]
 
     if (matches.length === 0) {
       return NextResponse.json({

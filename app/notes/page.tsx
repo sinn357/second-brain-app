@@ -94,9 +94,11 @@ function NotesPageContent() {
   const [editorContent, setEditorContent] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const lastSavedRef = useRef<{ title: string; body: string } | null>(null)
+  const lastSavedRef = useRef<{ noteId: string; title: string; body: string } | null>(null)
   const saveInFlight = useRef(false)
   const pendingSave = useRef<{ title: string; body: string } | null>(null)
+  const activeNoteIdRef = useRef<string | null>(null)
+  const isHydratingRef = useRef(false)
   const desktopGridRef = useRef<HTMLDivElement>(null)
   const resizeStateRef = useRef<{
     type: 'folder' | 'list' | null
@@ -143,6 +145,10 @@ function NotesPageContent() {
   }
 
   const handleEditorUpdate = (markdown: string) => {
+    if (isHydratingRef.current) {
+      isHydratingRef.current = false
+      return
+    }
     const parsed = parseEditorContent(markdown)
     setTitle(parsed.title)
     setBody(parsed.body)
@@ -150,27 +156,38 @@ function NotesPageContent() {
   }
 
   useEffect(() => {
-    if (!note) {
+    if (!noteId || !note) {
       setTitle('')
       setBody('')
       setEditorContent('')
       lastSavedRef.current = null
+      activeNoteIdRef.current = null
+      pendingSave.current = null
+      saveInFlight.current = false
       return
     }
+    activeNoteIdRef.current = noteId
+    isHydratingRef.current = true
     setTitle(note.title)
     setBody(note.body)
     setEditorContent(buildEditorContent(note.title, note.body))
-    lastSavedRef.current = { title: note.title, body: note.body }
-  }, [note?.id])
+    lastSavedRef.current = { noteId, title: note.title, body: note.body }
+    pendingSave.current = null
+    saveInFlight.current = false
+  }, [note?.id, noteId])
 
   // 디바운스된 값으로 자동 저장
   useEffect(() => {
     if (!noteId || !note) return
+    if (isHydratingRef.current) return
+    if (activeNoteIdRef.current !== noteId) return
+    if (debouncedTitle !== title || debouncedBody !== body) return
     if (!debouncedTitle.trim()) return
 
     // 마지막 저장된 값과 같으면 저장하지 않음
     if (
       lastSavedRef.current &&
+      lastSavedRef.current.noteId === noteId &&
       lastSavedRef.current.title === debouncedTitle &&
       lastSavedRef.current.body === debouncedBody
     ) {
@@ -191,7 +208,7 @@ function NotesPageContent() {
       try {
         await updateNote.mutateAsync({ title: debouncedTitle, body: debouncedBody })
         await parseLinks.mutateAsync({ noteId, body: debouncedBody })
-        lastSavedRef.current = { title: debouncedTitle, body: debouncedBody }
+        lastSavedRef.current = { noteId, title: debouncedTitle, body: debouncedBody }
         setSaveStatus('saved')
       } catch (error) {
         console.error('Auto save error:', error)

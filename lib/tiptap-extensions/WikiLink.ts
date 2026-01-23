@@ -87,9 +87,16 @@ export const WikiLink = Mark.create<WikiLinkOptions>({
           },
           handleClick: (view, pos, event) => {
             const target = event.target
-            if (!(target instanceof Element)) return false
+            if (!target) return false
 
-            const linkEl = target.closest('.wiki-link-decoration') as HTMLElement | null
+            let element: Element | null = null
+            if (target instanceof Element) {
+              element = target
+            } else if (target instanceof Node) {
+              element = target.parentElement
+            }
+
+            const linkEl = element?.closest('.wiki-link-decoration') as HTMLElement | null
             if (!linkEl) return false
 
             const title = linkEl.getAttribute('data-title')

@@ -30,5 +30,8 @@ export function markdownToHtml(content: string) {
 }
 
 export function htmlToMarkdown(content: string) {
-  return turndown.turndown(content || '')
+  const markdownContent = turndown.turndown(content || '')
+  return markdownContent
+    .replace(/\\\[\[/g, '[[')
+    .replace(/\\\]\]/g, ']]')
 }

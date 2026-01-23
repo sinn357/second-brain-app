@@ -50,8 +50,11 @@ export const WikiLinkSuggestionList = forwardRef((props: SuggestionListProps, re
       }
 
       if (event.key === 'Enter') {
+        return false
+      }
+
+      if (event.key === 'Tab') {
         if (props.items.length === 0) return false
-        if (props.query?.includes(']]')) return false
         enterHandler()
         return true
       }
