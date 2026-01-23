@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     }
 
     const { noteId, body: noteBody } = validated.data
-    const normalizedBody = noteBody.replace(/\\\[\[/g, '[[').replace(/\\\]\]/g, ']]')
+    const normalizedBody = noteBody.replace(/\\+\[\[/g, '[[').replace(/\\+\]\]/g, ']]')
 
     // [[문자열]] 패턴 추출
     const linkPattern = /\[\[(.+?)\]\]/g

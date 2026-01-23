@@ -48,8 +48,8 @@ export async function GET() {
 
     notes.forEach((note) => {
       const body = `${note.title}\n${note.body || ''}`
-        .replace(/\\\[\[/g, '[[')
-        .replace(/\\\]\]/g, ']]')
+        .replace(/\\+\[\[/g, '[[')
+        .replace(/\\+\]\]/g, ']]')
       const matches = [...body.matchAll(linkPattern)]
       const uniqueTitles = [...new Set(matches.map((m) => m[1].trim()).filter(Boolean))]
 

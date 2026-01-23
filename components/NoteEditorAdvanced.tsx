@@ -253,8 +253,15 @@ export function NoteEditorAdvanced({
     }
 
     const handleClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      const linkEl = target?.closest?.('.wiki-link-decoration') as HTMLElement | null
+      const target = event.target
+      let element: Element | null = null
+      if (target instanceof Element) {
+        element = target
+      } else if (target instanceof Node) {
+        element = target.parentElement
+      }
+
+      const linkEl = element?.closest('.wiki-link-decoration') as HTMLElement | null
       if (!linkEl) return
       const title = linkEl.getAttribute('data-title')
       if (title) {
@@ -265,12 +272,12 @@ export function NoteEditorAdvanced({
 
     editorElement.addEventListener('mouseover', handleMouseOver)
     editorElement.addEventListener('mouseout', handleMouseOut)
-    editorElement.addEventListener('click', handleClick)
+    editorElement.addEventListener('click', handleClick, true)
 
     return () => {
       editorElement.removeEventListener('mouseover', handleMouseOver)
       editorElement.removeEventListener('mouseout', handleMouseOut)
-      editorElement.removeEventListener('click', handleClick)
+      editorElement.removeEventListener('click', handleClick, true)
       if (tippyInstance) {
         tippyInstance.destroy()
       }
