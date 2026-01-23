@@ -497,7 +497,7 @@ function NotesPageContent() {
               </Sheet>
             </div>
             {/* 노트 리스트 (스와이프 삭제 지원) */}
-            <div className="panel p-4">
+            <div className="p-4">
               <NoteList folderId={selectedFolderId} selectedId={noteId} onSelect={handleMobileSelectNote} enableSwipe />
             </div>
           </div>
@@ -527,7 +527,7 @@ function NotesPageContent() {
               </div>
             </div>
             {/* 에디터 */}
-            <div className="panel p-4">
+            <div className="p-4">
               {isNoteLoading ? (
                 <Skeleton className="h-96" />
               ) : note ? (
@@ -536,6 +536,7 @@ function NotesPageContent() {
                     content={editorContent}
                     onUpdate={handleEditorUpdate}
                     currentNoteId={noteId}
+                    currentFolderId={selectedFolderId ?? null}
                     placeholder="내용을 입력하세요..."
                     forceFirstHeading
                   />
@@ -559,7 +560,7 @@ function NotesPageContent() {
         }}
       >
         {/* 좌측: 폴더 트리 */}
-        <aside className="panel p-3">
+        <aside className="p-3">
           <FolderTree selectedFolderId={selectedFolderId} />
         </aside>
 
@@ -574,7 +575,7 @@ function NotesPageContent() {
         </div>
 
         {/* 중앙: 노트 리스트 */}
-        <section className="panel p-3">
+        <section className="p-3">
           <div className="page-header">
             <div>
               <h1 className="page-title text-indigo-900 dark:text-indigo-100">
@@ -597,7 +598,7 @@ function NotesPageContent() {
         </div>
 
         {/* 우측: 노트 편집 */}
-        <section className="panel p-6 min-h-[600px]">
+        <section className="p-6 min-h-[600px]">
           {!noteId ? (
             <div className="h-full flex items-center justify-center text-indigo-600 dark:text-indigo-300">
               오른쪽에서 편집할 노트를 선택하세요.
@@ -629,6 +630,7 @@ function NotesPageContent() {
                 content={editorContent}
                 onUpdate={handleEditorUpdate}
                 currentNoteId={noteId}
+                currentFolderId={selectedFolderId ?? null}
                 placeholder="내용을 입력하세요. [[노트제목]]으로 링크, #태그로 태그를 추가할 수 있습니다."
                 forceFirstHeading
               />

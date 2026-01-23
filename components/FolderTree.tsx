@@ -1,6 +1,7 @@
 'use client'
 
 import { useFolders, useCreateFolder, useDeleteFolder, useUpdateFolder } from '@/lib/hooks/useFolders'
+import { useNotes } from '@/lib/hooks/useNotes'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Folder, ChevronRight, ChevronDown, Plus, Minus } from 'lucide-react'
 import { useCallback, useMemo, useState, useEffect, useRef } from 'react'
@@ -202,6 +203,7 @@ function FolderItem({
 export function FolderTree({ selectedFolderId }: { selectedFolderId?: string }) {
   const router = useRouter()
   const { data: folders = [], isLoading, error } = useFolders()
+  const { data: allNotes = [] } = useNotes()
   const createFolder = useCreateFolder()
   const deleteFolder = useDeleteFolder()
   const [newFolderName, setNewFolderName] = useState('')
@@ -361,6 +363,9 @@ export function FolderTree({ selectedFolderId }: { selectedFolderId?: string }) 
   const handleNavigate = (folderId: string) => {
     router.push(`/notes?folderId=${folderId}`)
   }
+  const handleNavigateAll = () => {
+    router.push('/notes')
+  }
 
   if (isLoading) {
     return (
@@ -442,6 +447,22 @@ export function FolderTree({ selectedFolderId }: { selectedFolderId?: string }) 
           </div>
         </div>
       )}
+
+      <div className="mb-2">
+        <button
+          type="button"
+          onClick={handleNavigateAll}
+          className={`flex w-full items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
+            !selectedFolderId
+              ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-800/70 dark:text-indigo-100'
+              : 'text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-800/60'
+          }`}
+        >
+          <Folder className="h-4 w-4 text-indigo-500 dark:text-indigo-300" />
+          <span className="flex-1 text-left">전체</span>
+          <span className="text-[11px] text-indigo-500 dark:text-indigo-300">{allNotes.length}</span>
+        </button>
+      </div>
 
       <SortableContext
         items={rootFolders.map((folder) => `folder:${folder.id}`)}

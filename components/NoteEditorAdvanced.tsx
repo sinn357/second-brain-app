@@ -29,6 +29,14 @@ import { WikiLinkSuggestionList } from './WikiLinkSuggestionList'
 import { createRoot } from 'react-dom/client'
 import { toast } from 'sonner'
 import { htmlToMarkdown, isProbablyHtml, markdownToHtml } from '@/lib/markdown'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 
 interface NoteEditorAdvancedProps {
   content: string
@@ -36,6 +44,7 @@ interface NoteEditorAdvancedProps {
   placeholder?: string
   currentNoteId?: string
   forceFirstHeading?: boolean
+  currentFolderId?: string | null
 }
 
 export function NoteEditorAdvanced({
@@ -43,13 +52,18 @@ export function NoteEditorAdvanced({
   onUpdate,
   placeholder = '내용을 입력하세요. [[노트제목]]으로 링크, #태그로 태그를 추가할 수 있습니다.',
   currentNoteId,
-  forceFirstHeading = false
+  forceFirstHeading = false,
+  currentFolderId = null
 }: NoteEditorAdvancedProps) {
   const router = useRouter()
   const { data: allNotes = [] } = useNotes()
   const createNote = useCreateNote()
   const createTag = useCreateTag()
   const [creatingLinkTitle, setCreatingLinkTitle] = useState<string | null>(null)
+  const [linkChoices, setLinkChoices] = useState<{
+    title: string
+    candidates: typeof allNotes
+  } | null>(null)
   const lastSyncedMarkdown = useRef<string | null>(null)
   const { vimMode } = useEditorStore()
   const notesRef = useRef(allNotes)
@@ -65,9 +79,19 @@ export function NoteEditorAdvanced({
 
   const handleWikiLinkClick = useCallback(
     async (title: string) => {
-      const existing = notesRef.current.find((note) => note.title === title)
-      if (existing) {
-        router.push(`/notes?noteId=${existing.id}`)
+      const matches = notesRef.current.filter((note) => note.title === title)
+      if (matches.length === 1) {
+        router.push(`/notes?noteId=${matches[0].id}`)
+        return
+      }
+
+      if (matches.length > 1) {
+        const sameFolder = matches.find((note) => note.folderId === currentFolderId)
+        if (sameFolder) {
+          router.push(`/notes?noteId=${sameFolder.id}`)
+          return
+        }
+        setLinkChoices({ title, candidates: matches })
         return
       }
 
@@ -78,7 +102,7 @@ export function NoteEditorAdvanced({
         const newNote = await createNote.mutateAsync({
           title,
           body: '',
-          folderId: null,
+          folderId: currentFolderId ?? null,
         })
         toast.success(`"${title}" 노트를 생성했습니다`)
         router.push(`/notes?noteId=${newNote.id}`)
@@ -89,7 +113,7 @@ export function NoteEditorAdvanced({
         setCreatingLinkTitle(null)
       }
     },
-    [createNote, router]
+    [createNote, router, currentFolderId]
   )
 
   const getEditorContent = (value: string) => {
@@ -305,6 +329,36 @@ export function NoteEditorAdvanced({
   return (
     <div className="border rounded">
       <EditorContent editor={editor} />
+      <Dialog open={Boolean(linkChoices)} onOpenChange={(open) => !open && setLinkChoices(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>동일한 노트 제목이 있습니다</DialogTitle>
+            <DialogDescription>
+              "{linkChoices?.title}" 노트가 여러 개입니다. 열 노트를 선택하세요.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {linkChoices?.candidates.map((note) => (
+              <Button
+                key={note.id}
+                variant="outline"
+                className="w-full justify-between text-left"
+                onClick={() => {
+                  setLinkChoices(null)
+                  router.push(`/notes?noteId=${note.id}`)
+                }}
+              >
+                <span className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                  {note.title}
+                </span>
+                <span className="text-xs text-indigo-500 dark:text-indigo-300">
+                  {note.folder?.name ?? '폴더 없음'}
+                </span>
+              </Button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 글로벌 스타일 */}
       <style jsx global>{`

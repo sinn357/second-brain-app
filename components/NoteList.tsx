@@ -22,7 +22,7 @@ interface NoteListProps {
   enableSwipe?: boolean
 }
 
-const ESTIMATED_ITEM_HEIGHT = 104
+const ESTIMATED_ITEM_HEIGHT = 86
 
 export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }: NoteListProps) {
   const { data: notes = [], isLoading, error } = useNotes(folderId)
@@ -261,6 +261,8 @@ interface NoteItemProps {
 }
 
 function NoteItem({ note, isSelected, onSelect, onContextMenu }: NoteItemProps) {
+  const previewSource = note.body?.split('\n').find((line) => line.trim()) ?? ''
+  const previewText = previewSource.replace(/\s+/g, ' ').trim()
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `note:${note.id}`,
     data: { type: 'note', id: note.id, folderId: note.folderId ?? null },
@@ -288,15 +290,10 @@ function NoteItem({ note, isSelected, onSelect, onContextMenu }: NoteItemProps) 
             {note.title}
           </h3>
           </div>
-          <p className="text-xs text-indigo-700 dark:text-indigo-300 line-clamp-2 mb-2">
-            {note.body.slice(0, 150) || '내용 없음'}
+          <p className="text-xs text-indigo-700 dark:text-indigo-300 line-clamp-1 mb-2">
+            {previewText || '내용 없음'}
           </p>
           <div className="flex items-center gap-2 text-[11px] text-indigo-500 dark:text-indigo-300">
-            {note.folder && (
-              <Badge variant="outline" className="text-[11px]">
-                {note.folder.name}
-              </Badge>
-            )}
             {note.tags && note.tags.length > 0 && (
               <div className="flex gap-1">
                 {note.tags.slice(0, 3).map((nt) => (

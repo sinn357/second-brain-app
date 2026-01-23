@@ -187,6 +187,7 @@ export default function DailyPage() {
                 onUpdate={handleContentUpdate}
                 placeholder={`${currentDate} 일일 노트를 작성하세요...`}
                 currentNoteId={dailyNote.id}
+                currentFolderId={dailyNote.folderId ?? null}
               />
             </>
           )}

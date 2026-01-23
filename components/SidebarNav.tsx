@@ -63,7 +63,7 @@ export function SidebarNav() {
 
   return (
     <>
-      <header className="lg:hidden border-b border-indigo-200 dark:border-indigo-800 bg-white/90 dark:bg-indigo-950/90 backdrop-blur">
+      <header className="lg:hidden border-b sidebar-border sidebar-surface backdrop-blur">
         <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <MobileNav />
@@ -105,11 +105,11 @@ export function SidebarNav() {
       </header>
 
       <aside
-        className={`hidden lg:flex flex-col border-r border-indigo-200 dark:border-indigo-800 bg-white dark:bg-indigo-950 transition-all duration-300 ${
+        className={`hidden lg:flex flex-col border-r sidebar-border sidebar-surface transition-all duration-300 ${
           isCollapsed ? 'w-16' : 'w-64'
         }`}
       >
-        <div className={`px-5 py-6 flex items-center ${isCollapsed ? 'flex-col gap-3' : 'justify-between'}`}>
+        <div className={`px-5 py-6 flex items-center ${isCollapsed ? 'flex-col gap-3' : 'justify-between gap-3 flex-wrap'}`}>
           <Link
             href="/notes"
             className="text-2xl font-bold text-indigo-900 dark:text-indigo-100"
@@ -124,7 +124,7 @@ export function SidebarNav() {
               'Nexus'
             )}
           </Link>
-          <div className={`flex items-center ${isCollapsed ? 'flex-col gap-2' : 'gap-2'}`}>
+          <div className={`flex items-center ${isCollapsed ? 'flex-col gap-2' : 'gap-2 flex-wrap'}`}>
             <Button
               variant="ghost"
               size="sm"
@@ -139,7 +139,7 @@ export function SidebarNav() {
               )}
             </Button>
             <ShortcutHelpButton
-              compact={isCollapsed}
+              compact
               variant="ghost"
               className="text-indigo-700 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
             />

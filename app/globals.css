@@ -272,6 +272,15 @@ h1, h2, h3, h4, h5, h6 {
   padding: 1.25rem;
 }
 
+.sidebar-surface {
+  background: rgba(var(--bg-elevated), 0.95);
+  color: rgb(var(--text-primary));
+}
+
+.sidebar-border {
+  border-color: var(--border-subtle);
+}
+
 .toolbar-pill {
   display: inline-flex;
   align-items: center;
