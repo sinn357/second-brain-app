@@ -67,6 +67,7 @@ function NotesPageContent() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })
+      queryClient.invalidateQueries({ queryKey: ['folders'] })
     },
   })
 

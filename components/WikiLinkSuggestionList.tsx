@@ -10,6 +10,7 @@ interface Note {
 interface SuggestionListProps {
   items: Note[]
   command: (item: Note) => void
+  query?: string
 }
 
 export const WikiLinkSuggestionList = forwardRef((props: SuggestionListProps, ref) => {
@@ -50,6 +51,7 @@ export const WikiLinkSuggestionList = forwardRef((props: SuggestionListProps, re
 
       if (event.key === 'Enter') {
         if (props.items.length === 0) return false
+        if (props.query?.includes(']]')) return false
         enterHandler()
         return true
       }

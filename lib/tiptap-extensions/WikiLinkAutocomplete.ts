@@ -110,6 +110,9 @@ export const WikiLinkAutocomplete = Extension.create<WikiLinkAutocompleteOptions
             editor.commands.focus()
           }, 0)
         },
+        allow: ({ query }: { query: string }) => {
+          return !query.includes(']]')
+        },
       },
     }
   },

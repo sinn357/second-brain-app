@@ -160,8 +160,10 @@ function FolderItem({
         )}
         <div
           ref={setDroppableNodeRef}
-          className={`ml-1 h-3.5 w-3.5 rounded-full border border-dashed ${
-            isOver ? 'border-indigo-500 bg-indigo-100 dark:bg-indigo-900/60' : 'border-indigo-200 dark:border-indigo-700'
+          className={`ml-1 h-3.5 w-3.5 rounded-full border border-dashed transition-colors ${
+            isOver
+              ? 'border-indigo-500 bg-indigo-100 dark:bg-indigo-900/60'
+              : 'border-transparent bg-transparent'
           }`}
           title="폴더 안으로 이동"
         />

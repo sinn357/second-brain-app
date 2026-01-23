@@ -83,6 +83,7 @@ export function useCreateNote() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })
+      queryClient.invalidateQueries({ queryKey: ['folders'] })
     },
   })
 }
@@ -105,6 +106,8 @@ export function useUpdateNote(id: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })
       queryClient.invalidateQueries({ queryKey: ['notes', id] })
+      queryClient.invalidateQueries({ queryKey: ['folders'] })
+      queryClient.invalidateQueries({ queryKey: ['graph'] })
     },
   })
 }
@@ -123,6 +126,8 @@ export function useDeleteNote() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })
+      queryClient.invalidateQueries({ queryKey: ['folders'] })
+      queryClient.invalidateQueries({ queryKey: ['graph'] })
     },
   })
 }

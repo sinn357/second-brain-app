@@ -15,7 +15,7 @@ export async function GET(request: Request) {
       orderBy: [
         { isPinned: 'desc' },
         { pinnedAt: 'desc' },
-        { updatedAt: 'desc' },
+        { createdAt: 'desc' },
       ],
       include: {
         folder: true,

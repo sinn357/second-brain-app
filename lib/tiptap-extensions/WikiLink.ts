@@ -86,8 +86,8 @@ export const WikiLink = Mark.create<WikiLinkOptions>({
             return DecorationSet.create(doc, decorations)
           },
           handleClick: (view, pos, event) => {
-            const target = event.target as HTMLElement | null
-            if (!target) return false
+            const target = event.target
+            if (!(target instanceof Element)) return false
 
             const linkEl = target.closest('.wiki-link-decoration') as HTMLElement | null
             if (!linkEl) return false
