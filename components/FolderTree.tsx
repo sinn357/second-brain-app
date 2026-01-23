@@ -91,6 +91,8 @@ function FolderItem({
           isSelected ? 'bg-indigo-100 dark:bg-indigo-800/70' : 'hover:bg-indigo-50 dark:hover:bg-indigo-800/60'
         }`}
         onContextMenu={(event) => onContextMenu(event, folder)}
+        {...attributes}
+        {...listeners}
       >
         {hasChildren ? (
           <button onClick={() => setIsOpen(!isOpen)} className="p-0.5 text-indigo-500 dark:text-indigo-300">
@@ -104,16 +106,12 @@ function FolderItem({
           <div className="w-4" />
         )}
 
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          disabled={folder.isDefault}
-          className="text-indigo-500 dark:text-indigo-300 disabled:opacity-40"
-          aria-label="폴더 이동"
+        <span
+          className={`text-indigo-500 dark:text-indigo-300 ${folder.isDefault ? 'opacity-70' : ''}`}
+          aria-hidden="true"
         >
           <Folder className="h-4 w-4" />
-        </button>
+        </span>
         {isEditing ? (
           <div className="flex-1">
             <Input
@@ -208,6 +206,7 @@ export function FolderTree({ selectedFolderId }: { selectedFolderId?: string }) 
   const deleteFolder = useDeleteFolder()
   const [newFolderName, setNewFolderName] = useState('')
   const [parentId, setParentId] = useState<string | null>(null)
+  const [hasSelectedParent, setHasSelectedParent] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
@@ -353,6 +352,7 @@ export function FolderTree({ selectedFolderId }: { selectedFolderId?: string }) 
     }
 
     setParentId(folder.id)
+    setHasSelectedParent(true)
     setNewFolderName('')
     setShowCreate(true)
     setTimeout(() => {
@@ -364,8 +364,20 @@ export function FolderTree({ selectedFolderId }: { selectedFolderId?: string }) 
     router.push(`/notes?folderId=${folderId}`)
   }
   const handleNavigateAll = () => {
-    router.push('/notes')
+    router.push('/notes?folderId=all')
   }
+
+  const defaultFolder = useMemo(
+    () => folders.find((folder) => folder.isDefault) ?? null,
+    [folders]
+  )
+
+  useEffect(() => {
+    if (hasSelectedParent) return
+    if (!parentId && defaultFolder?.id) {
+      setParentId(defaultFolder.id)
+    }
+  }, [hasSelectedParent, parentId, defaultFolder?.id])
 
   if (isLoading) {
     return (
@@ -406,7 +418,13 @@ export function FolderTree({ selectedFolderId }: { selectedFolderId?: string }) 
 
       {showCreate && (
         <div className="space-y-2 mb-3">
-          <Select value={parentId ?? '__root__'} onValueChange={(value) => setParentId(value === '__root__' ? null : value)}>
+          <Select
+            value={parentId ?? '__root__'}
+            onValueChange={(value) => {
+              setHasSelectedParent(true)
+              setParentId(value === '__root__' ? null : value)
+            }}
+          >
             <SelectTrigger className="h-8 text-xs">
               <SelectValue placeholder="상위 폴더" />
             </SelectTrigger>
@@ -464,16 +482,23 @@ export function FolderTree({ selectedFolderId }: { selectedFolderId?: string }) 
         </button>
       </div>
 
+      <div
+        ref={setRootDropRef}
+        className={`mb-2 flex items-center justify-between px-3 py-2 rounded-md border border-dashed text-xs transition-colors ${
+          isRootOver
+            ? 'border-indigo-400 bg-indigo-50 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-200'
+            : 'border-indigo-200 text-indigo-500 dark:border-indigo-800 dark:text-indigo-300'
+        }`}
+      >
+        <span>최상위로 이동</span>
+        <span className="text-[11px]">드롭</span>
+      </div>
+
       <SortableContext
         items={rootFolders.map((folder) => `folder:${folder.id}`)}
         strategy={verticalListSortingStrategy}
       >
-        <div
-          ref={setRootDropRef}
-          className={`space-y-1 rounded-md transition-colors ${
-            isRootOver ? 'bg-indigo-50/70 dark:bg-indigo-900/40' : ''
-          }`}
-        >
+        <div className="space-y-1 rounded-md">
           {rootFolders.length === 0 ? (
             <p className="text-sm text-indigo-500 dark:text-indigo-300">폴더가 없습니다</p>
           ) : (

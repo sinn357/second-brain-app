@@ -320,14 +320,14 @@ export function NoteEditorAdvanced({
 
   if (!editor) {
     return (
-      <div className="border rounded p-4 min-h-[400px] bg-gray-50 animate-pulse">
+      <div className="p-4 min-h-[400px] animate-pulse text-indigo-500 dark:text-indigo-300">
         Loading editor...
       </div>
     )
   }
 
   return (
-    <div className="border rounded">
+    <div>
       <EditorContent editor={editor} />
       <Dialog open={Boolean(linkChoices)} onOpenChange={(open) => !open && setLinkChoices(null)}>
         <DialogContent className="sm:max-w-md">

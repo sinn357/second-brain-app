@@ -287,8 +287,14 @@ function NoteItem({ note, isSelected, onSelect, onContextMenu }: NoteItemProps) 
               <Pin className="h-3.5 w-3.5 text-amber-500" />
             )}
             <h3 className="font-semibold text-base mb-1 text-indigo-900 dark:text-indigo-100">
-            {note.title}
-          </h3>
+              {note.title}
+            </h3>
+            <span className="ml-auto text-[11px] text-indigo-500 dark:text-indigo-300">
+              {formatDistanceToNow(new Date(note.updatedAt), {
+                addSuffix: true,
+                locale: ko,
+              })}
+            </span>
           </div>
           <p className="text-xs text-indigo-700 dark:text-indigo-300 line-clamp-1 mb-2">
             {previewText || '내용 없음'}
@@ -310,12 +316,6 @@ function NoteItem({ note, isSelected, onSelect, onContextMenu }: NoteItemProps) 
                 ))}
               </div>
             )}
-            <span className="ml-auto">
-              {formatDistanceToNow(new Date(note.updatedAt), {
-                addSuffix: true,
-                locale: ko,
-              })}
-            </span>
           </div>
         </div>
       </div>

@@ -87,18 +87,21 @@ export function SwipeableNoteItem({ note, isSelected, onSelect, onDelete }: Swip
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-1 text-indigo-900 dark:text-indigo-100">
-                {note.title}
-              </h3>
-              <p className="text-sm text-indigo-700 dark:text-indigo-300 line-clamp-2 mb-2">
-                {note.body.slice(0, 150) || '내용 없음'}
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-lg mb-1 text-indigo-900 dark:text-indigo-100">
+                  {note.title}
+                </h3>
+                <span className="ml-auto text-xs text-indigo-500 dark:text-indigo-300">
+                  {formatDistanceToNow(new Date(note.updatedAt), {
+                    addSuffix: true,
+                    locale: ko,
+                  })}
+                </span>
+              </div>
+              <p className="text-sm text-indigo-700 dark:text-indigo-300 line-clamp-1 mb-2">
+                {note.body.slice(0, 120) || '내용 없음'}
               </p>
               <div className="flex items-center gap-2 text-xs text-indigo-500 dark:text-indigo-300">
-                {note.folder && (
-                  <Badge variant="outline" className="text-xs">
-                    {note.folder.name}
-                  </Badge>
-                )}
                 {note.tags && note.tags.length > 0 && (
                   <div className="flex gap-1">
                     {note.tags.slice(0, 3).map((nt) => (
@@ -115,12 +118,6 @@ export function SwipeableNoteItem({ note, isSelected, onSelect, onDelete }: Swip
                     ))}
                   </div>
                 )}
-                <span className="ml-auto">
-                  {formatDistanceToNow(new Date(note.updatedAt), {
-                    addSuffix: true,
-                    locale: ko,
-                  })}
-                </span>
               </div>
             </div>
           </div>

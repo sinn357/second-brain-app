@@ -11,7 +11,7 @@ import { useDeleteNote, useNote, useParseLinks, useUpdateNote } from '@/lib/hook
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Trash2, FolderOpen, ChevronLeft } from 'lucide-react'
+import { Trash2, FolderOpen, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useFolders } from '@/lib/hooks/useFolders'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
@@ -23,11 +23,14 @@ const MIN_FOLDER_WIDTH = 160
 const MIN_LIST_WIDTH = 240
 const MIN_EDITOR_WIDTH = 360
 const RESIZE_HANDLE_WIDTH = 8
+const COLLAPSED_COLUMN_WIDTH = 56
 
 function NotesPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const folderId = searchParams.get('folderId') || undefined
+  const folderIdParam = searchParams.get('folderId')
+  const isAllFolders = folderIdParam === 'all'
+  const folderId = !folderIdParam || isAllFolders ? undefined : folderIdParam
   const noteId = searchParams.get('noteId') || undefined
   const { data: folders = [] } = useFolders()
   const { data: note, isLoading: isNoteLoading } = useNote(noteId || '')
@@ -40,19 +43,19 @@ function NotesPageContent() {
     () => folders.find((folder) => folder.isDefault) ?? null,
     [folders]
   )
-  const selectedFolder = useMemo(
-    () => folders.find((folder) => folder.id === folderId) ?? defaultFolder,
-    [folders, folderId, defaultFolder]
-  )
+  const selectedFolder = useMemo(() => {
+    if (isAllFolders) return null
+    return folders.find((folder) => folder.id === folderId) ?? defaultFolder
+  }, [folders, folderId, defaultFolder, isAllFolders])
   const selectedFolderId = selectedFolder?.id
 
   useEffect(() => {
-    if (!folderId && defaultFolder?.id) {
+    if (!folderIdParam && defaultFolder?.id) {
       const nextParams = new URLSearchParams(searchParams.toString())
       nextParams.set('folderId', defaultFolder.id)
       router.replace(`/notes?${nextParams.toString()}`, { scroll: false })
     }
-  }, [folderId, defaultFolder?.id, searchParams, router])
+  }, [folderIdParam, defaultFolder?.id, searchParams, router])
 
   const moveNoteMutation = useMutation({
     mutationFn: async ({ id, folderId: nextFolderId }: { id: string; folderId: string | null }) => {
@@ -407,6 +410,8 @@ function NotesPageContent() {
 
   const [folderWidth, setFolderWidth] = useState(180)
   const [listWidth, setListWidth] = useState(300)
+  const [isFolderCollapsed, setIsFolderCollapsed] = useState(false)
+  const [isListCollapsed, setIsListCollapsed] = useState(false)
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -451,6 +456,12 @@ function NotesPageContent() {
 
   const startResize = (type: 'folder' | 'list') => (event: React.MouseEvent) => {
     event.preventDefault()
+    if (type === 'folder' && isFolderCollapsed) {
+      setIsFolderCollapsed(false)
+    }
+    if (type === 'list' && isListCollapsed) {
+      setIsListCollapsed(false)
+    }
     resizeStateRef.current = {
       type,
       startX: event.clientX,
@@ -460,6 +471,9 @@ function NotesPageContent() {
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
   }
+
+  const resolvedFolderWidth = isFolderCollapsed ? COLLAPSED_COLUMN_WIDTH : folderWidth
+  const resolvedListWidth = isListCollapsed ? COLLAPSED_COLUMN_WIDTH : listWidth
 
   return (
     <div className="page-shell">
@@ -498,7 +512,12 @@ function NotesPageContent() {
             </div>
             {/* 노트 리스트 (스와이프 삭제 지원) */}
             <div className="p-4">
-              <NoteList folderId={selectedFolderId} selectedId={noteId} onSelect={handleMobileSelectNote} enableSwipe />
+              <NoteList
+                folderId={isAllFolders ? undefined : selectedFolderId}
+                selectedId={noteId}
+                onSelect={handleMobileSelectNote}
+                enableSwipe
+              />
             </div>
           </div>
         ) : (
@@ -536,7 +555,7 @@ function NotesPageContent() {
                     content={editorContent}
                     onUpdate={handleEditorUpdate}
                     currentNoteId={noteId}
-                    currentFolderId={selectedFolderId ?? null}
+                    currentFolderId={selectedFolderId ?? defaultFolder?.id ?? null}
                     placeholder="내용을 입력하세요..."
                     forceFirstHeading
                   />
@@ -556,12 +575,37 @@ function NotesPageContent() {
         ref={desktopGridRef}
         className="page-content page-content-fluid hidden lg:grid gap-0"
         style={{
-          gridTemplateColumns: `${folderWidth}px ${RESIZE_HANDLE_WIDTH}px ${listWidth}px ${RESIZE_HANDLE_WIDTH}px minmax(0, 1fr)`,
+          gridTemplateColumns: `${resolvedFolderWidth}px ${RESIZE_HANDLE_WIDTH}px ${resolvedListWidth}px ${RESIZE_HANDLE_WIDTH}px minmax(0, 1fr)`,
         }}
       >
         {/* 좌측: 폴더 트리 */}
-        <aside className="p-3">
-          <FolderTree selectedFolderId={selectedFolderId} />
+        <aside className={isFolderCollapsed ? 'p-2 flex items-center justify-center' : 'p-3'}>
+          {isFolderCollapsed ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsFolderCollapsed(false)}
+              className="text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+              aria-label="폴더 목록 펼치기"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <>
+              <div className="flex items-center justify-end mb-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsFolderCollapsed(true)}
+                  className="text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+                  aria-label="폴더 목록 접기"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
+              <FolderTree selectedFolderId={selectedFolderId} />
+            </>
+          )}
         </aside>
 
         {/* 리사이즈 핸들: 폴더 */}
@@ -575,16 +619,43 @@ function NotesPageContent() {
         </div>
 
         {/* 중앙: 노트 리스트 */}
-        <section className="p-3">
-          <div className="page-header">
-            <div>
-              <h1 className="page-title text-indigo-900 dark:text-indigo-100">
-                {selectedFolder ? selectedFolder.name : '모든 노트'}
-              </h1>
-              <p className="page-subtitle">노트를 빠르게 탐색하고 연결하세요.</p>
-            </div>
-          </div>
-          <NoteList folderId={selectedFolderId} selectedId={noteId} onSelect={handleSelectNote} />
+        <section className={isListCollapsed ? 'p-2 flex items-center justify-center' : 'p-3'}>
+          {isListCollapsed ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsListCollapsed(false)}
+              className="text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+              aria-label="노트 목록 펼치기"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <>
+              <div className="page-header">
+                <div>
+                  <h1 className="page-title text-indigo-900 dark:text-indigo-100">
+                    {isAllFolders ? '모든 노트' : selectedFolder ? selectedFolder.name : '모든 노트'}
+                  </h1>
+                  <p className="page-subtitle">노트를 빠르게 탐색하고 연결하세요.</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsListCollapsed(true)}
+                  className="text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+                  aria-label="노트 목록 접기"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
+              <NoteList
+                folderId={isAllFolders ? undefined : selectedFolderId}
+                selectedId={noteId}
+                onSelect={handleSelectNote}
+              />
+            </>
+          )}
         </section>
 
         {/* 리사이즈 핸들: 노트 리스트 */}
@@ -630,7 +701,7 @@ function NotesPageContent() {
                 content={editorContent}
                 onUpdate={handleEditorUpdate}
                 currentNoteId={noteId}
-                currentFolderId={selectedFolderId ?? null}
+                currentFolderId={selectedFolderId ?? defaultFolder?.id ?? null}
                 placeholder="내용을 입력하세요. [[노트제목]]으로 링크, #태그로 태그를 추가할 수 있습니다."
                 forceFirstHeading
               />
