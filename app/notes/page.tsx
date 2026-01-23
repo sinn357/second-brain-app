@@ -416,7 +416,7 @@ function NotesPageContent() {
       <QuickAddButton />
 
       {/* 모바일: 단일 컬럼 레이아웃 */}
-      <div className="page-content lg:hidden">
+      <div className="page-content page-content-fluid lg:hidden">
         {mobileView === 'list' ? (
           <div className="space-y-4">
             {/* 모바일 헤더 + 폴더 버튼 */}
@@ -507,7 +507,7 @@ function NotesPageContent() {
       {/* 데스크톱: 3컬럼 레이아웃 */}
       <div
         ref={desktopGridRef}
-        className="page-content hidden lg:grid gap-0"
+        className="page-content page-content-fluid hidden lg:grid gap-0"
         style={{
           gridTemplateColumns: `${folderWidth}px ${RESIZE_HANDLE_WIDTH}px ${listWidth}px ${RESIZE_HANDLE_WIDTH}px minmax(0, 1fr)`,
         }}

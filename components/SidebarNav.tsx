@@ -15,6 +15,8 @@ import {
   Table,
   Moon,
   Sun,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/lib/hooks/useTheme'
@@ -37,6 +39,7 @@ const secondaryItems = [
 export function SidebarNav() {
   const pathname = usePathname()
   const [isMac, setIsMac] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
   const { theme, toggleTheme, mounted } = useTheme()
 
   useEffect(() => {
@@ -51,6 +54,10 @@ export function SidebarNav() {
       bubbles: true,
     })
     document.dispatchEvent(event)
+  }
+
+  const toggleCollapsed = () => {
+    setIsCollapsed((prev) => !prev)
   }
 
   return (
@@ -95,40 +102,75 @@ export function SidebarNav() {
         </div>
       </header>
 
-      <aside className="hidden lg:flex w-64 flex-col border-r border-indigo-200 dark:border-indigo-800 bg-white dark:bg-indigo-950">
-        <div className="px-5 py-6 flex items-center justify-between">
-          <Link href="/notes" className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
-            Nexus
+      <aside
+        className={`hidden lg:flex flex-col border-r border-indigo-200 dark:border-indigo-800 bg-white dark:bg-indigo-950 transition-all duration-300 ${
+          isCollapsed ? 'w-16' : 'w-64'
+        }`}
+      >
+        <div className={`px-5 py-6 flex items-center ${isCollapsed ? 'flex-col gap-3' : 'justify-between'}`}>
+          <Link
+            href="/notes"
+            className="text-2xl font-bold text-indigo-900 dark:text-indigo-100"
+            aria-label="Nexus 홈"
+          >
+            {isCollapsed ? (
+              <>
+                <span className="sr-only">Nexus</span>
+                <span aria-hidden="true">N</span>
+              </>
+            ) : (
+              'Nexus'
+            )}
           </Link>
-          {mounted && (
+          <div className={`flex items-center ${isCollapsed ? 'flex-col gap-2' : 'gap-2'}`}>
             <Button
               variant="ghost"
               size="sm"
-              onClick={toggleTheme}
+              onClick={toggleCollapsed}
               className="text-indigo-700 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
-              aria-label="Toggle theme"
+              aria-label={isCollapsed ? '사이드바 펼치기' : '사이드바 접기'}
             >
-              {theme === 'light' ? (
-                <Moon className="h-5 w-5" />
+              {isCollapsed ? (
+                <ChevronRight className="h-4 w-4" />
               ) : (
-                <Sun className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4" />
               )}
             </Button>
-          )}
+            {mounted && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleTheme}
+                className="text-indigo-700 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+                aria-label="Toggle theme"
+              >
+                {theme === 'light' ? (
+                  <Moon className="h-5 w-5" />
+                ) : (
+                  <Sun className="h-5 w-5" />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
 
-        <div className="px-4 pb-4">
+        <div className={`px-4 pb-4 ${isCollapsed ? 'flex justify-center' : ''}`}>
           <Button
             variant="outline"
             size="sm"
             onClick={handleSearchClick}
-            className="w-full justify-start gap-2 border-indigo-300 dark:border-indigo-700"
+            className={`border-indigo-300 dark:border-indigo-700 ${
+              isCollapsed ? 'w-9 h-9 p-0 justify-center' : 'w-full justify-start gap-2'
+            }`}
+            aria-label="Search"
           >
             <Search className="h-4 w-4" />
-            Search
-            <kbd className="ml-auto px-2 py-0.5 text-xs bg-indigo-100 dark:bg-indigo-800 rounded">
-              {isMac ? '⌘K' : 'Ctrl+K'}
-            </kbd>
+            <span className={isCollapsed ? 'sr-only' : undefined}>Search</span>
+            {!isCollapsed && (
+              <kbd className="ml-auto px-2 py-0.5 text-xs bg-indigo-100 dark:bg-indigo-800 rounded">
+                {isMac ? '⌘K' : 'Ctrl+K'}
+              </kbd>
+            )}
           </Button>
         </div>
 
@@ -140,23 +182,26 @@ export function SidebarNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900/60 dark:text-indigo-100'
                     : 'text-indigo-700 hover:bg-indigo-50 hover:text-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-900/40 dark:hover:text-indigo-100'
-                }`}
+                } ${isCollapsed ? 'justify-center' : 'gap-3'}`}
+                title={isCollapsed ? item.label : undefined}
               >
                 <Icon className="h-4 w-4" />
-                {item.label}
+                <span className={isCollapsed ? 'sr-only' : undefined}>{item.label}</span>
               </Link>
             )
           })}
         </nav>
 
         <div className="px-2 pb-4">
-          <div className="text-[11px] uppercase tracking-[0.2em] text-indigo-400 px-3 pb-2">
-            More
-          </div>
+          {!isCollapsed && (
+            <div className="text-[11px] uppercase tracking-[0.2em] text-indigo-400 px-3 pb-2">
+              More
+            </div>
+          )}
           {secondaryItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname?.startsWith(item.href)
@@ -164,14 +209,15 @@ export function SidebarNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900/60 dark:text-indigo-100'
                     : 'text-indigo-600 hover:bg-indigo-50 hover:text-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-900/40 dark:hover:text-indigo-100'
-                }`}
+                } ${isCollapsed ? 'justify-center' : 'gap-3'}`}
+                title={isCollapsed ? item.label : undefined}
               >
                 <Icon className="h-4 w-4" />
-                {item.label}
+                <span className={isCollapsed ? 'sr-only' : undefined}>{item.label}</span>
               </Link>
             )
           })}

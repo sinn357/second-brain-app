@@ -226,6 +226,11 @@ h1, h2, h3, h4, h5, h6 {
   padding: 1.5rem;
 }
 
+.page-content-fluid {
+  max-width: none;
+  width: 100%;
+}
+
 .page-header {
   display: flex;
   align-items: flex-end;

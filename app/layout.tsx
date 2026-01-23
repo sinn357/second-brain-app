@@ -54,7 +54,7 @@ export default function RootLayout({
           <Toaster position="top-right" richColors />
           <div className="min-h-screen flex flex-col lg:flex-row">
             <SidebarNav />
-            <main className="flex-1">
+            <main className="flex-1 min-w-0">
               {children}
             </main>
           </div>
