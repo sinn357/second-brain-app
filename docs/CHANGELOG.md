@@ -1,5 +1,21 @@
 # Second Brain App Changelog
 
+## 2026-01-23
+
+### Updated (Notes + Wiki Link Session)
+- 위키링크 파싱/클릭 안정화: `[[...]]` 클릭 시 이동/생성, 중복 제목 선택 모달
+- 그래프 뷰 링크 동기화: 누락 링크 표시 및 링크 파싱 후 연결 반영
+- 노트 편집 UX 정리: 단축키 도움말 버튼, 에디터 프레임 최소화, H1 시작 유지
+- 폴더/노트 리스트 개선: 전체 보기, 폴더 카운트 갱신, 미리보기 1줄, 타임스탬프 정렬
+- 레이아웃 정리: 좌측/중앙 접기, 넓은 화면 확장, 사이드바 다크모드 일관화
+- 폴더 DnD 개선: 전체 행 드래그, 최상위 드롭존 추가, 기본 폴더 유지
+
+### Technical Changes (Notes + Wiki Link Session)
+- `NoteEditorAdvanced`에 폴더 컨텍스트 전달 및 링크 생성 로직 개선
+- `FolderTree`에 전체 보기/카운트/루트 드롭 안내 추가
+- `NoteList`/`SwipeableNoteItem` 미리보기/시간 표시 포맷 정리
+- `/notes` 라우트에서 `folderId=all` 처리 및 접기 상태 UI 추가
+
 ## 2025-12-31
 
 ### Added (Seventh Session - Claude + Codex 협업)
