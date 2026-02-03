@@ -1,13 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { FileText, Network, Table, Settings, LayoutTemplate, Menu, X, CalendarDays, Brain, Keyboard, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { createPortal } from 'react-dom'
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const pathname = usePathname()
 
   const navItems = [
@@ -21,6 +23,10 @@ export function MobileNav() {
     { href: '/daily', label: 'Daily', icon: CalendarDays },
     { href: '/dashboard', label: 'Dashboard', icon: Home },
   ]
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   return (
     <>
@@ -36,19 +42,19 @@ export function MobileNav() {
       </Button>
 
       {/* 모바일 사이드바 */}
-      {isOpen && (
-        <>
+      {isMounted && isOpen && createPortal(
+        <div className="fixed inset-0 z-50 md:hidden">
           {/* 배경 오버레이 */}
           <div
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            className="absolute inset-0 bg-black/50"
             onClick={() => setIsOpen(false)}
           />
 
           {/* 사이드바 */}
-          <div className="fixed top-0 left-0 bottom-0 w-64 bg-white dark:bg-indigo-900 z-50 md:hidden shadow-xl">
+          <div className="absolute inset-y-0 left-0 h-[100dvh] w-72 max-w-[85vw] bg-white dark:bg-indigo-900 shadow-xl">
             <div className="flex flex-col h-full">
               {/* 헤더 */}
-              <div className="flex items-center justify-between p-4 border-b border-indigo-200 dark:border-indigo-800">
+              <div className="flex items-center justify-between p-4 border-b border-indigo-200 dark:border-indigo-800 pt-[env(safe-area-inset-top)]">
                 <span className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
                   Second Brain
                 </span>
@@ -62,7 +68,7 @@ export function MobileNav() {
               </div>
 
               {/* 네비게이션 아이템 */}
-              <nav className="flex-1 overflow-y-auto p-4">
+              <nav className="flex-1 overflow-y-auto p-4 pb-[env(safe-area-inset-bottom)]">
                 <div className="space-y-2">
                   {navItems.map((item) => {
                     const Icon = item.icon
@@ -88,7 +94,8 @@ export function MobileNav() {
               </nav>
             </div>
           </div>
-        </>
+        </div>,
+        document.body
       )}
     </>
   )
