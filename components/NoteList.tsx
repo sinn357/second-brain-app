@@ -1,8 +1,9 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { useNotes, useDeleteNote, useCreateNote } from '@/lib/hooks/useNotes'
+import { useDeleteNote, useCreateNote } from '@/lib/hooks/useNotes'
+import { useNotesInfinite } from '@/lib/hooks/useNotesInfinite'
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +13,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { useDraggable } from '@dnd-kit/core'
-import { Pin, PinOff, Copy, Trash2 } from 'lucide-react'
+import { Pin, PinOff, Copy, Trash2, Loader2 } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 interface NoteListProps {
@@ -25,7 +26,21 @@ interface NoteListProps {
 const ESTIMATED_ITEM_HEIGHT = 86
 
 export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }: NoteListProps) {
-  const { data: notes = [], isLoading, error } = useNotes(folderId)
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useNotesInfinite(folderId)
+
+  // 모든 페이지의 노트를 평탄화
+  const notes = useMemo(() => {
+    if (!data?.pages) return []
+    return data.pages.flatMap((page) => page.notes)
+  }, [data])
+
   const deleteNote = useDeleteNote()
   const createNote = useCreateNote()
   const queryClient = useQueryClient()
@@ -54,6 +69,28 @@ export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }
       window.removeEventListener('scroll', handleScroll, true)
     }
   }, [])
+
+  // 무한 스크롤: 하단 도달 시 다음 페이지 로드
+  const handleScroll = useCallback(() => {
+    const container = parentRef.current
+    if (!container) return
+
+    const { scrollTop, scrollHeight, clientHeight } = container
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+
+    // 하단 200px 이내 도달 시 다음 페이지 로드
+    if (distanceFromBottom < 200 && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage()
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  useEffect(() => {
+    const container = parentRef.current
+    if (!container) return
+
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [handleScroll])
 
   const virtualizer = useVirtualizer({
     count: notes.length,
@@ -199,6 +236,18 @@ export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }
             )
           })}
         </div>
+        {/* 무한 스크롤 로딩 인디케이터 */}
+        {isFetchingNextPage && (
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+          </div>
+        )}
+        {/* 더 이상 노트가 없을 때 */}
+        {!hasNextPage && notes.length > 0 && (
+          <div className="text-center py-4 text-sm text-indigo-400 dark:text-indigo-500">
+            모든 노트를 불러왔습니다
+          </div>
+        )}
       </div>
       {contextMenu && (
         <div

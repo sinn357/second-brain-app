@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { noteUpdateSchema } from '@/lib/validations/note'
 import { prisma } from '@/lib/db'
+import { createNoteVersion } from '@/lib/versionUtils'
 
 function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
   return error instanceof Prisma.PrismaClientKnownRequestError
@@ -92,6 +93,23 @@ export async function PATCH(
     }
 
     const data = validated.data
+
+    // 내용 변경 시 버전 생성 (title 또는 body 변경)
+    if (data.title !== undefined || data.body !== undefined) {
+      const currentNote = await prisma.note.findUnique({
+        where: { id },
+        select: { title: true, body: true },
+      })
+
+      if (currentNote) {
+        const titleChanged = data.title !== undefined && data.title !== currentNote.title
+        const bodyChanged = data.body !== undefined && data.body !== currentNote.body
+
+        if (titleChanged || bodyChanged) {
+          await createNoteVersion(id, currentNote.title, currentNote.body)
+        }
+      }
+    }
 
     const updateData = {
       ...data,

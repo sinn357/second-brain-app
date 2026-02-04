@@ -28,10 +28,28 @@ model Note {
   linksTo    Link[]         @relation("TargetNote")
   properties NoteProperty[]
   presences  Presence[]
+  versions   NoteVersion[]
 
   @@index([folderId])
   @@index([createdAt])
   @@map("notes")
+}
+
+// 노트 버전 (변경 이력)
+model NoteVersion {
+  id        String   @id @default(cuid())
+  noteId    String
+  version   Int      // 버전 번호 (노트별 자동 증가)
+  title     String   @db.VarChar(500)
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, version])
+  @@index([noteId])
+  @@index([createdAt])
+  @@map("note_versions")
 }
 
 // 폴더 (계층 구조)

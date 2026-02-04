@@ -11,8 +11,9 @@ import { useDeleteNote, useNote, useParseLinks, useUpdateNote } from '@/lib/hook
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Trash2, FolderOpen, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Trash2, FolderOpen, ChevronLeft, ChevronRight, History } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { VersionHistoryPanel } from '@/components/VersionHistoryPanel'
 import { useFolders } from '@/lib/hooks/useFolders'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
@@ -535,6 +536,26 @@ function NotesPageContent() {
                   {saveStatus === 'saved' && '✓ 저장됨'}
                   {saveStatus === 'error' && '⚠ 실패'}
                 </span>
+                {/* 모바일 버전 히스토리 */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <History className="h-4 w-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
+                    <SheetHeader>
+                      <SheetTitle>버전 히스토리</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-4 overflow-y-auto max-h-[calc(70vh-80px)]">
+                      <VersionHistoryPanel
+                        noteId={noteId!}
+                        currentTitle={title}
+                        currentBody={body}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -687,15 +708,38 @@ function NotesPageContent() {
                     {saveStatus === 'idle' && ''}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDelete}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
-                </Button>
+                <div className="flex items-center gap-2">
+                  {/* 버전 히스토리 */}
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <History className="h-4 w-4 mr-1" />
+                        History
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-[400px] sm:w-[540px]">
+                      <SheetHeader>
+                        <SheetTitle>버전 히스토리</SheetTitle>
+                      </SheetHeader>
+                      <div className="mt-4">
+                        <VersionHistoryPanel
+                          noteId={noteId!}
+                          currentTitle={title}
+                          currentBody={body}
+                        />
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDelete}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                </div>
               </div>
               <NoteEditorAdvanced
                 content={editorContent}
