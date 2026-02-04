@@ -1,8 +1,25 @@
 # Second Brain App Roadmap
 
 ## Current Status
-Phase 0~5 완료 ✅
-**Home 페이지 개선 검토 중**
+Phase 0~7 완료 ✅
+**다음: Phase 8 (AI 기능) 또는 Home 페이지 개선**
+
+---
+
+## 🎯 경쟁 앱 대비 진행도 (2026-02-04 기준)
+
+| 앱 | 달성도 | 핵심 차이점 |
+|----|--------|------------|
+| 애플 메모 | **90%** | 이미지 첨부만 없음 |
+| 옵시디언 | **75%** | 플러그인/로컬 파일 없음 |
+| 노션 | **60%** | 블록 에디터/협업 부족 |
+| 마인드맵 | **40%** | 시각화만, 편집 불가 |
+
+### 상세
+- **애플 메모 90%**: Quick Add, 폴더, 고정, 검색, 스와이프 ✅ / 이미지 ❌
+- **옵시디언 75%**: Wiki Links, 백링크, Graph, 태그, Daily, 템플릿, Export/Import ✅ / 플러그인 ❌
+- **노션 60%**: 속성, DB뷰, 필터, SavedView, 버전히스토리 ✅ / 블록에디터, 실시간협업 ⚠️
+- **마인드맵 40%**: Graph View ✅ / 마인드맵 편집 ❌
 
 ---
 
@@ -112,6 +129,29 @@ Phase 0~5 완료 ✅
 
 ## Completed Phases
 
+### Phase 7: 성능 & 버전 관리 ✅ (2026-02-04)
+
+#### Phase 7-1: 무한 스크롤
+- [x] API 커서 기반 페이지네이션 (`/api/notes?cursor=&limit=20`)
+- [x] `useNotesInfinite` 훅 (TanStack Query useInfiniteQuery)
+- [x] NoteList 무한 스크롤 (하단 200px 도달 시 자동 로드)
+- [x] 고정 노트 별도 처리 (첫 페이지에서 상단 표시)
+- [x] 로딩 인디케이터
+
+#### Phase 7-2: 버전 히스토리
+- [x] NoteVersion 모델 추가 (노트당 최대 50개)
+- [x] 버전 API: 목록, 상세, 복원
+- [x] 노트 수정 시 자동 버전 생성
+- [x] VersionHistoryPanel, VersionDiffDialog 컴포넌트
+- [x] 노트 페이지에 History 버튼 통합 (데스크톱/모바일)
+
+### Phase 6: 고급 검색 & 모바일 ✅ (이전 완료)
+- [x] 정규식 검색 (AdvancedSearchDialog)
+- [x] 검색 히스토리 (useSearchHistory)
+- [x] 검색 결과 하이라이트 (SearchHighlight)
+- [x] 모바일 네비게이션 (MobileNav - 햄버거 메뉴)
+- [x] PWA manifest.json
+
 ### Phase 3-4: 노션 Core - 속성 필터 강화 ✅ (2025-12-31)
 - [x] SavedView DB 모델 추가
 - [x] 필터 쿼리 엔진 (AND/OR 조건)
@@ -199,14 +239,17 @@ Phase 0~5 완료 ✅
 - Phase 3: 노션 Core ✅
 - Phase 4: 옵시디언 Core ✅
 - Phase 5: UX 개선 & 최적화 ✅
+- Phase 6: 고급 검색 & 모바일 ✅
+- Phase 7: 성능 & 버전 관리 ✅
 
 ### 🟡 남은 작업 (선택)
-1. Home 페이지 개선 (랜딩/대시보드/온보딩)
-2. Mindmap 코드 리뷰
-3. any 타입 정리
+1. **Phase 8: AI 기능** - 노트 요약, 태그 자동생성, 시맨틱 검색
+2. Home 페이지 개선 (랜딩/대시보드/온보딩)
+3. 이미지 첨부 기능 (애플 메모 100%)
+4. 마인드맵 편집 모드 (마인드맵 70%)
 
 ---
 
-**Last Updated**: 2026-01-22
-**Current Phase**: Phase 5 완료
-**Status**: MVP 이상 완성, Home 페이지 개선 검토 중
+**Last Updated**: 2026-02-04
+**Current Phase**: Phase 7 완료
+**Status**: MVP 이상 완성, Phase 8 (AI) 또는 Home 개선 검토 중
