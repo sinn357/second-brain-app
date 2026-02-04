@@ -1,5 +1,53 @@
 # Second Brain App Changelog
 
+## 2026-02-04
+
+### Added (Phase 7: Performance & Version History)
+
+#### Phase 7-1: Infinite Scroll
+노트 목록 성능 최적화를 위한 무한 스크롤 구현
+
+- **API 커서 기반 페이지네이션**: `/api/notes?cursor=&limit=20`
+- **useNotesInfinite 훅**: TanStack Query `useInfiniteQuery` 사용
+- **NoteList 무한 스크롤**: 하단 200px 도달 시 자동 로딩
+- **고정 노트 처리**: 첫 페이지에서 별도 조회하여 항상 상단 표시
+- **로딩 인디케이터**: 추가 로딩 중 스피너 표시
+
+#### Phase 7-2: Version History
+노트 변경 이력 추적 및 복원 기능
+
+- **NoteVersion 모델**: 노트당 최대 50개 버전 자동 유지
+- **버전 API**:
+  - `GET /api/notes/[id]/versions` - 버전 목록
+  - `GET /api/notes/[id]/versions/[versionId]` - 버전 상세
+  - `POST /api/notes/[id]/versions/[versionId]/restore` - 버전 복원
+- **자동 버전 생성**: 노트 title/body 변경 시 이전 상태 자동 저장
+- **VersionHistoryPanel**: 버전 목록 UI (시간순 정렬)
+- **VersionDiffDialog**: 이전 vs 현재 버전 Side-by-side 비교
+- **History 버튼**: 노트 페이지에 통합 (데스크톱/모바일)
+
+### Technical Changes (Phase 7)
+- `prisma/schema.prisma` - NoteVersion 모델 추가
+- `lib/versionUtils.ts` - 버전 생성/정리 유틸리티 (최대 50개 유지)
+- `lib/hooks/useNotesInfinite.ts` - 무한 스크롤 훅
+- `lib/hooks/useNoteVersions.ts` - 버전 관리 훅
+- `app/api/notes/route.ts` - 커서 기반 페이지네이션
+- `app/api/notes/[id]/route.ts` - PATCH 시 자동 버전 생성
+- `app/api/notes/[id]/versions/` - 버전 API 엔드포인트
+- `components/NoteList.tsx` - 무한 스크롤 적용
+- `components/VersionHistoryPanel.tsx` - 버전 목록 UI
+- `components/VersionDiffDialog.tsx` - Diff 비교 다이얼로그
+- `app/notes/page.tsx` - History 버튼 추가
+
+### Files Changed (Phase 7)
+- 14 files changed
+- +760 insertions, -31 deletions
+
+### Commits
+- `41cb851`: feat: add infinite scroll and version history (Phase 7)
+
+---
+
 ## 2026-01-23
 
 ### Updated (Notes + Wiki Link Session)
