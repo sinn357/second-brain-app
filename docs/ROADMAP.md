@@ -2,6 +2,7 @@
 
 ## Current Status
 Phase 0~7 완료 ✅
+**병행 트랙: 모바일 앱 전환(PWA -> Expo) 진행 중**
 **다음: Phase 8 (AI 기능) 또는 Home 페이지 개선**
 
 ---

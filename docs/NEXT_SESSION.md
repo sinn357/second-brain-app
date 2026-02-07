@@ -1,87 +1,49 @@
-# Next Session Guide
+# Next Session Guide (Mobile -> Store Resume)
 
-**작성일**: 2026-01-22
-**목적**: 다음 세션에서 바로 작업을 시작할 수 있도록 컨텍스트 제공
+**작성일**: 2026-02-04  
+**목적**: 모바일 앱스토어 등록 작업을 재개할 때 바로 실행 가능한 체크리스트 제공
 
----
+## ✅ 현재까지 완료
 
-## ✅ 이전 세션 완료 작업
+- Expo SDK 54 업그레이드 완료 (`apps/mobile`)
+- Expo Router/Babel 설정 충돌 정리 완료
+- 모노레포 contracts 해석 이슈 해결
+- 모바일에서 노트 핵심 CRUD(생성/수정/저장/삭제) 동작 확인
 
-### 문서 정리 & 타입 안전성 개선 (2026-01-22)
+## ⚠️ 현재 보류 상태
 
-1. **ROADMAP.md 업데이트**
-   - Phase 5 완료 체크박스 처리
-   - 페이지별 현황 테이블 업데이트 (평균 90%+)
-   - Current Status 변경
+- 앱스토어 등록은 잠정 보류
+- 모바일 전체 기능(폴더/태그/그래프, 오프라인 쓰기 큐)은 미완료
 
-2. **Mindmap 코드 리뷰**
-   - useEffect 의존성 확인 → 순환 문제 없음
+## ▶ 재개 시 바로 할 일
 
-3. **any 타입 정리**
-   - `useTemplates.ts`: `any[]` → `Template[]`
-   - `useDailyNote.ts`: `any` → `Note`
-   - 4개 API routes: `error: any` → `error: unknown` + Prisma 타입 가드
-
----
-
-## 🎯 다음 세션 작업 목록 (선택)
-
-### 1. Home (/) 페이지 개선
-현재 상태: `/notes`로 리다이렉트만 함
-
-**옵션 A**: 랜딩 페이지
-- 앱 소개, 주요 기능 하이라이트
-- "시작하기" 버튼 → /notes
-
-**옵션 B**: 대시보드로 연결
-- `/dashboard`로 리다이렉트 변경
-
-**옵션 C**: 온보딩 화면
-- 첫 방문자를 위한 가이드
-
-### 2. 추가 개선 사항
-```
-- [ ] 남은 any 타입 정리 (components, filterEngine)
-- [ ] 에러 메시지 한글화 누락 확인
-- [ ] 테스트 코드 추가 (선택)
-```
-
----
-
-## 📁 참고 파일
-
-```
-docs/ROADMAP.md          # Phase 5 완료, 90%+ 완성
-app/page.tsx             # Home 페이지 (현재 리다이렉트)
-```
-
----
-
-## 🧪 빠른 테스트
-
+1. 백엔드 실행 (루트)
 ```bash
 cd /Users/woocheolshin/Documents/Vibecoding/projects/second-brain-app
-
-# 개발 서버
 npm run dev
-
-# 빌드 테스트
-npm run build
 ```
 
----
+2. 모바일 실행 (`apps/mobile`)
+```bash
+cd /Users/woocheolshin/Documents/Vibecoding/projects/second-brain-app/apps/mobile
+EXPO_PUBLIC_API_BASE_URL=http://<맥IP>:3004 npx expo start -c
+```
 
-## 📊 전체 진행률
+3. 최소 회귀 테스트
+- 노트 목록 로드
+- 신규 생성
+- 상세/수정/저장
+- 삭제
+- 앱 재실행 후 데이터 일관성
 
-| Phase | 상태 | 비고 |
-|-------|------|------|
-| Phase 0~5 | ✅ 완료 | 안정화, MVP, 노션/옵시디언 Core, UX |
-| 문서 정리 | ✅ 완료 | ROADMAP.md 업데이트 완료 |
-| 타입 안전성 | ✅ 완료 | hooks, API routes 정리 |
-| Home 페이지 | 🔄 대기 | 선택적 개선 |
+4. 앱스토어 준비 재개 시
+- `eas-cli` 로그인 및 설정
+- iOS 빌드: `eas build -p ios`
+- TestFlight 제출: `eas submit -p ios`
+- App Store Connect 메타데이터/심사 제출
 
----
+## 📁 참고 문서
 
-**Last Updated**: 2026-01-22
-**Git Status**: Pushed to origin/master
-**Status**: MVP 완성, 선택적 개선 사항만 남음
+- `docs/MOBILE_APP_TRACK.md` (모바일 진행/이슈 로그)
+
+**Status**: 모바일 핵심 플로우 확인 완료, 앱스토어 등록 대기

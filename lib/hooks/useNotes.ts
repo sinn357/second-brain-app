@@ -1,37 +1,29 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { NoteInput, NoteUpdateInput } from '@/lib/validations/note'
+import type { Note } from '@/lib/contracts/entities'
+import { parseApiJson } from '@/lib/contracts/api'
+import {
+  noteDetailResponseSchema,
+  notesListResponseSchema,
+} from '@/lib/contracts/schemas'
 
-interface Note {
+interface BacklinkEntry {
   id: string
   title: string
   body: string
-  folderId: string | null
-  isPinned: boolean
-  pinnedAt: Date | null
-  createdAt: Date
-  updatedAt: Date
-  folder?: {
-    id: string
-    name: string
-  } | null
-  tags?: Array<{
-    tag: {
-      id: string
-      name: string
-      color: string | null
-    }
-  }>
-  properties?: Array<{
-    id: string
-    propertyId: string
-    value: any
-    property: {
-      id: string
-      name: string
-      type: string
-      options: string[] | null
-    }
-  }>
+  createdAt: string | Date
+  updatedAt: string | Date
+  contexts: string[]
+  mentionCount: number
+}
+
+interface UnlinkedMentionEntry {
+  id: string
+  title: string
+  body: string
+  updatedAt: string | Date
+  contexts: string[]
+  mentionCount: number
 }
 
 // 노트 목록 조회
@@ -41,8 +33,7 @@ export function useNotes(folderId?: string) {
     queryFn: async () => {
       const url = folderId ? `/api/notes?folderId=${folderId}` : '/api/notes'
       const response = await fetch(url)
-      const data = await response.json()
-      if (!data.success) throw new Error(data.error)
+      const data = await parseApiJson(response, notesListResponseSchema)
       return data.notes
     },
     refetchInterval: 10000, // 10초마다 자동 갱신 (실시간 협업)
@@ -56,8 +47,7 @@ export function useNote(id: string) {
     queryKey: ['notes', id],
     queryFn: async () => {
       const response = await fetch(`/api/notes/${id}`)
-      const data = await response.json()
-      if (!data.success) throw new Error(data.error)
+      const data = await parseApiJson(response, noteDetailResponseSchema)
       return data.note
     },
     enabled: !!id,
@@ -138,7 +128,7 @@ export function useDeleteNote() {
 
 // 백링크 조회
 export function useBacklinks(noteId: string) {
-  return useQuery<any[], Error>({
+  return useQuery<BacklinkEntry[], Error>({
     queryKey: ['backlinks', noteId],
     queryFn: async () => {
       const response = await fetch(`/api/notes/${noteId}/backlinks`)
@@ -152,7 +142,7 @@ export function useBacklinks(noteId: string) {
 
 // Unlinked Mentions 조회
 export function useUnlinkedMentions(noteId: string) {
-  return useQuery<any[], Error>({
+  return useQuery<UnlinkedMentionEntry[], Error>({
     queryKey: ['unlinked-mentions', noteId],
     queryFn: async () => {
       const response = await fetch(`/api/notes/${noteId}/unlinked-mentions`)

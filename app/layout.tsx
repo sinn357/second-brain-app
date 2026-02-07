@@ -6,6 +6,7 @@ import { SidebarNav } from "@/components/SidebarNav";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Toaster } from "sonner";
 import { ShortcutManager } from "@/components/ShortcutManager";
+import { PWARegister } from "@/components/PWARegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,6 +21,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Nexus - Second Brain",
   description: "개인 지식 관리 앱 - 노트, 위키링크, 그래프 뷰",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -48,6 +50,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <PWARegister />
         <Providers>
           <CommandPalette />
           <ShortcutManager />

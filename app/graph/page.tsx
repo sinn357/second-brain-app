@@ -513,8 +513,11 @@ export default function GraphPage() {
         </div>
 
         {/* Graph Container */}
-        <div ref={containerRef} className="w-full">
-          <svg ref={svgRef} className="w-full border border-indigo-200 dark:border-indigo-700 rounded-lg" />
+        <div ref={containerRef} className="w-full overflow-hidden rounded-lg">
+          <svg
+            ref={svgRef}
+            className="w-full border border-indigo-200 dark:border-indigo-700 rounded-lg touch-none select-none"
+          />
         </div>
       </div>
       </div>

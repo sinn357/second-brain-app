@@ -1,17 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { FolderInput, FolderUpdateInput } from '@/lib/validations/folder'
-
-interface Folder {
-  id: string
-  name: string
-  parentId: string | null
-  position: number
-  isDefault: boolean
-  children?: Folder[]
-  _count?: {
-    notes: number
-  }
-}
+import type { Folder } from '@/lib/contracts/entities'
+import { parseApiJson } from '@/lib/contracts/api'
+import { foldersListResponseSchema } from '@/lib/contracts/schemas'
 
 // 폴더 트리 조회
 export function useFolders() {
@@ -19,9 +10,8 @@ export function useFolders() {
     queryKey: ['folders'],
     queryFn: async () => {
       const response = await fetch('/api/folders')
-      const data = await response.json()
-      if (!data.success) throw new Error(data.error)
-      return data.folders
+      const data = await parseApiJson(response, foldersListResponseSchema)
+      return data.folders as Folder[]
     },
   })
 }

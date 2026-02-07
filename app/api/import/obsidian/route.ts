@@ -5,8 +5,10 @@ import JSZip from 'jszip'
 // POST /api/import/obsidian - Obsidian Vault (Markdown ZIP) Import
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData()
-    const file = formData.get('file') as File
+    const formData = (await request.formData()) as unknown as {
+      get: (name: string) => FormDataEntryValue | null
+    }
+    const file = formData.get('file') as File | null
 
     if (!file) {
       return NextResponse.json(

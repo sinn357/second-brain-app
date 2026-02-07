@@ -133,6 +133,13 @@ second-brain-app/
 - 드래그로 위치 이동 가능
 - 클릭 시 해당 노트로 이동
 
+## 📱 PWA 지원
+
+- `app/manifest.ts` 기반 앱 설치(홈 화면 추가) 지원
+- `public/sw.js` 서비스 워커로 정적 에셋 캐시 + 오프라인 fallback 제공
+- 오프라인 페이지: `public/offline.html`
+- 서비스 워커 등록은 production 빌드에서만 활성화됨
+
 ## 📝 개발 스크립트
 
 ```bash
@@ -174,6 +181,7 @@ vercel
 
 - [프로젝트 명세](./docs/PROJECT_SPEC.md)
 - [웹 Claude 작업 가이드](./docs/WEB_CLAUDE_GUIDE.md)
+- [모바일 전환 트랙](./docs/MOBILE_APP_TRACK.md)
 - [플레이북](../../docs/WEB-APP-EFFICIENCY-BOOST-PLAYBOOK.md)
 
 ## 🔗 관련 링크

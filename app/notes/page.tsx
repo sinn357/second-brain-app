@@ -18,6 +18,9 @@ import { useFolders } from '@/lib/hooks/useFolders'
 import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove } from '@dnd-kit/sortable'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { ThinkingPanel } from '@/components/ThinkingPanel'
+import { ThinkingButton } from '@/components/ThinkingButton'
+import type { Folder } from '@/lib/contracts/entities'
 
 const AUTO_SAVE_DELAY = 500 // ms
 const MIN_FOLDER_WIDTH = 160
@@ -33,7 +36,8 @@ function NotesPageContent() {
   const isAllFolders = folderIdParam === 'all'
   const folderId = !folderIdParam || isAllFolders ? undefined : folderIdParam
   const noteId = searchParams.get('noteId') || undefined
-  const { data: folders = [] } = useFolders()
+  const { data } = useFolders()
+  const folders = (data ?? []) as Folder[]
   const { data: note, isLoading: isNoteLoading } = useNote(noteId || '')
   const updateNote = useUpdateNote(noteId || '')
   const deleteNote = useDeleteNote()
@@ -262,6 +266,14 @@ function NotesPageContent() {
   // 모바일: 노트 선택 시 에디터 뷰로 전환
   const [mobileView, setMobileView] = useState<'list' | 'editor'>('list')
 
+  useEffect(() => {
+    if (noteId) {
+      setMobileView('editor')
+      return
+    }
+    setMobileView('list')
+  }, [noteId])
+
   // 노트 선택 시 모바일에서 에디터 뷰로 전환
   const handleMobileSelectNote = (id: string) => {
     handleSelectNote(id)
@@ -413,6 +425,23 @@ function NotesPageContent() {
   const [listWidth, setListWidth] = useState(300)
   const [isFolderCollapsed, setIsFolderCollapsed] = useState(false)
   const [isListCollapsed, setIsListCollapsed] = useState(false)
+  const [isThinkingOpen, setIsThinkingOpen] = useState(false)
+
+  useEffect(() => {
+    if (!noteId) {
+      setIsThinkingOpen(false)
+      return
+    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault()
+        setIsThinkingOpen((prev) => !prev)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [noteId])
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
@@ -482,11 +511,11 @@ function NotesPageContent() {
       <QuickAddButton />
 
       {/* 모바일: 단일 컬럼 레이아웃 */}
-      <div className="page-content page-content-fluid lg:hidden">
+      <div className="page-content page-content-fluid lg:hidden pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
         {mobileView === 'list' ? (
           <div className="space-y-4">
             {/* 모바일 헤더 + 폴더 버튼 */}
-            <div className="flex items-center justify-between">
+            <div className="sticky top-0 z-10 flex items-center justify-between rounded-xl border border-indigo-200/60 bg-white/90 px-3 py-2 backdrop-blur dark:border-indigo-700/50 dark:bg-indigo-950/80">
               <div>
                 <h1 className="page-title text-indigo-900 dark:text-indigo-100">
                   {selectedFolder ? selectedFolder.name : '모든 노트'}
@@ -525,7 +554,7 @@ function NotesPageContent() {
           /* 모바일 에디터 뷰 */
           <div className="space-y-4">
             {/* 뒤로가기 + 저장 상태 */}
-            <div className="flex items-center justify-between">
+            <div className="sticky top-0 z-10 flex items-center justify-between rounded-xl border border-indigo-200/60 bg-white/90 px-3 py-2 backdrop-blur dark:border-indigo-700/50 dark:bg-indigo-950/80">
               <Button variant="ghost" size="sm" onClick={handleMobileBack}>
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 목록
@@ -536,6 +565,12 @@ function NotesPageContent() {
                   {saveStatus === 'saved' && '✓ 저장됨'}
                   {saveStatus === 'error' && '⚠ 실패'}
                 </span>
+                {noteId && (
+                  <ThinkingButton
+                    onClick={() => setIsThinkingOpen((prev) => !prev)}
+                    isActive={isThinkingOpen}
+                  />
+                )}
                 {/* 모바일 버전 히스토리 */}
                 <Sheet>
                   <SheetTrigger asChild>
@@ -709,6 +744,12 @@ function NotesPageContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {noteId && (
+                    <ThinkingButton
+                      onClick={() => setIsThinkingOpen((prev) => !prev)}
+                      isActive={isThinkingOpen}
+                    />
+                  )}
                   {/* 버전 히스토리 */}
                   <Sheet>
                     <SheetTrigger asChild>
@@ -758,6 +799,21 @@ function NotesPageContent() {
         </section>
       </div>
       </DndContext>
+      {noteId && (
+        <ThinkingPanel
+          noteId={noteId}
+          isOpen={isThinkingOpen}
+          onClose={() => setIsThinkingOpen(false)}
+          onNoteClick={(targetId) => {
+            const nextParams = new URLSearchParams(searchParams.toString())
+            nextParams.set('noteId', targetId)
+            if (selectedFolderId) {
+              nextParams.set('folderId', selectedFolderId)
+            }
+            router.push(`/notes?${nextParams.toString()}`, { scroll: false })
+          }}
+        />
+      )}
     </div>
   )
 }

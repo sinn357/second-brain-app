@@ -11,6 +11,7 @@ import { useTags } from '@/lib/hooks/useTags'
 import { useSearchHistory } from '@/lib/hooks/useSearchHistory'
 import { SlidersHorizontal, X, Clock } from 'lucide-react'
 import type { ReactNode } from 'react'
+import type { Folder, Tag } from '@/lib/contracts/entities'
 
 interface AdvancedSearchDialogProps {
   children: ReactNode
@@ -35,8 +36,10 @@ export function AdvancedSearchDialog({ children, onSearch }: AdvancedSearchDialo
   const [dateFrom, setDateFrom] = useState<string>('')
   const [dateTo, setDateTo] = useState<string>('')
 
-  const { data: folders = [] } = useFolders()
-  const { data: tags = [] } = useTags()
+  const { data: folderData } = useFolders()
+  const { data: tagData } = useTags()
+  const folders = (folderData ?? []) as Folder[]
+  const tags = (tagData ?? []) as Tag[]
   const { history, addToHistory, removeFromHistory, clearHistory, mounted } = useSearchHistory()
 
   const handleSearch = () => {

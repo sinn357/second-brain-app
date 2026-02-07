@@ -200,7 +200,8 @@ function FolderItem({
 
 export function FolderTree({ selectedFolderId }: { selectedFolderId?: string }) {
   const router = useRouter()
-  const { data: folders = [], isLoading, error } = useFolders()
+  const { data: folderData, isLoading, error } = useFolders()
+  const folders = (folderData ?? []) as FolderNode[]
   const { data: allNotes = [] } = useNotes()
   const createFolder = useCreateFolder()
   const deleteFolder = useDeleteFolder()

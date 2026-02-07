@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { FileText, Network, Table, Settings, LayoutTemplate, Menu, X, CalendarDays, Brain, Keyboard, Home } from 'lucide-react'
@@ -9,8 +9,8 @@ import { createPortal } from 'react-dom'
 
 export function MobileNav() {
   const [isOpen, setIsOpen] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
   const pathname = usePathname()
+  const canUseDOM = typeof document !== 'undefined'
 
   const navItems = [
     { href: '/notes', label: 'Notes', icon: FileText },
@@ -23,10 +23,6 @@ export function MobileNav() {
     { href: '/daily', label: 'Daily', icon: CalendarDays },
     { href: '/dashboard', label: 'Dashboard', icon: Home },
   ]
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
 
   return (
     <>
@@ -42,7 +38,7 @@ export function MobileNav() {
       </Button>
 
       {/* 모바일 사이드바 */}
-      {isMounted && isOpen && createPortal(
+      {canUseDOM && isOpen && createPortal(
         <div className="fixed inset-0 z-50 md:hidden">
           {/* 배경 오버레이 */}
           <div
@@ -56,7 +52,7 @@ export function MobileNav() {
               {/* 헤더 */}
               <div className="flex items-center justify-between p-4 border-b border-indigo-200 dark:border-indigo-800 pt-[env(safe-area-inset-top)]">
                 <span className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
-                  Second Brain
+                  Nexus
                 </span>
                 <Button
                   variant="ghost"

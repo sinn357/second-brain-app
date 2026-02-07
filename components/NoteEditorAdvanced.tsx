@@ -37,6 +37,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import {
+  Bold,
+  Heading1,
+  Italic,
+  Link2,
+  List,
+  ListOrdered,
+  Code2,
+  CheckSquare,
+} from 'lucide-react'
 
 interface NoteEditorAdvancedProps {
   content: string
@@ -326,15 +336,109 @@ export function NoteEditorAdvanced({
     )
   }
 
+  const applyLink = () => {
+    const previousUrl = editor.getAttributes('link').href as string | undefined
+    const url = window.prompt('링크 URL을 입력하세요', previousUrl || 'https://')
+    if (url === null) return
+
+    const trimmedUrl = url.trim()
+    if (!trimmedUrl) {
+      editor.chain().focus().unsetLink().run()
+      return
+    }
+
+    editor.chain().focus().extendMarkRange('link').setLink({ href: trimmedUrl }).run()
+  }
+
+  const mobileToolbarItems = [
+    {
+      key: 'h1',
+      label: '제목',
+      icon: Heading1,
+      active: editor.isActive('heading', { level: 1 }),
+      onClick: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+    },
+    {
+      key: 'bold',
+      label: '굵게',
+      icon: Bold,
+      active: editor.isActive('bold'),
+      onClick: () => editor.chain().focus().toggleBold().run(),
+    },
+    {
+      key: 'italic',
+      label: '기울임',
+      icon: Italic,
+      active: editor.isActive('italic'),
+      onClick: () => editor.chain().focus().toggleItalic().run(),
+    },
+    {
+      key: 'bullet',
+      label: '목록',
+      icon: List,
+      active: editor.isActive('bulletList'),
+      onClick: () => editor.chain().focus().toggleBulletList().run(),
+    },
+    {
+      key: 'ordered',
+      label: '번호',
+      icon: ListOrdered,
+      active: editor.isActive('orderedList'),
+      onClick: () => editor.chain().focus().toggleOrderedList().run(),
+    },
+    {
+      key: 'task',
+      label: '체크',
+      icon: CheckSquare,
+      active: editor.isActive('taskList'),
+      onClick: () => editor.chain().focus().toggleTaskList().run(),
+    },
+    {
+      key: 'codeblock',
+      label: '코드',
+      icon: Code2,
+      active: editor.isActive('codeBlock'),
+      onClick: () => editor.chain().focus().toggleCodeBlock().run(),
+    },
+    {
+      key: 'link',
+      label: '링크',
+      icon: Link2,
+      active: editor.isActive('link'),
+      onClick: applyLink,
+    },
+  ]
+
   return (
     <div>
       <EditorContent editor={editor} />
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-indigo-200/70 bg-white/95 px-3 py-2 backdrop-blur supports-[padding:max(0px)]:pb-[max(env(safe-area-inset-bottom),0.5rem)] dark:border-indigo-700/60 dark:bg-indigo-950/90 lg:hidden">
+        <div className="flex items-center gap-1 overflow-x-auto pb-1">
+          {mobileToolbarItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <Button
+                key={item.key}
+                type="button"
+                variant={item.active ? 'default' : 'outline'}
+                size="sm"
+                className="h-9 shrink-0 gap-1"
+                onClick={item.onClick}
+                aria-label={item.label}
+                title={item.label}
+              >
+                <Icon className="h-4 w-4" />
+              </Button>
+            )
+          })}
+        </div>
+      </div>
       <Dialog open={Boolean(linkChoices)} onOpenChange={(open) => !open && setLinkChoices(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>동일한 노트 제목이 있습니다</DialogTitle>
             <DialogDescription>
-              "{linkChoices?.title}" 노트가 여러 개입니다. 열 노트를 선택하세요.
+              &quot;{linkChoices?.title}&quot; 노트가 여러 개입니다. 열 노트를 선택하세요.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -394,6 +498,13 @@ export function NoteEditorAdvanced({
         }
         .tippy-box[data-theme~='light-border'][data-placement^='top'] > .tippy-arrow::before {
           border-top-color: white;
+        }
+        @media (max-width: 1023px) {
+          .note-content,
+          .ProseMirror {
+            min-height: 52dvh;
+            padding-bottom: 5.5rem;
+          }
         }
       `}</style>
     </div>

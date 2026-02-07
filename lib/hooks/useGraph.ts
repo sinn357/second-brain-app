@@ -1,48 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import type { SimulationNodeDatum, SimulationLinkDatum } from 'd3'
+import { parseApiJson } from '@/lib/contracts/api'
+import type { GraphData, SimulationLink, SimulationNode } from '@/lib/contracts/entities'
+import { graphResponseSchema } from '@/lib/contracts/schemas'
 
-// 기본 Graph 타입
-export interface GraphNode {
-  id: string
-  title: string
-  folderId: string | null
-  folderName: string | null
-  isMissing?: boolean
-}
-
-export interface GraphEdge {
-  id: string
-  source: string
-  target: string
-}
-
-export interface GraphFolder {
-  id: string
-  name: string
-}
-
-export interface GraphData {
-  nodes: GraphNode[]
-  edges: GraphEdge[]
-  folders: GraphFolder[]
-  unresolved: Array<{
-    title: string
-    sources: Array<{ id: string; title: string }>
-  }>
-}
-
-// D3 시뮬레이션용 확장 타입
-export interface SimulationNode extends SimulationNodeDatum, GraphNode {
-  x?: number
-  y?: number
-  fx?: number | null
-  fy?: number | null
-}
-
-export interface SimulationLink extends SimulationLinkDatum<SimulationNode> {
-  source: SimulationNode | string
-  target: SimulationNode | string
-}
+export type { GraphData, SimulationLink, SimulationNode }
 
 // Graph 데이터 조회
 export function useGraph() {
@@ -50,8 +11,7 @@ export function useGraph() {
     queryKey: ['graph'],
     queryFn: async () => {
       const response = await fetch('/api/graph')
-      const data = await response.json()
-      if (!data.success) throw new Error(data.error)
+      const data = await parseApiJson(response, graphResponseSchema)
       return data.graph
     },
   })

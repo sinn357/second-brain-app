@@ -4,9 +4,11 @@ import { prisma } from '@/lib/db'
 // POST /api/import/json - JSON 데이터 Import
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData()
-    const file = formData.get('file') as File
-    const mode = formData.get('mode') as string // 'replace' or 'merge'
+    const formData = (await request.formData()) as unknown as {
+      get: (name: string) => FormDataEntryValue | null
+    }
+    const file = formData.get('file') as File | null
+    const mode = (formData.get('mode') as string | null) || 'merge' // 'replace' or 'merge'
 
     if (!file) {
       return NextResponse.json(

@@ -6,6 +6,7 @@ import { useShortcutStore } from '@/lib/stores/shortcutStore'
 import { matchShortcut, type ShortcutId } from '@/lib/shortcuts'
 import { useCreateNote } from '@/lib/hooks/useNotes'
 import { useFolders } from '@/lib/hooks/useFolders'
+import type { Folder } from '@/lib/contracts/entities'
 
 function isEditableTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false
@@ -18,7 +19,8 @@ export function ShortcutManager() {
   const router = useRouter()
   const { shortcuts } = useShortcutStore()
   const createNote = useCreateNote()
-  const { data: folders = [] } = useFolders()
+  const { data } = useFolders()
+  const folders = (data ?? []) as Folder[]
 
   const defaultFolderId = useMemo(() => {
     const defaultFolder = folders.find((folder) => folder.isDefault)

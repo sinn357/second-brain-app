@@ -5,7 +5,7 @@ import { useFilterStore } from '@/lib/stores/filterStore'
 import { useProperties } from '@/lib/hooks/useProperties'
 import { useTags } from '@/lib/hooks/useTags'
 import { useFolders } from '@/lib/hooks/useFolders'
-import { useSavedViews, useCreateSavedView, useDeleteSavedView } from '@/lib/hooks/useFilters'
+import { useSavedViews, useCreateSavedView, useDeleteSavedView, type SavedView } from '@/lib/hooks/useFilters'
 import { PropertyFilterItem } from '@/components/PropertyFilterItem'
 import { FilterConditionToggle } from '@/components/FilterConditionToggle'
 import { SavedViewDialog } from '@/components/SavedViewDialog'
@@ -15,6 +15,17 @@ import { Card } from '@/components/ui/card'
 import { X, Plus, Filter } from 'lucide-react'
 import { toast } from 'sonner'
 import type { FilterCondition } from '@/lib/filterEngine'
+import type { Folder, Tag } from '@/lib/contracts/entities'
+
+type PropertyItem = {
+  id: string
+  name: string
+  type: string
+  options: string[] | null
+  _count?: {
+    values: number
+  }
+}
 
 export function FilterBuilder() {
   const {
@@ -28,10 +39,14 @@ export function FilterBuilder() {
     isEmpty,
   } = useFilterStore()
 
-  const { data: properties = [] } = useProperties()
-  const { data: tags = [] } = useTags()
-  const { data: folders = [] } = useFolders()
-  const { data: savedViews = [] } = useSavedViews()
+  const { data: propertyData } = useProperties()
+  const { data: tagData } = useTags()
+  const { data: folderData } = useFolders()
+  const { data: savedViewData } = useSavedViews()
+  const properties = (propertyData ?? []) as PropertyItem[]
+  const tags = (tagData ?? []) as Tag[]
+  const folders = (folderData ?? []) as Folder[]
+  const savedViews = (savedViewData ?? []) as SavedView[]
   const createSavedView = useCreateSavedView()
   const deleteSavedView = useDeleteSavedView()
 

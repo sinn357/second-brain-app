@@ -29,6 +29,7 @@ model Note {
   properties NoteProperty[]
   presences  Presence[]
   versions   NoteVersion[]
+  thinkingSessions ThinkingSession[]
 
   @@index([folderId])
   @@index([createdAt])
@@ -173,4 +174,23 @@ model SavedView {
   updatedAt   DateTime @updatedAt
 
   @@map("saved_views")
+}
+
+// Thinking Session (AI 사고 세션)
+model ThinkingSession {
+  id        String   @id @default(cuid())
+  noteId    String   // 시작 노트
+  command   String   @db.VarChar(50) // connect | contrast | combine | simplify
+  input     Json     // 입력 데이터
+  output    Json     // AI 출력 (임시)
+  savedIds  String[] // 저장된 결과 ID들
+  createdAt DateTime @default(now())
+  expiresAt DateTime // 세션 만료 시간
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@map("thinking_sessions")
 }

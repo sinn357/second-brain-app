@@ -11,6 +11,7 @@ import { useFolders } from '@/lib/hooks/useFolders'
 import { useSearchHistory } from '@/lib/hooks/useSearchHistory'
 import { AdvancedSearchDialog, type SearchParams } from '@/components/AdvancedSearchDialog'
 import { SearchHighlight } from '@/components/SearchHighlight'
+import type { Folder as FolderEntity, Tag as TagEntity } from '@/lib/contracts/entities'
 
 type SearchResult = {
   id: string
@@ -32,8 +33,10 @@ export function CommandPalette() {
   const router = useRouter()
 
   // Data hooks (for tags and folders only)
-  const { data: tags = [] } = useTags()
-  const { data: folders = [] } = useFolders()
+  const { data: tagData } = useTags()
+  const { data: folderData } = useFolders()
+  const tags = (tagData ?? []) as TagEntity[]
+  const folders = (folderData ?? []) as FolderEntity[]
   const { addToHistory } = useSearchHistory()
 
   // Debounced search

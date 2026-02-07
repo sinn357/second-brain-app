@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -39,13 +39,9 @@ const secondaryItems = [
 
 export function SidebarNav() {
   const pathname = usePathname()
-  const [isMac, setIsMac] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
   const { theme, toggleTheme, mounted } = useTheme()
-
-  useEffect(() => {
-    setIsMac(navigator.platform.includes('Mac'))
-  }, [])
+  const isMac = typeof navigator !== 'undefined' && navigator.platform.includes('Mac')
 
   const handleSearchClick = () => {
     const event = new KeyboardEvent('keydown', {
@@ -64,7 +60,10 @@ export function SidebarNav() {
   return (
     <>
       <header className="lg:hidden border-b sidebar-border sidebar-surface backdrop-blur">
-        <div className="px-4 py-3 flex items-center justify-between">
+        <div
+          className="px-4 py-3 flex items-center justify-between"
+          style={{ paddingTop: 'max(env(safe-area-inset-top), 0.75rem)' }}
+        >
           <div className="flex items-center gap-3">
             <MobileNav />
             <Link href="/notes" className="text-lg font-bold text-indigo-900 dark:text-indigo-100">

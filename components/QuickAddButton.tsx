@@ -10,12 +10,14 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
+import type { Folder } from '@/lib/contracts/entities'
 
 export function QuickAddButton() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const createNote = useCreateNote()
-  const { data: folders } = useFolders()
+  const { data } = useFolders()
+  const folders = (data ?? []) as Folder[]
   const { data: templates = [] } = useTemplates()
   const [isOpen, setIsOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)

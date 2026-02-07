@@ -1,24 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { TagInput, TagUpdateInput } from '@/lib/validations/tag'
+import type { Note, Tag } from '@/lib/contracts/entities'
+import { parseApiJson } from '@/lib/contracts/api'
+import { tagsResponseSchema } from '@/lib/contracts/schemas'
 
-interface Tag {
-  id: string
-  name: string
-  color: string | null
-  _count?: {
-    notes: number
-  }
-}
-
-interface Note {
-  id: string
-  title: string
-  body: string
-  folderId: string | null
-  folder?: {
-    id: string
-    name: string
-  } | null
+type TagNote = Pick<Note, 'id' | 'title' | 'body' | 'folderId'> & {
+  folder?: Note['folder']
 }
 
 // 태그 목록 조회
@@ -27,8 +14,7 @@ export function useTags() {
     queryKey: ['tags'],
     queryFn: async () => {
       const response = await fetch('/api/tags')
-      const data = await response.json()
-      if (!data.success) throw new Error(data.error)
+      const data = await parseApiJson(response, tagsResponseSchema)
       return data.tags
     },
   })
@@ -36,7 +22,7 @@ export function useTags() {
 
 // 태그별 노트 조회
 export function useTagNotes(tagId: string) {
-  return useQuery<Note[], Error>({
+  return useQuery<TagNote[], Error>({
     queryKey: ['tags', tagId, 'notes'],
     queryFn: async () => {
       const response = await fetch(`/api/tags/${tagId}/notes`)
