@@ -1,5 +1,23 @@
 # Second Brain App Changelog
 
+## 2026-02-08
+
+### Updated (Notes Layout Simplification)
+- 데스크톱 네비게이션을 우측 상단 메뉴 버튼으로 이동 (우측 Sheet)
+- 폴더 트리를 좌측 상단 버튼으로 호출 (좌측 Sheet)
+- 데스크톱 3컬럼 → 2컬럼 구조로 단순화
+- 에디터 여백/포커스 강조 제거로 넓은 빈 공간 느낌 강화
+
+### Technical Changes (Notes Layout Simplification)
+- `app/layout.tsx` - 고정 사이드바 제거, 우측 상단 메뉴 트리거 추가
+- `components/AppMenuSheet.tsx` - 앱 메뉴 Sheet 신규 추가
+- `app/notes/page.tsx` - 폴더/메뉴 버튼, 2컬럼 레이아웃 및 리사이즈 로직 정리
+- `components/NoteEditorAdvanced.tsx` - 에디터 패딩/높이 조정
+- `app/globals.css` - 에디터 focus outline 제거
+
+### Commits
+- `58d8cbb`: feat: simplify notes layout and editor
+
 ## 2026-02-04
 
 ### Added (Phase 7: Performance & Version History)
