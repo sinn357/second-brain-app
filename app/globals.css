@@ -333,6 +333,12 @@ h1, h2, h3, h4, h5, h6 {
   color: rgb(var(--text-primary));
   font-size: 0.95rem;
   line-height: 1.7;
+  outline: none;
+}
+
+.note-content:focus-visible,
+.ProseMirror:focus-visible {
+  outline: none;
 }
 
 .note-content h1,

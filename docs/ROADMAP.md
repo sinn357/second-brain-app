@@ -1,9 +1,10 @@
 # Second Brain App Roadmap
 
 ## Current Status
-Phase 0~7 완료 ✅
+Phase 0~7 완료 ✅  
+Phase 8 (AI Thinking) Phase 1 구현 완료 ✅  
 **병행 트랙: 모바일 앱 전환(PWA -> Expo) 진행 중**
-**다음: Phase 8 (AI 기능) 또는 Home 페이지 개선**
+**다음: Phase 8 (AI Thinking) 저장 플로우 보완 또는 Home 페이지 개선**
 
 ---
 
@@ -74,6 +75,13 @@ Phase 0~7 완료 ✅
 ---
 
 ## Next Tasks (Optional)
+
+### Phase 8: AI Thinking (Follow-up)
+- [ ] 저장 시 새 노트 본문 채우기 (현재는 빈 노트 생성)
+  - 옵션 A: 연결 이유만 저장
+  - 옵션 B: 연결 이유 + 미리보기 저장
+  - 옵션 C: 저장 전 간단 편집 UI
+- [ ] 저장 후 새 노트로 이동 또는 토스트 링크 제공
 
 ### Home 페이지 개선
 현재 `/notes`로 리다이렉트만 존재. 개선 옵션:

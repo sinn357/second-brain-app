@@ -212,7 +212,7 @@ export function NoteEditorAdvanced({
     content: getEditorContent(content),
     editorProps: {
       attributes: {
-        class: 'note-content max-w-none focus:outline-none min-h-[400px] p-4',
+        class: 'note-content max-w-none focus:outline-none min-h-[60vh] px-0 py-6',
       },
     },
     onUpdate: ({ editor }) => {

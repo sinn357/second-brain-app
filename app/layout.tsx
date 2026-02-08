@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import { SidebarNav } from "@/components/SidebarNav";
+import { AppMenuSheet } from "@/components/AppMenuSheet";
 import { CommandPalette } from "@/components/CommandPalette";
 import { Toaster } from "sonner";
 import { ShortcutManager } from "@/components/ShortcutManager";
@@ -55,8 +55,10 @@ export default function RootLayout({
           <CommandPalette />
           <ShortcutManager />
           <Toaster position="top-right" richColors />
-          <div className="min-h-screen flex flex-col lg:flex-row">
-            <SidebarNav />
+          <div className="min-h-screen flex flex-col">
+            <div className="fixed right-4 top-4 z-50">
+              <AppMenuSheet />
+            </div>
             <main className="flex-1 min-w-0">
               {children}
             </main>

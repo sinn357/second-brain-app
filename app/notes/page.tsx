@@ -23,7 +23,6 @@ import { ThinkingButton } from '@/components/ThinkingButton'
 import type { Folder } from '@/lib/contracts/entities'
 
 const AUTO_SAVE_DELAY = 500 // ms
-const MIN_FOLDER_WIDTH = 160
 const MIN_LIST_WIDTH = 240
 const MIN_EDITOR_WIDTH = 360
 const RESIZE_HANDLE_WIDTH = 8
@@ -109,11 +108,10 @@ function NotesPageContent() {
   const isHydratingRef = useRef(false)
   const desktopGridRef = useRef<HTMLDivElement>(null)
   const resizeStateRef = useRef<{
-    type: 'folder' | 'list' | null
+    type: 'list' | null
     startX: number
-    startFolder: number
     startList: number
-  }>({ type: null, startX: 0, startFolder: 0, startList: 0 })
+  }>({ type: null, startX: 0, startList: 0 })
 
   // Debounce title and body
   const debouncedTitle = useDebounce(title, AUTO_SAVE_DELAY)
@@ -421,9 +419,7 @@ function NotesPageContent() {
     }
   }
 
-  const [folderWidth, setFolderWidth] = useState(180)
   const [listWidth, setListWidth] = useState(300)
-  const [isFolderCollapsed, setIsFolderCollapsed] = useState(false)
   const [isListCollapsed, setIsListCollapsed] = useState(false)
   const [isThinkingOpen, setIsThinkingOpen] = useState(false)
 
@@ -457,15 +453,8 @@ function NotesPageContent() {
         return Math.min(max, Math.max(min, value))
       }
 
-      if (resizeState.type === 'folder') {
-        const maxFolder =
-          containerWidth - listWidth - MIN_EDITOR_WIDTH - RESIZE_HANDLE_WIDTH * 2
-        setFolderWidth(clampWithin(resizeState.startFolder + delta, MIN_FOLDER_WIDTH, maxFolder))
-        return
-      }
-
       const maxList =
-        containerWidth - folderWidth - MIN_EDITOR_WIDTH - RESIZE_HANDLE_WIDTH * 2
+        containerWidth - MIN_EDITOR_WIDTH - RESIZE_HANDLE_WIDTH
       setListWidth(clampWithin(resizeState.startList + delta, MIN_LIST_WIDTH, maxList))
     }
 
@@ -482,27 +471,22 @@ function NotesPageContent() {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [folderWidth, listWidth])
+  }, [listWidth])
 
-  const startResize = (type: 'folder' | 'list') => (event: React.MouseEvent) => {
+  const startResize = (type: 'list') => (event: React.MouseEvent) => {
     event.preventDefault()
-    if (type === 'folder' && isFolderCollapsed) {
-      setIsFolderCollapsed(false)
-    }
     if (type === 'list' && isListCollapsed) {
       setIsListCollapsed(false)
     }
     resizeStateRef.current = {
       type,
       startX: event.clientX,
-      startFolder: folderWidth,
       startList: listWidth,
     }
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
   }
 
-  const resolvedFolderWidth = isFolderCollapsed ? COLLAPSED_COLUMN_WIDTH : folderWidth
   const resolvedListWidth = isListCollapsed ? COLLAPSED_COLUMN_WIDTH : listWidth
 
   return (
@@ -626,54 +610,39 @@ function NotesPageContent() {
         )}
       </div>
 
-      {/* 데스크톱: 3컬럼 레이아웃 */}
+      {/* 데스크톱: 상단 액션 바 */}
+      <div className="hidden lg:flex items-center justify-between px-6 pt-4">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <FolderOpen className="h-4 w-4" />
+              폴더
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[320px] sm:w-[360px]">
+            <SheetHeader>
+              <SheetTitle>폴더</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4 overflow-y-auto max-h-[calc(100dvh-120px)]">
+              <FolderTree selectedFolderId={selectedFolderId} />
+            </div>
+          </SheetContent>
+        </Sheet>
+        <div className="text-xs text-indigo-500 dark:text-indigo-300">
+          {saveStatus === 'saving' && '저장 중...'}
+          {saveStatus === 'saved' && '✓ 저장됨'}
+          {saveStatus === 'error' && '⚠ 저장 실패'}
+        </div>
+      </div>
+
+      {/* 데스크톱: 2컬럼 레이아웃 */}
       <div
         ref={desktopGridRef}
         className="page-content page-content-fluid hidden lg:grid gap-0"
         style={{
-          gridTemplateColumns: `${resolvedFolderWidth}px ${RESIZE_HANDLE_WIDTH}px ${resolvedListWidth}px ${RESIZE_HANDLE_WIDTH}px minmax(0, 1fr)`,
+          gridTemplateColumns: `${resolvedListWidth}px ${RESIZE_HANDLE_WIDTH}px minmax(0, 1fr)`,
         }}
       >
-        {/* 좌측: 폴더 트리 */}
-        <aside className={isFolderCollapsed ? 'p-2 flex items-center justify-center' : 'p-3'}>
-          {isFolderCollapsed ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsFolderCollapsed(false)}
-              className="text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
-              aria-label="폴더 목록 펼치기"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          ) : (
-            <>
-              <div className="flex items-center justify-end mb-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsFolderCollapsed(true)}
-                  className="text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
-                  aria-label="폴더 목록 접기"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-              </div>
-              <FolderTree selectedFolderId={selectedFolderId} />
-            </>
-          )}
-        </aside>
-
-        {/* 리사이즈 핸들: 폴더 */}
-        <div
-          onMouseDown={startResize('folder')}
-          role="separator"
-          aria-orientation="vertical"
-          className="group cursor-col-resize"
-        >
-          <div className="mx-auto h-full w-px bg-indigo-200/70 dark:bg-indigo-700/60 group-hover:bg-indigo-400/80 transition-colors" />
-        </div>
-
         {/* 중앙: 노트 리스트 */}
         <section className={isListCollapsed ? 'p-2 flex items-center justify-center' : 'p-3'}>
           {isListCollapsed ? (
@@ -725,7 +694,7 @@ function NotesPageContent() {
         </div>
 
         {/* 우측: 노트 편집 */}
-        <section className="p-6 min-h-[600px]">
+        <section className="px-10 py-8 min-h-[600px]">
           {!noteId ? (
             <div className="h-full flex items-center justify-center text-indigo-600 dark:text-indigo-300">
               오른쪽에서 편집할 노트를 선택하세요.
