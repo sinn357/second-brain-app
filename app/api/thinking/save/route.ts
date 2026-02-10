@@ -33,15 +33,22 @@ export async function POST(request: NextRequest) {
     let savedNoteId: string
 
     if (saveAs === 'new_note') {
-      const resultNote = await prisma.note.findUnique({
-        where: { id: resultNoteId },
-        select: { title: true },
-      })
+      const [resultNote, sourceNote] = await Promise.all([
+        prisma.note.findUnique({
+          where: { id: resultNoteId },
+          select: { title: true },
+        }),
+        prisma.note.findUnique({
+          where: { id: session.noteId },
+          select: { folderId: true },
+        }),
+      ])
 
       const newNote = await prisma.note.create({
         data: {
           title: resolvedTitle || `연결: ${resultNote?.title || 'Unknown'}`,
           body: resolvedContent,
+          folderId: sourceNote?.folderId ?? null,
         },
       })
 
