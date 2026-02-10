@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { Search, FileText, Tag, Folder, Hash, Loader2, SlidersHorizontal, Brain, Network, RotateCcw, Lightbulb, AlertTriangle, Clock } from 'lucide-react'
+import { Search, FileText, Tag, Folder, Hash, Loader2, SlidersHorizontal, Brain, Network, RotateCcw, Lightbulb, AlertTriangle, Clock, Hourglass } from 'lucide-react'
 import { useTags } from '@/lib/hooks/useTags'
 import { useFolders } from '@/lib/hooks/useFolders'
 import { useSearchHistory } from '@/lib/hooks/useSearchHistory'
@@ -17,6 +17,7 @@ import { ResurfaceDialog } from '@/components/ResurfaceDialog'
 import { RandomSparkDialog } from '@/components/RandomSparkDialog'
 import { KnowledgeGapDialog } from '@/components/KnowledgeGapDialog'
 import { IncubationDialog } from '@/components/IncubationDialog'
+import { TimeCapsuleDialog } from '@/components/TimeCapsuleDialog'
 import type { Folder as FolderEntity, Tag as TagEntity } from '@/lib/contracts/entities'
 
 type SearchResult = {
@@ -260,6 +261,11 @@ export function CommandPalette() {
                 <Clock className="h-4 w-4" />
               </Button>
             </IncubationDialog>
+            <TimeCapsuleDialog>
+              <Button variant="ghost" size="sm" className="ml-2" title="Time Capsule">
+                <Hourglass className="h-4 w-4" />
+              </Button>
+            </TimeCapsuleDialog>
             <AdvancedSearchDialog onSearch={handleAdvancedSearch}>
               <Button variant="ghost" size="sm" className="ml-2">
                 <SlidersHorizontal className="h-4 w-4" />
