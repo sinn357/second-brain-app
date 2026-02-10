@@ -20,7 +20,7 @@ interface AdvancedSearchDialogProps {
 
 export interface SearchParams {
   query: string
-  mode: 'normal' | 'regex'
+  mode: 'normal' | 'regex' | 'semantic'
   folderId?: string
   tagId?: string
   dateFrom?: string
@@ -30,7 +30,7 @@ export interface SearchParams {
 export function AdvancedSearchDialog({ children, onSearch }: AdvancedSearchDialogProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [mode, setMode] = useState<'normal' | 'regex'>('normal')
+  const [mode, setMode] = useState<'normal' | 'regex' | 'semantic'>('normal')
   const [folderId, setFolderId] = useState<string | undefined>()
   const [tagId, setTagId] = useState<string | undefined>()
   const [dateFrom, setDateFrom] = useState<string>('')
@@ -120,6 +120,7 @@ export function AdvancedSearchDialog({ children, onSearch }: AdvancedSearchDialo
               <SelectContent>
                 <SelectItem value="normal">Normal (case-insensitive)</SelectItem>
                 <SelectItem value="regex">Regular Expression</SelectItem>
+                <SelectItem value="semantic">Semantic (AI)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -203,7 +204,9 @@ export function AdvancedSearchDialog({ children, onSearch }: AdvancedSearchDialo
                     onClick={() => handleHistoryClick(item)}
                   >
                     <span className="text-sm truncate flex-1">
-                      {item.query} {item.mode === 'regex' && '(regex)'}
+                      {item.query}
+                      {item.mode === 'regex' && ' (regex)'}
+                      {item.mode === 'semantic' && ' (semantic)'}
                     </span>
                     <Button
                       variant="ghost"

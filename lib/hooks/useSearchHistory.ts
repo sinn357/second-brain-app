@@ -6,7 +6,7 @@ const MAX_HISTORY = 10
 export interface SearchHistoryItem {
   query: string
   timestamp: number
-  mode?: 'normal' | 'regex'
+  mode?: 'normal' | 'regex' | 'semantic'
   filters?: {
     folderId?: string
     tagId?: string

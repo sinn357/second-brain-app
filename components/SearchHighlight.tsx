@@ -3,7 +3,7 @@
 interface SearchHighlightProps {
   text: string
   query: string
-  mode?: 'normal' | 'regex'
+  mode?: 'normal' | 'regex' | 'semantic'
   className?: string
 }
 

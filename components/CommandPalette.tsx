@@ -28,7 +28,7 @@ export function CommandPalette() {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
-  const [searchMode, setSearchMode] = useState<'normal' | 'regex'>('normal')
+  const [searchMode, setSearchMode] = useState<'normal' | 'regex' | 'semantic'>('normal')
   const [advancedFilters, setAdvancedFilters] = useState<Partial<SearchParams>>({})
   const router = useRouter()
 
@@ -52,14 +52,20 @@ export function CommandPalette() {
         // 고급 필터 파라미터 구성
         const params = new URLSearchParams({
           q: query,
-          mode: searchMode,
           ...(advancedFilters.folderId && { folderId: advancedFilters.folderId }),
           ...(advancedFilters.tagId && { tagId: advancedFilters.tagId }),
           ...(advancedFilters.dateFrom && { dateFrom: advancedFilters.dateFrom }),
           ...(advancedFilters.dateTo && { dateTo: advancedFilters.dateTo }),
         })
 
-        const res = await fetch(`/api/notes/search?${params}`)
+        const endpoint =
+          searchMode === 'semantic' ? '/api/notes/semantic-search' : '/api/notes/search'
+
+        if (searchMode !== 'semantic') {
+          params.set('mode', searchMode)
+        }
+
+        const res = await fetch(`${endpoint}?${params}`)
         const data = await res.json()
         if (data.success) {
           setSearchResults(data.notes || [])
