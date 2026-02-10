@@ -12,6 +12,12 @@ export const parseLinkSchema = z.object({
   body: z.string(),
 })
 
+export const approveLinkSchema = z.object({
+  noteId: z.string(),
+  targetIds: z.array(z.string()).min(1),
+})
+
 // 타입 추론
 export type LinkInput = z.infer<typeof linkSchema>
 export type ParseLinkInput = z.infer<typeof parseLinkSchema>
+export type ApproveLinkInput = z.infer<typeof approveLinkSchema>

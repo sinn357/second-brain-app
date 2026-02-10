@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { NoteList } from '@/components/NoteList'
 import { QuickAddButton } from '@/components/QuickAddButton'
 import { FolderTree } from '@/components/FolderTree'
@@ -20,6 +20,7 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ThinkingPanel } from '@/components/ThinkingPanel'
 import { ThinkingButton } from '@/components/ThinkingButton'
+import { AutoLinkMenu } from '@/components/AutoLinkMenu'
 import { AICommandMenu } from '@/components/AICommandMenu'
 import { AIResultPanel } from '@/components/AIResultPanel'
 import { useNoteAI } from '@/lib/hooks/useNoteAI'
@@ -117,11 +118,17 @@ function NotesPageContent() {
   const [editorContent, setEditorContent] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [autoLinkSuggestions, setAutoLinkSuggestions] = useState<
+    Array<{ noteId: string; noteTitle: string; reason: string; preview?: string }>
+  >([])
+  const [isAutoLinkLoading, setIsAutoLinkLoading] = useState(false)
+  const [autoLinkError, setAutoLinkError] = useState<string | null>(null)
   const lastSavedRef = useRef<{ noteId: string; title: string; body: string } | null>(null)
   const saveInFlight = useRef(false)
   const pendingSave = useRef<{ title: string; body: string } | null>(null)
   const activeNoteIdRef = useRef<string | null>(null)
   const isHydratingRef = useRef(false)
+  const autoLinkLastRunRef = useRef(0)
   const desktopGridRef = useRef<HTMLDivElement>(null)
   const resizeStateRef = useRef<{
     type: 'list' | null
@@ -182,6 +189,8 @@ function NotesPageContent() {
       setTitle('')
       setBody('')
       setEditorContent('')
+      setAutoLinkSuggestions([])
+      setAutoLinkError(null)
       setShowAIResult(false)
       resetAI()
       lastSavedRef.current = null
@@ -234,6 +243,7 @@ function NotesPageContent() {
         await parseLinks.mutateAsync({ noteId, body: debouncedBody })
         lastSavedRef.current = { noteId, title: debouncedTitle, body: debouncedBody }
         setSaveStatus('saved')
+        void fetchAutoLinkSuggestions(noteId, debouncedBody)
       } catch (error) {
         console.error('Auto save error:', error)
         setSaveStatus('error')
@@ -260,7 +270,7 @@ function NotesPageContent() {
     }
 
     runSave()
-  }, [debouncedTitle, debouncedBody, noteId, updateNote, parseLinks])
+  }, [debouncedTitle, debouncedBody, noteId, updateNote, parseLinks, fetchAutoLinkSuggestions])
 
   const handleDelete = async () => {
     if (!noteId) return
@@ -441,6 +451,58 @@ function NotesPageContent() {
   const [isListCollapsed, setIsListCollapsed] = useState(false)
   const [isThinkingOpen, setIsThinkingOpen] = useState(false)
 
+  const fetchAutoLinkSuggestions = useCallback(async (id: string, content: string) => {
+    if (!id) return
+    if (content.trim().length < 80) return
+    const now = Date.now()
+    if (now - autoLinkLastRunRef.current < 15000) return
+    autoLinkLastRunRef.current = now
+    setIsAutoLinkLoading(true)
+    setAutoLinkError(null)
+    try {
+      const res = await fetch('/api/links/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noteId: id }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || '링크 제안 실패')
+      }
+      setAutoLinkSuggestions(data.suggestions || [])
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '링크 제안 실패'
+      setAutoLinkError(message)
+    } finally {
+      setIsAutoLinkLoading(false)
+    }
+  }, [])
+
+  const approveAutoLink = useCallback(async (targetIds: string[]) => {
+    if (!noteId || targetIds.length === 0) return
+    try {
+      const res = await fetch('/api/links/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noteId, targetIds }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || '링크 승인 실패')
+      }
+      setAutoLinkSuggestions((prev) => prev.filter((s) => !targetIds.includes(s.noteId)))
+      toast.success('링크가 추가되었습니다')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '링크 승인 실패'
+      toast.error(message)
+    }
+  }, [noteId])
+
+  const dismissAutoLink = useCallback((targetIds: string[]) => {
+    if (targetIds.length === 0) return
+    setAutoLinkSuggestions((prev) => prev.filter((s) => !targetIds.includes(s.noteId)))
+  }, [])
+
   const handleAICommand = (command: AICommand) => {
     if (!noteId) return
     const titles: Record<AICommand, string> = {
@@ -598,6 +660,21 @@ function NotesPageContent() {
                   {saveStatus === 'saved' && '✓ 저장됨'}
                   {saveStatus === 'error' && '⚠ 실패'}
                 </span>
+                {noteId && (
+                  <AutoLinkMenu
+                    suggestions={autoLinkSuggestions}
+                    isLoading={isAutoLinkLoading}
+                    error={autoLinkError}
+                    onApprove={(targetId) => approveAutoLink([targetId])}
+                    onApproveAll={() =>
+                      approveAutoLink(autoLinkSuggestions.map((s) => s.noteId))
+                    }
+                    onDismiss={(targetId) => dismissAutoLink([targetId])}
+                    onDismissAll={() =>
+                      dismissAutoLink(autoLinkSuggestions.map((s) => s.noteId))
+                    }
+                  />
+                )}
                 {noteId && (
                   <AICommandMenu onCommand={handleAICommand} isLoading={isAILoading} />
                 )}
@@ -765,6 +842,21 @@ function NotesPageContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {noteId && (
+                    <AutoLinkMenu
+                      suggestions={autoLinkSuggestions}
+                      isLoading={isAutoLinkLoading}
+                      error={autoLinkError}
+                      onApprove={(targetId) => approveAutoLink([targetId])}
+                      onApproveAll={() =>
+                        approveAutoLink(autoLinkSuggestions.map((s) => s.noteId))
+                      }
+                      onDismiss={(targetId) => dismissAutoLink([targetId])}
+                      onDismissAll={() =>
+                        dismissAutoLink(autoLinkSuggestions.map((s) => s.noteId))
+                      }
+                    />
+                  )}
                   {noteId && (
                     <AICommandMenu onCommand={handleAICommand} isLoading={isAILoading} />
                   )}
