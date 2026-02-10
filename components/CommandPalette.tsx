@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { Search, FileText, Tag, Folder, Hash, Loader2, SlidersHorizontal, Brain, Network } from 'lucide-react'
+import { Search, FileText, Tag, Folder, Hash, Loader2, SlidersHorizontal, Brain, Network, RotateCcw } from 'lucide-react'
 import { useTags } from '@/lib/hooks/useTags'
 import { useFolders } from '@/lib/hooks/useFolders'
 import { useSearchHistory } from '@/lib/hooks/useSearchHistory'
@@ -13,6 +13,7 @@ import { AdvancedSearchDialog, type SearchParams } from '@/components/AdvancedSe
 import { SearchHighlight } from '@/components/SearchHighlight'
 import { AskMyBrainDialog } from '@/components/AskMyBrainDialog'
 import { SynthesisDialog } from '@/components/SynthesisDialog'
+import { ResurfaceDialog } from '@/components/ResurfaceDialog'
 import type { Folder as FolderEntity, Tag as TagEntity } from '@/lib/contracts/entities'
 
 type SearchResult = {
@@ -236,6 +237,11 @@ export function CommandPalette() {
                 <Network className="h-4 w-4" />
               </Button>
             </SynthesisDialog>
+            <ResurfaceDialog>
+              <Button variant="ghost" size="sm" className="ml-2" title="Resurface">
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            </ResurfaceDialog>
             <AdvancedSearchDialog onSearch={handleAdvancedSearch}>
               <Button variant="ghost" size="sm" className="ml-2">
                 <SlidersHorizontal className="h-4 w-4" />
