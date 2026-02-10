@@ -194,3 +194,18 @@ model ThinkingSession {
   @@index([expiresAt])
   @@map("thinking_sessions")
 }
+
+// Incubation (질문 부화)
+model IncubationQuestion {
+  id         String   @id @default(cuid())
+  question   String   @db.Text
+  noteIds    String[]
+  status     String   @db.VarChar(20) // open | ready | done
+  createdAt  DateTime @default(now())
+  reviewAt   DateTime
+  reviewedAt DateTime?
+
+  @@index([status])
+  @@index([reviewAt])
+  @@map("incubation_questions")
+}
