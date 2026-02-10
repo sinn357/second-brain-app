@@ -209,69 +209,6 @@ function NotesPageContent() {
     saveInFlight.current = false
   }, [note?.id, noteId, resetAI])
 
-  // 디바운스된 값으로 자동 저장
-  useEffect(() => {
-    if (!noteId || !note) return
-    if (isHydratingRef.current) return
-    if (activeNoteIdRef.current !== noteId) return
-    if (debouncedTitle !== title || debouncedBody !== body) return
-    if (!debouncedTitle.trim()) return
-
-    // 마지막 저장된 값과 같으면 저장하지 않음
-    if (
-      lastSavedRef.current &&
-      lastSavedRef.current.noteId === noteId &&
-      lastSavedRef.current.title === debouncedTitle &&
-      lastSavedRef.current.body === debouncedBody
-    ) {
-      return
-    }
-
-    const runSave = async () => {
-      // 이미 저장 중이면 대기열에 추가
-      if (saveInFlight.current) {
-        pendingSave.current = { title: debouncedTitle, body: debouncedBody }
-        return
-      }
-
-      saveInFlight.current = true
-      setIsSaving(true)
-      setSaveStatus('saving')
-
-      try {
-        await updateNote.mutateAsync({ title: debouncedTitle, body: debouncedBody })
-        await parseLinks.mutateAsync({ noteId, body: debouncedBody })
-        lastSavedRef.current = { noteId, title: debouncedTitle, body: debouncedBody }
-        setSaveStatus('saved')
-        void fetchAutoLinkSuggestions(noteId, debouncedBody)
-      } catch (error) {
-        console.error('Auto save error:', error)
-        setSaveStatus('error')
-        toast.error('자동 저장에 실패했습니다')
-      } finally {
-        saveInFlight.current = false
-        setIsSaving(false)
-
-        // 대기 중인 저장이 있으면 실행
-        if (pendingSave.current) {
-          const pending = pendingSave.current
-          pendingSave.current = null
-          // 다음 틱에서 저장 실행
-          setTimeout(() => {
-            if (
-              lastSavedRef.current?.title !== pending.title ||
-              lastSavedRef.current?.body !== pending.body
-            ) {
-              runSave()
-            }
-          }, 0)
-        }
-      }
-    }
-
-    runSave()
-  }, [debouncedTitle, debouncedBody, noteId, updateNote, parseLinks, fetchAutoLinkSuggestions])
-
   const handleDelete = async () => {
     if (!noteId) return
     const confirmed = window.confirm('이 노트를 삭제하시겠습니까?')
@@ -502,6 +439,69 @@ function NotesPageContent() {
     if (targetIds.length === 0) return
     setAutoLinkSuggestions((prev) => prev.filter((s) => !targetIds.includes(s.noteId)))
   }, [])
+
+  // 디바운스된 값으로 자동 저장
+  useEffect(() => {
+    if (!noteId || !note) return
+    if (isHydratingRef.current) return
+    if (activeNoteIdRef.current !== noteId) return
+    if (debouncedTitle !== title || debouncedBody !== body) return
+    if (!debouncedTitle.trim()) return
+
+    // 마지막 저장된 값과 같으면 저장하지 않음
+    if (
+      lastSavedRef.current &&
+      lastSavedRef.current.noteId === noteId &&
+      lastSavedRef.current.title === debouncedTitle &&
+      lastSavedRef.current.body === debouncedBody
+    ) {
+      return
+    }
+
+    const runSave = async () => {
+      // 이미 저장 중이면 대기열에 추가
+      if (saveInFlight.current) {
+        pendingSave.current = { title: debouncedTitle, body: debouncedBody }
+        return
+      }
+
+      saveInFlight.current = true
+      setIsSaving(true)
+      setSaveStatus('saving')
+
+      try {
+        await updateNote.mutateAsync({ title: debouncedTitle, body: debouncedBody })
+        await parseLinks.mutateAsync({ noteId, body: debouncedBody })
+        lastSavedRef.current = { noteId, title: debouncedTitle, body: debouncedBody }
+        setSaveStatus('saved')
+        void fetchAutoLinkSuggestions(noteId, debouncedBody)
+      } catch (error) {
+        console.error('Auto save error:', error)
+        setSaveStatus('error')
+        toast.error('자동 저장에 실패했습니다')
+      } finally {
+        saveInFlight.current = false
+        setIsSaving(false)
+
+        // 대기 중인 저장이 있으면 실행
+        if (pendingSave.current) {
+          const pending = pendingSave.current
+          pendingSave.current = null
+          // 다음 틱에서 저장 실행
+          setTimeout(() => {
+            if (
+              lastSavedRef.current?.title !== pending.title ||
+              lastSavedRef.current?.body !== pending.body
+            ) {
+              runSave()
+            }
+          }, 0)
+        }
+      }
+    }
+
+    runSave()
+  }, [debouncedTitle, debouncedBody, noteId, updateNote, parseLinks, fetchAutoLinkSuggestions])
 
   const handleAICommand = (command: AICommand) => {
     if (!noteId) return
