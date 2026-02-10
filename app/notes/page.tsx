@@ -20,6 +20,10 @@ import { arrayMove } from '@dnd-kit/sortable'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ThinkingPanel } from '@/components/ThinkingPanel'
 import { ThinkingButton } from '@/components/ThinkingButton'
+import { AICommandMenu } from '@/components/AICommandMenu'
+import { AIResultPanel } from '@/components/AIResultPanel'
+import { useNoteAI } from '@/lib/hooks/useNoteAI'
+import type { AICommand } from '@/lib/ai/types'
 import type { Folder } from '@/lib/contracts/entities'
 
 const AUTO_SAVE_DELAY = 500 // ms
@@ -42,6 +46,18 @@ function NotesPageContent() {
   const deleteNote = useDeleteNote()
   const parseLinks = useParseLinks()
   const queryClient = useQueryClient()
+  const [showAIResult, setShowAIResult] = useState(false)
+  const [aiTitle, setAITitle] = useState('')
+  const {
+    execute: executeAI,
+    isLoading: isAILoading,
+    data: aiData,
+    error: aiError,
+    reset: resetAI,
+  } = useNoteAI({
+    onSuccess: () => setShowAIResult(true),
+    onError: (error) => toast.error(error.message),
+  })
 
   const defaultFolder = useMemo(
     () => folders.find((folder) => folder.isDefault) ?? null,
@@ -166,6 +182,8 @@ function NotesPageContent() {
       setTitle('')
       setBody('')
       setEditorContent('')
+      setShowAIResult(false)
+      resetAI()
       lastSavedRef.current = null
       activeNoteIdRef.current = null
       pendingSave.current = null
@@ -180,7 +198,7 @@ function NotesPageContent() {
     lastSavedRef.current = { noteId, title: note.title, body: note.body }
     pendingSave.current = null
     saveInFlight.current = false
-  }, [note?.id, noteId])
+  }, [note?.id, noteId, resetAI])
 
   // 디바운스된 값으로 자동 저장
   useEffect(() => {
@@ -423,6 +441,37 @@ function NotesPageContent() {
   const [isListCollapsed, setIsListCollapsed] = useState(false)
   const [isThinkingOpen, setIsThinkingOpen] = useState(false)
 
+  const handleAICommand = (command: AICommand) => {
+    if (!noteId) return
+    const titles: Record<AICommand, string> = {
+      summarize: '요약',
+      expand: '확장',
+      clarify: '명확화',
+      structure: '구조화',
+      tagSuggest: '태그 제안',
+      question: '질문 생성',
+      action: '액션 제안',
+    }
+    setAITitle(titles[command])
+    executeAI({ noteId, command })
+  }
+
+  const handleCloseAI = () => {
+    setShowAIResult(false)
+    resetAI()
+  }
+
+  const handleSaveAIResult = (content: string) => {
+    const trimmed = content.trim()
+    if (!trimmed) return
+    const nextBody = body ? `${body}\n\n---\n\n${trimmed}\n` : `${trimmed}\n`
+    setBody(nextBody)
+    setEditorContent(buildEditorContent(title, nextBody))
+    setShowAIResult(false)
+    resetAI()
+    toast.success('AI 결과를 노트에 추가했습니다')
+  }
+
   useEffect(() => {
     if (!noteId) {
       setIsThinkingOpen(false)
@@ -549,6 +598,9 @@ function NotesPageContent() {
                   {saveStatus === 'saved' && '✓ 저장됨'}
                   {saveStatus === 'error' && '⚠ 실패'}
                 </span>
+                {noteId && (
+                  <AICommandMenu onCommand={handleAICommand} isLoading={isAILoading} />
+                )}
                 {noteId && (
                   <ThinkingButton
                     onClick={() => setIsThinkingOpen((prev) => !prev)}
@@ -714,6 +766,9 @@ function NotesPageContent() {
                 </div>
                 <div className="flex items-center gap-2">
                   {noteId && (
+                    <AICommandMenu onCommand={handleAICommand} isLoading={isAILoading} />
+                  )}
+                  {noteId && (
                     <ThinkingButton
                       onClick={() => setIsThinkingOpen((prev) => !prev)}
                       isActive={isThinkingOpen}
@@ -768,6 +823,16 @@ function NotesPageContent() {
         </section>
       </div>
       </DndContext>
+      {showAIResult && (
+        <AIResultPanel
+          title={aiTitle}
+          result={aiData?.result || null}
+          isLoading={isAILoading}
+          error={aiError as Error | null}
+          onClose={handleCloseAI}
+          onSave={handleSaveAIResult}
+        />
+      )}
       {noteId && (
         <ThinkingPanel
           noteId={noteId}
