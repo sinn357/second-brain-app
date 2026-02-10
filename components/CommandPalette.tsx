@@ -18,6 +18,7 @@ import { RandomSparkDialog } from '@/components/RandomSparkDialog'
 import { KnowledgeGapDialog } from '@/components/KnowledgeGapDialog'
 import { IncubationDialog } from '@/components/IncubationDialog'
 import { TimeCapsuleDialog } from '@/components/TimeCapsuleDialog'
+import { SemanticSearchDialog } from '@/components/SemanticSearchDialog'
 import type { Folder as FolderEntity, Tag as TagEntity } from '@/lib/contracts/entities'
 
 type SearchResult = {
@@ -236,6 +237,11 @@ export function CommandPalette() {
                 <Brain className="h-4 w-4" />
               </Button>
             </AskMyBrainDialog>
+            <SemanticSearchDialog>
+              <Button variant="ghost" size="sm" className="ml-2" title="Semantic Search">
+                <Search className="h-4 w-4" />
+              </Button>
+            </SemanticSearchDialog>
             <SynthesisDialog>
               <Button variant="ghost" size="sm" className="ml-2" title="Synthesis">
                 <Network className="h-4 w-4" />

@@ -34,7 +34,10 @@ export async function POST(request: Request) {
     })
 
     if (notes.length === 0) {
-      return NextResponse.json({ success: true, result: '' })
+      return NextResponse.json({
+        success: true,
+        result: `## 시간 여행: \"${keyword}\"\n\n해당 키워드로 작성된 노트가 없습니다.\n\n- 다른 키워드로 시도해보세요\n- 관련 노트를 먼저 작성해보세요`,
+      })
     }
 
     if (!process.env.OPENAI_API_KEY) {
