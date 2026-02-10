@@ -26,7 +26,9 @@ export function QuickAddButton() {
     () => folders?.find((folder) => folder.isDefault),
     [folders]
   )
-  const selectedFolderId = searchParams.get('folderId') || defaultFolder?.id || null
+  const folderIdParam = searchParams.get('folderId')
+  const selectedFolderId =
+    folderIdParam === 'all' ? defaultFolder?.id || null : folderIdParam || defaultFolder?.id || null
 
   const handleCreateWithTemplate = async (templateId: string | null) => {
     setIsCreating(true)
