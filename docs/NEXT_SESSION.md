@@ -18,30 +18,26 @@
 
 ---
 
-## ▶ 다음 세션 작업 (우선순위)
+## ✅ 2026-02-10 구현 완료
 
-### 1. Codex: 개별 노트 AI 구현
-```
-참고: docs/AI_INDIVIDUAL_NOTE_TASKS.md
-```
+### 개별 노트 AI 구현 완료
+- AI 서비스 레이어 + API + React Hook
+- 결과 패널 UI + AI 메뉴 + 노트 에디터 통합
 
-Task 순서:
-1. AI 서비스 기반 구축 (types, prompts, service)
-2. API 엔드포인트 구현
-3. React Hook 구현
-4. AI 결과 패널 UI
-5. AI 메뉴 컴포넌트
-6. 노트 에디터 통합
-7. 통합 테스트
+### 노트 연결 AI 구현 완료
+- Connect / Contrast / Combine / Bridge
+- 저장 시 결과 노트 생성 및 폴더 유지
 
-### 2. Connect 저장 보완
-- 빈 노트 → AI 콘텐츠 채우기
-- 출력 구조: 연결된 노트, 공통점, 차이점, 연결 이유, 결합 아이디어, 탐구 질문, 내 생각
-
-### 3. Auto-Link 설계/구현
-- 노트 저장 시 자동 분석
-- 링크 제안 배지
-- 사용자 승인 후 링크 생성
+### 네트워크 AI 구현 완료 (1~9)
+- Auto-Link (제안/승인)
+- Semantic Search (Advanced + 아이콘)
+- Ask My Brain
+- Synthesis
+- Resurface
+- Random Spark
+- Knowledge Gap
+- Incubation (DB 저장)
+- Time Capsule
 
 ---
 
@@ -59,7 +55,7 @@ Task 순서:
 ## ⚠️ 보류 상태
 
 - 모바일 앱스토어 등록 (잠정 보류)
-- Thinking 저장 시 새 노트 본문 비어있음 (개선 예정)
+- 접근성 경고: DialogContent aria warning (추후 정리)
 
 ---
 
@@ -74,4 +70,4 @@ Task 순서:
 
 ---
 
-**Status**: AI 기능 설계 완료, Codex 작업 대기
+**Status**: AI 기능 구현 완료, 안정화/UX 개선 단계

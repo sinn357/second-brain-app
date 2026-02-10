@@ -1,5 +1,52 @@
 # Second Brain App Changelog
 
+## 2026-02-10
+
+### Added (AI Network + Note AI Expansion)
+- 개별 노트 AI 7종 (Summarize/Expand/Clarify/Structure/TagSuggest/Question/Action)
+- 노트 연결 AI 4종 (Connect/Contrast/Combine/Bridge)
+- 네트워크 AI 9종
+  - Auto-Link (링크 제안 + 승인)
+  - Semantic Search (의미 검색)
+  - Ask My Brain
+  - Synthesis (3개 이상 종합)
+  - Resurface
+  - Random Spark
+  - Knowledge Gap
+  - Incubation (부화, DB 저장)
+  - Time Capsule
+
+### Updated
+- Thinking 저장 시 새 노트가 **현재 노트 폴더**에 생성되도록 개선
+- Quick Add가 `folderId=all`일 때 기본 폴더로 생성되도록 수정
+- Time Capsule: 결과 없음 안내 메시지 추가
+- Command Palette 상단에 네트워크 AI 아이콘 버튼들 추가
+
+### Technical Changes
+- 신규 API:
+  - `/api/ai/note`
+  - `/api/notes/semantic-search`
+  - `/api/notes/ask-my-brain`
+  - `/api/notes/synthesis`
+  - `/api/notes/resurface`
+  - `/api/notes/random-spark`
+  - `/api/notes/knowledge-gap`
+  - `/api/notes/incubation`, `/api/notes/incubation/resolve`
+  - `/api/notes/time-capsule`
+  - `/api/links/suggest`, `/api/links/approve`
+  - `/api/thinking/contrast`, `/api/thinking/combine`, `/api/thinking/bridge`
+- 신규 UI:
+  - `AICommandMenu`, `AIResultPanel`
+  - `AskMyBrainDialog`, `SemanticSearchDialog`, `SynthesisDialog`
+  - `ResurfaceDialog`, `RandomSparkDialog`, `KnowledgeGapDialog`
+  - `IncubationDialog`, `TimeCapsuleDialog`, `AutoLinkMenu`
+- Prisma:
+  - `IncubationQuestion` 모델 추가
+
+### Commits (2026-02-10)
+- `e23d02f` ~ `333ec8d` (AI 기능 전체 추가)
+- `6981ed2` Quick Add 폴더 필터 수정
+
 ## 2026-02-08
 
 ### Updated (Notes Layout Simplification)
@@ -332,4 +379,4 @@
 
 ---
 
-**Last Updated**: 2025-11-18
+**Last Updated**: 2026-02-10
