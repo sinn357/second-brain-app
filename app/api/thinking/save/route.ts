@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { sessionId, resultNoteId, saveAs, targetNoteId, userContent } = body
+    const { sessionId, resultNoteId, saveAs, targetNoteId, userContent, resultTitle } = body
 
     if (!sessionId || !resultNoteId) {
       return NextResponse.json(
@@ -25,6 +25,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '이미 저장된 결과입니다' }, { status: 400 })
     }
 
+    const output = session.output as { results?: Array<{ noteId?: string; content?: string; resultTitle?: string }> }
+    const resultEntry = output?.results?.find((result) => result.noteId === resultNoteId)
+    const resolvedContent = userContent || resultEntry?.content || ''
+    const resolvedTitle = resultTitle || resultEntry?.resultTitle
+
     let savedNoteId: string
 
     if (saveAs === 'new_note') {
@@ -35,8 +40,8 @@ export async function POST(request: NextRequest) {
 
       const newNote = await prisma.note.create({
         data: {
-          title: `연결: ${resultNote?.title || 'Unknown'}`,
-          body: userContent || '',
+          title: resolvedTitle || `연결: ${resultNote?.title || 'Unknown'}`,
+          body: resolvedContent,
         },
       })
 
@@ -60,7 +65,7 @@ export async function POST(request: NextRequest) {
       await prisma.note.update({
         where: { id: targetNoteId },
         data: {
-          body: `${targetNote.body}\n\n${userContent || ''}`,
+          body: `${targetNote.body}\n\n${resolvedContent}`,
         },
       })
 

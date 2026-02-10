@@ -4,11 +4,15 @@ import { useEffect, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { ArrowRight, Brain, Link2, Loader2, Save, X } from 'lucide-react'
 
-interface ConnectResult {
+type ThinkingCommand = 'connect' | 'contrast' | 'combine' | 'bridge'
+
+interface ThinkingResult {
   noteId: string
   noteTitle: string
   reason: string
   preview?: string
+  content?: string
+  resultTitle?: string
 }
 
 interface ThinkingPanelProps {
@@ -20,35 +24,53 @@ interface ThinkingPanelProps {
 
 export function ThinkingPanel({ noteId, isOpen, onClose, onNoteClick }: ThinkingPanelProps) {
   const [sessionId, setSessionId] = useState<string | null>(null)
-  const [results, setResults] = useState<ConnectResult[]>([])
+  const [results, setResults] = useState<ThinkingResult[]>([])
   const [savingId, setSavingId] = useState<string | null>(null)
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
+  const [activeCommand, setActiveCommand] = useState<ThinkingCommand>('connect')
+
+  const commandLabels: Record<ThinkingCommand, string> = {
+    connect: 'Connect',
+    contrast: 'Contrast',
+    combine: 'Combine',
+    bridge: 'Bridge',
+  }
 
   useEffect(() => {
     setSessionId(null)
     setResults([])
     setSavingId(null)
     setSavedIds(new Set())
+    setActiveCommand('connect')
   }, [noteId])
 
-  const connectMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch('/api/thinking/connect', {
+  const commandMutation = useMutation({
+    mutationFn: async (command: ThinkingCommand) => {
+      const res = await fetch(`/api/thinking/${command}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ noteId }),
       })
-      if (!res.ok) throw new Error('Connect 실패')
+      if (!res.ok) throw new Error('Thinking 요청 실패')
       return res.json()
     },
-    onSuccess: (data) => {
+    onSuccess: (data, command) => {
       setSessionId(data.sessionId)
       setResults(data.results || [])
+      setActiveCommand(command)
     },
   })
 
   const saveMutation = useMutation({
-    mutationFn: async (resultNoteId: string) => {
+    mutationFn: async ({
+      resultNoteId,
+      userContent,
+      resultTitle,
+    }: {
+      resultNoteId: string
+      userContent?: string
+      resultTitle?: string
+    }) => {
       const res = await fetch('/api/thinking/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,13 +78,15 @@ export function ThinkingPanel({ noteId, isOpen, onClose, onNoteClick }: Thinking
           sessionId,
           resultNoteId,
           saveAs: 'new_note',
+          userContent,
+          resultTitle,
         }),
       })
       if (!res.ok) throw new Error('저장 실패')
       return res.json()
     },
-    onSuccess: (_, resultNoteId) => {
-      setSavedIds((prev) => new Set(prev).add(resultNoteId))
+    onSuccess: (_, variables) => {
+      setSavedIds((prev) => new Set(prev).add(variables.resultNoteId))
       setSavingId(null)
     },
     onError: () => {
@@ -70,16 +94,20 @@ export function ThinkingPanel({ noteId, isOpen, onClose, onNoteClick }: Thinking
     },
   })
 
-  const handleConnect = () => {
+  const handleCommand = (command: ThinkingCommand) => {
     setResults([])
     setSessionId(null)
     setSavedIds(new Set())
-    connectMutation.mutate()
+    commandMutation.mutate(command)
   }
 
-  const handleSave = (resultNoteId: string) => {
+  const handleSave = (
+    resultNoteId: string,
+    userContent?: string,
+    resultTitle?: string
+  ) => {
     setSavingId(resultNoteId)
-    saveMutation.mutate(resultNoteId)
+    saveMutation.mutate({ resultNoteId, userContent, resultTitle })
   }
 
   if (!isOpen) return null
@@ -100,31 +128,38 @@ export function ThinkingPanel({ noteId, isOpen, onClose, onNoteClick }: Thinking
         </button>
       </div>
 
-      <div className="p-4 border-b border-indigo-200/70 dark:border-indigo-800/60">
-        <button
-          onClick={handleConnect}
-          disabled={connectMutation.isPending}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-200 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors disabled:opacity-50"
-          type="button"
-        >
-          {connectMutation.isPending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Link2 className="w-4 h-4" />
-          )}
-          <span>Connect</span>
-        </button>
+      <div className="p-4 border-b border-indigo-200/70 dark:border-indigo-800/60 space-y-2">
+        {(Object.keys(commandLabels) as ThinkingCommand[]).map((command) => (
+          <button
+            key={command}
+            onClick={() => handleCommand(command)}
+            disabled={commandMutation.isPending}
+            className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 ${
+              command === activeCommand
+                ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-200'
+                : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/40'
+            }`}
+            type="button"
+          >
+            {commandMutation.isPending && command === activeCommand ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Link2 className="w-4 h-4" />
+            )}
+            <span>{commandLabels[command]}</span>
+          </button>
+        ))}
       </div>
 
       <div className="p-4 max-h-96 overflow-y-auto">
-        {connectMutation.isPending && (
+        {commandMutation.isPending && (
           <div className="text-center py-8 text-indigo-400">
             <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-            <p className="text-sm">관련 노트를 찾고 있습니다...</p>
+            <p className="text-sm">{commandLabels[activeCommand]} 실행 중...</p>
           </div>
         )}
 
-        {!connectMutation.isPending && results.length === 0 && sessionId && (
+        {!commandMutation.isPending && results.length === 0 && sessionId && (
           <div className="text-center py-8 text-indigo-400">
             <p className="text-sm">연결된 노트가 없습니다</p>
           </div>
@@ -162,7 +197,9 @@ export function ThinkingPanel({ noteId, isOpen, onClose, onNoteClick }: Thinking
 
                 {!savedIds.has(result.noteId) && (
                   <button
-                    onClick={() => handleSave(result.noteId)}
+                    onClick={() =>
+                      handleSave(result.noteId, result.content, result.resultTitle)
+                    }
                     disabled={savingId === result.noteId}
                     className="mt-2 flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-300 hover:underline disabled:opacity-50"
                     type="button"
@@ -186,9 +223,9 @@ export function ThinkingPanel({ noteId, isOpen, onClose, onNoteClick }: Thinking
           </div>
         )}
 
-        {!sessionId && !connectMutation.isPending && (
+        {!sessionId && !commandMutation.isPending && (
           <div className="text-center py-8 text-indigo-300">
-            <p className="text-sm">Connect를 눌러 관련 노트를 찾아보세요</p>
+            <p className="text-sm">명령을 눌러 관련 노트를 찾아보세요</p>
           </div>
         )}
       </div>
