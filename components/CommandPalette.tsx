@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { Search, FileText, Tag, Folder, Hash, Loader2, SlidersHorizontal, Brain, Network, RotateCcw, Lightbulb } from 'lucide-react'
+import { Search, FileText, Tag, Folder, Hash, Loader2, SlidersHorizontal, Brain, Network, RotateCcw, Lightbulb, AlertTriangle } from 'lucide-react'
 import { useTags } from '@/lib/hooks/useTags'
 import { useFolders } from '@/lib/hooks/useFolders'
 import { useSearchHistory } from '@/lib/hooks/useSearchHistory'
@@ -15,6 +15,7 @@ import { AskMyBrainDialog } from '@/components/AskMyBrainDialog'
 import { SynthesisDialog } from '@/components/SynthesisDialog'
 import { ResurfaceDialog } from '@/components/ResurfaceDialog'
 import { RandomSparkDialog } from '@/components/RandomSparkDialog'
+import { KnowledgeGapDialog } from '@/components/KnowledgeGapDialog'
 import type { Folder as FolderEntity, Tag as TagEntity } from '@/lib/contracts/entities'
 
 type SearchResult = {
@@ -248,6 +249,11 @@ export function CommandPalette() {
                 <Lightbulb className="h-4 w-4" />
               </Button>
             </RandomSparkDialog>
+            <KnowledgeGapDialog>
+              <Button variant="ghost" size="sm" className="ml-2" title="Knowledge Gap">
+                <AlertTriangle className="h-4 w-4" />
+              </Button>
+            </KnowledgeGapDialog>
             <AdvancedSearchDialog onSearch={handleAdvancedSearch}>
               <Button variant="ghost" size="sm" className="ml-2">
                 <SlidersHorizontal className="h-4 w-4" />
