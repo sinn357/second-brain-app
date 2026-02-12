@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Brain,
   FileText,
   Home,
   Keyboard,
@@ -25,7 +24,6 @@ import { useTheme } from '@/lib/hooks/useTheme'
 const primaryItems = [
   { href: '/notes', label: 'Notes', icon: FileText },
   { href: '/graph', label: 'Graph', icon: Network },
-  { href: '/mindmap', label: 'Mindmap', icon: Brain },
   { href: '/templates', label: 'Templates', icon: LayoutTemplate },
   { href: '/db', label: 'Database', icon: Table },
   { href: '/shortcuts', label: 'Shortcuts', icon: Keyboard },

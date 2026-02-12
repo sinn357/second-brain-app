@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   FileText, Network, Folder, Table, Search, Moon, Sun,
-  Settings, LayoutTemplate, Home, Brain, Keyboard
+  Settings, LayoutTemplate, Home, Keyboard
 } from 'lucide-react'
 import { useTheme } from '@/lib/hooks/useTheme'
 
@@ -25,7 +25,6 @@ export function FloatingNav() {
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/graph', label: 'Graph', icon: Network },
     { href: '/db', label: 'Database', icon: Table },
-    { href: '/mindmap', label: 'Mindmap', icon: Brain },
     { href: '/folders', label: 'Folders', icon: Folder },
     { href: '/templates', label: 'Templates', icon: LayoutTemplate },
     { href: '/shortcuts', label: 'Shortcuts', icon: Keyboard },

@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useGraph, type SimulationNode, type SimulationLink } from '@/lib/hooks/useGraph'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import * as d3 from 'd3'
 import { useRouter } from 'next/navigation'
 import { useCreateNote } from '@/lib/hooks/useNotes'
@@ -40,11 +41,38 @@ export default function GraphPage() {
   const queryClient = useQueryClient()
   const createNote = useCreateNote()
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 })
+  const [layout, setLayout] = useState<'network' | 'tree'>('network')
+  const [rootId, setRootId] = useState<string | null>(null)
+  const [depthLimit, setDepthLimit] = useState(3)
   const [selectedFolders, setSelectedFolders] = useState<Set<string>>(new Set())
   const [showIsolated, setShowIsolated] = useState(true)
   const [showLabels, setShowLabels] = useState(true)
   const [limitNodes, setLimitNodes] = useState(false)
   const [showMissing, setShowMissing] = useState(true)
+  const nodeMap = useMemo(() => {
+    if (!graphData) return new Map<string, { title: string; isMissing: boolean }>()
+    return new Map(graphData.nodes.map((node) => [node.id, { title: node.title, isMissing: node.isMissing }]))
+  }, [graphData])
+
+  const adjacency = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    if (!graphData) return map
+    graphData.edges.forEach((edge) => {
+      if (!map.has(edge.source)) map.set(edge.source, new Set())
+      if (!map.has(edge.target)) map.set(edge.target, new Set())
+      map.get(edge.source)!.add(edge.target)
+      map.get(edge.target)!.add(edge.source)
+    })
+    return map
+  }, [graphData])
+
+  useEffect(() => {
+    if (!graphData) return
+    if (rootId) return
+    if (graphData.nodes.length > 0) {
+      setRootId(graphData.nodes[0].id)
+    }
+  }, [graphData, rootId])
 
   // 컨테이너 크기 감지 (반응형)
   useEffect(() => {
@@ -64,17 +92,9 @@ export default function GraphPage() {
     return () => resizeObserver.disconnect()
   }, [])
 
-  useEffect(() => {
-    if (!graphData || !svgRef.current) return
-
-    const { nodes, edges, folders } = graphData
-    const { width, height } = dimensions
-
-    // 폴더 ID → 색상 매핑
-    const folderColorMap = new Map<string, string>()
-    folders.forEach((folder, idx) => {
-      folderColorMap.set(folder.id, FOLDER_COLORS[idx % FOLDER_COLORS.length])
-    })
+  const filteredGraph = useMemo(() => {
+    if (!graphData) return null
+    const { nodes, edges } = graphData
 
     // 고립 노드 탐지 (edges에 없는 노드)
     const connectedNodeIds = new Set<string>()
@@ -83,7 +103,6 @@ export default function GraphPage() {
       connectedNodeIds.add(edge.target)
     })
 
-    // 필터링된 노드
     let filteredNodes = nodes
     if (!showMissing) {
       filteredNodes = filteredNodes.filter((n) => !n.isMissing)
@@ -97,13 +116,30 @@ export default function GraphPage() {
       filteredNodes = filteredNodes.filter((n) => connectedNodeIds.has(n.id))
     }
 
-    // 필터링된 노드 ID 집합
     const filteredNodeIds = new Set(filteredNodes.map((n) => n.id))
-
-    // 필터링된 엣지 (양쪽 노드가 모두 필터링된 노드에 포함)
     const filteredEdges = edges.filter((e) =>
       filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target)
     )
+
+    return { filteredNodes, filteredEdges, connectedNodeIds }
+  }, [graphData, selectedFolders, showIsolated, showMissing])
+
+  useEffect(() => {
+    if (!graphData || !svgRef.current) return
+    if (layout !== 'network') return
+
+    const { folders } = graphData
+    const { width, height } = dimensions
+
+    // 폴더 ID → 색상 매핑
+    const folderColorMap = new Map<string, string>()
+    folders.forEach((folder, idx) => {
+      folderColorMap.set(folder.id, FOLDER_COLORS[idx % FOLDER_COLORS.length])
+    })
+
+    const filteredNodes = filteredGraph?.filteredNodes ?? []
+    const filteredEdges = filteredGraph?.filteredEdges ?? []
+    const connectedNodeIds = filteredGraph?.connectedNodeIds ?? new Set<string>()
 
     // 노드 색상 결정 함수
     const getNodeColor = (node: SimulationNode) => {
@@ -274,7 +310,110 @@ export default function GraphPage() {
     return () => {
       simulation.stop()
     }
-  }, [graphData, router, dimensions, selectedFolders, showIsolated, showLabels, limitNodes])
+  }, [graphData, router, dimensions, selectedFolders, showIsolated, showLabels, limitNodes, showMissing, layout, filteredGraph])
+
+  useEffect(() => {
+    if (!graphData || !svgRef.current || !rootId) return
+    if (layout !== 'tree') return
+
+    const allowedNodeIds = new Set(
+      (filteredGraph?.filteredNodes ?? graphData.nodes).map((node) => node.id)
+    )
+    const visited = new Set<string>([rootId])
+
+    type TreeNode = {
+      id: string
+      title: string
+      isMissing: boolean
+      children?: TreeNode[]
+    }
+
+    const buildTree = (id: string, depth: number): TreeNode => {
+      const nodeMeta = nodeMap.get(id)
+      const title = nodeMeta?.title ?? 'Untitled'
+      const isMissing = nodeMeta?.isMissing ?? false
+
+      if (depth >= depthLimit) {
+        return { id, title, isMissing }
+      }
+
+      const neighbors = Array.from(adjacency.get(id) ?? [])
+        .filter((neighborId) => allowedNodeIds.has(neighborId))
+
+      const children: TreeNode[] = []
+
+      for (const childId of neighbors) {
+        if (visited.has(childId)) continue
+        visited.add(childId)
+        children.push(buildTree(childId, depth + 1))
+      }
+
+      return children.length > 0 ? { id, title, isMissing, children } : { id, title, isMissing }
+    }
+
+    const treeData = buildTree(rootId, 0)
+    const root = d3.hierarchy(treeData)
+
+    const { width, height } = dimensions
+    const isDark = document.documentElement.classList.contains('dark')
+    const treeLayout = d3.tree<TreeNode>().size([height - 80, width - 160])
+    treeLayout(root)
+
+    const svg = d3.select(svgRef.current)
+    svg.selectAll('*').remove()
+    svg.attr('width', width).attr('height', height)
+
+    const g = svg.append('g').attr('transform', 'translate(80,40)')
+
+    const linkGenerator = d3
+      .linkHorizontal<d3.HierarchyPointLink<TreeNode>, d3.HierarchyPointNode<TreeNode>>()
+      .x((d) => d.y)
+      .y((d) => d.x)
+
+    const links = root.links() as d3.HierarchyPointLink<TreeNode>[]
+
+    g.append('g')
+      .selectAll('path')
+      .data(links)
+      .enter()
+      .append('path')
+      .attr('d', (d) => linkGenerator(d) ?? '')
+      .attr('fill', 'none')
+      .attr('stroke', isDark ? '#64748b' : '#94a3b8')
+      .attr('stroke-width', 1.5)
+
+    const node = g
+      .append('g')
+      .selectAll('g')
+      .data(root.descendants())
+      .enter()
+      .append('g')
+      .attr('transform', (d) => `translate(${d.y},${d.x})`)
+      .style('cursor', 'pointer')
+      .on('click', (_, d) => setRootId(d.data.id))
+
+    node
+      .append('circle')
+      .attr('r', (d) => (d.depth === 0 ? 10 : 7))
+      .attr('fill', (d) => (d.data.isMissing ? MISSING_NODE_COLOR : d.depth === 0 ? '#6366f1' : '#a5b4fc'))
+      .attr('stroke', isDark ? '#0f172a' : '#1f2937')
+      .attr('stroke-width', 1)
+      .attr('stroke-dasharray', (d) => (d.data.isMissing ? '4,3' : null))
+
+    if (showLabels) {
+      node
+        .append('text')
+        .attr('x', (d) => (d.children ? -12 : 12))
+        .attr('text-anchor', (d) => (d.children ? 'end' : 'start'))
+        .attr('font-size', 12)
+        .attr('fill', isDark ? '#e2e8f0' : '#1f2937')
+        .text((d) => d.data.title)
+        .clone(true)
+        .lower()
+        .attr('stroke', isDark ? '#0f172a' : 'white')
+        .attr('stroke-width', 3)
+    }
+  }, [graphData, rootId, depthLimit, adjacency, nodeMap, dimensions, layout, filteredGraph, showLabels])
 
   if (isLoading) {
     return (
@@ -352,90 +491,138 @@ export default function GraphPage() {
           <div>
             <h1 className="page-title text-indigo-900 dark:text-indigo-100">Graph View</h1>
             <p className="page-subtitle">
-          노트를 클릭하면 해당 노트로 이동합니다. 드래그로 노드를 이동할 수 있습니다.
-        </p>
+              노트를 클릭하면 해당 노트로 이동합니다. 드래그로 노드를 이동할 수 있습니다.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={layout === 'network' ? 'default' : 'outline'}
+              onClick={() => setLayout('network')}
+            >
+              Network
+            </Button>
+            <Button
+              size="sm"
+              variant={layout === 'tree' ? 'default' : 'outline'}
+              onClick={() => setLayout('tree')}
+            >
+              Tree
+            </Button>
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="mb-4 space-y-3">
-          <div className="font-semibold text-indigo-900 dark:text-indigo-100 text-sm">Filters:</div>
-          <div className="flex flex-wrap gap-2">
-            {folders.map((folder) => (
-              <label
-                key={folder.id}
-                className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedFolders.has(folder.id)}
-                  onChange={() => toggleFolder(folder.id)}
-                  className="w-4 h-4 rounded border-gray-300"
-                />
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: folderColorMap.get(folder.id) }}
-                />
-                <span className="text-sm text-indigo-700 dark:text-indigo-300">{folder.name}</span>
-              </label>
-            ))}
+        {layout === 'tree' ? (
+          <div className="mb-4 flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-indigo-600 dark:text-indigo-300">Root</span>
+              <Select value={rootId ?? ''} onValueChange={(value) => setRootId(value)}>
+                <SelectTrigger className="w-64 text-sm">
+                  <SelectValue placeholder="Select note" />
+                </SelectTrigger>
+                <SelectContent>
+                  {nodes.map((node) => (
+                    <SelectItem key={node.id} value={node.id}>
+                      {node.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-indigo-600 dark:text-indigo-300">Depth</span>
+              <input
+                type="range"
+                min={1}
+                max={5}
+                value={depthLimit}
+                onChange={(event) => setDepthLimit(Number(event.target.value))}
+                className="w-32"
+              />
+              <span className="toolbar-pill">{depthLimit}</span>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
-              <input
-                type="checkbox"
-                checked={showIsolated}
-                onChange={(e) => setShowIsolated(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300"
-              />
-              <span className="text-sm text-indigo-700 dark:text-indigo-300">
-                Show Isolated Nodes ({isolatedCount})
-              </span>
-            </label>
-            <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
-              <input
-                type="checkbox"
-                checked={showMissing}
-                onChange={(e) => setShowMissing(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300"
-              />
-              <span className="text-sm text-indigo-700 dark:text-indigo-300">
-                Show Missing Links ({missingCount})
-              </span>
-            </label>
-            <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
-              <input
-                type="checkbox"
-                checked={showLabels}
-                onChange={(e) => setShowLabels(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300"
-              />
-              <span className="text-sm text-indigo-700 dark:text-indigo-300">
-                Show Labels
-              </span>
-            </label>
-            {nodes.length > LARGE_GRAPH_THRESHOLD && (
+        ) : (
+          <div className="mb-4 space-y-3">
+            <div className="font-semibold text-indigo-900 dark:text-indigo-100 text-sm">Filters:</div>
+            <div className="flex flex-wrap gap-2">
+              {folders.map((folder) => (
+                <label
+                  key={folder.id}
+                  className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedFolders.has(folder.id)}
+                    onChange={() => toggleFolder(folder.id)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: folderColorMap.get(folder.id) }}
+                  />
+                  <span className="text-sm text-indigo-700 dark:text-indigo-300">{folder.name}</span>
+                </label>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
               <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
                 <input
                   type="checkbox"
-                  checked={limitNodes}
-                  onChange={(e) => setLimitNodes(e.target.checked)}
+                  checked={showIsolated}
+                  onChange={(e) => setShowIsolated(e.target.checked)}
                   className="w-4 h-4 rounded border-gray-300"
                 />
                 <span className="text-sm text-indigo-700 dark:text-indigo-300">
-                  Limit to Top {LARGE_GRAPH_THRESHOLD} Nodes
+                  Show Isolated Nodes ({isolatedCount})
                 </span>
               </label>
+              <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={showMissing}
+                  onChange={(e) => setShowMissing(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300"
+                />
+                <span className="text-sm text-indigo-700 dark:text-indigo-300">
+                  Show Missing Links ({missingCount})
+                </span>
+              </label>
+              <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={showLabels}
+                  onChange={(e) => setShowLabels(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300"
+                />
+                <span className="text-sm text-indigo-700 dark:text-indigo-300">
+                  Show Labels
+                </span>
+              </label>
+              {nodes.length > LARGE_GRAPH_THRESHOLD && (
+                <label className="panel-soft flex items-center gap-2 px-3 py-1.5 rounded-md cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-800 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={limitNodes}
+                    onChange={(e) => setLimitNodes(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300"
+                  />
+                  <span className="text-sm text-indigo-700 dark:text-indigo-300">
+                    Limit to Top {LARGE_GRAPH_THRESHOLD} Nodes
+                  </span>
+                </label>
+              )}
+            </div>
+            {/* 대규모 그래프 경고 */}
+            {nodes.length > LARGE_GRAPH_THRESHOLD && !limitNodes && (
+              <div className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                ⚠️ 노드가 많아 성능이 저하될 수 있습니다 ({nodes.length}개).
+                레이블이 자동으로 숨겨지며 hover 시 표시됩니다.
+              </div>
             )}
           </div>
-          {/* 대규모 그래프 경고 */}
-          {nodes.length > LARGE_GRAPH_THRESHOLD && !limitNodes && (
-            <div className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-              ⚠️ 노드가 많아 성능이 저하될 수 있습니다 ({nodes.length}개).
-              레이블이 자동으로 숨겨지며 hover 시 표시됩니다.
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Legend */}
         <div className="mb-4 flex flex-wrap gap-4 text-sm border-t border-indigo-200 dark:border-indigo-700 pt-4">

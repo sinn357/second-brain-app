@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FileText, Network, Table, Settings, LayoutTemplate, Menu, X, CalendarDays, Brain, Keyboard, Home } from 'lucide-react'
+import { FileText, Network, Table, Settings, LayoutTemplate, Menu, X, CalendarDays, Keyboard, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { createPortal } from 'react-dom'
 
@@ -15,7 +15,6 @@ export function MobileNav() {
   const navItems = [
     { href: '/notes', label: 'Notes', icon: FileText },
     { href: '/graph', label: 'Graph', icon: Network },
-    { href: '/mindmap', label: 'Mindmap', icon: Brain },
     { href: '/templates', label: 'Templates', icon: LayoutTemplate },
     { href: '/db', label: 'Database', icon: Table },
     { href: '/shortcuts', label: 'Shortcuts', icon: Keyboard },
