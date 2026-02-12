@@ -854,12 +854,12 @@ function NotesPageContent() {
             </Button>
           ) : (
             <>
-              <div className="page-header">
-                <div>
+              <div className="page-header flex flex-wrap items-start gap-3">
+                <div className="min-w-0 flex-1">
                   <h1 className="page-title text-indigo-900 dark:text-indigo-100">
                     {isAllFolders ? '모든 노트' : selectedFolder ? selectedFolder.name : '모든 노트'}
                   </h1>
-                  <p className="page-subtitle">노트를 빠르게 탐색하고 연결하세요.</p>
+                  <p className="page-subtitle whitespace-normal">노트를 빠르게 탐색하고 연결하세요.</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Select value={sortBy} onValueChange={handleSortChange}>
