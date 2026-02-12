@@ -34,7 +34,7 @@ export async function GET(request: Request) {
           return [{ updatedAt: order }, { title: 'asc' as const }]
         case 'opened':
           return [
-            { lastOpenedAt: { sort: order, nulls: 'last' } },
+            { lastOpenedAt: { sort: order, nulls: Prisma.NullsOrder.last } },
             { updatedAt: 'desc' },
           ]
         case 'created':
