@@ -28,14 +28,14 @@ export async function GET(request: Request) {
     const order: Prisma.SortOrder =
       orderParam === 'asc' || orderParam === 'desc' ? orderParam : defaultOrder
 
-    const orderBy = (() => {
+    const orderBy: Prisma.NoteOrderByWithRelationInput[] = (() => {
       switch (sortBy) {
         case 'updated':
           return [{ updatedAt: order }, { title: 'asc' as const }]
         case 'opened':
           return [
             { lastOpenedAt: { sort: order, nulls: Prisma.NullsOrder.last } },
-            { updatedAt: 'desc' },
+            { updatedAt: Prisma.SortOrder.desc },
           ]
         case 'created':
           return [{ createdAt: order }, { title: 'asc' as const }]
