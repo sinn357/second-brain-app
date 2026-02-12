@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { Prisma } from '@prisma/client'
 
 // 검색어 주변 컨텍스트 추출 (50자)
 function extractContext(text: string, query: string, contextLength = 50): string {
@@ -100,9 +101,10 @@ export async function GET(request: Request) {
       delete whereConditions.AND
     }
 
-    const defaultOrder =
+    const defaultOrder: Prisma.SortOrder =
       sortBy === 'title' || sortBy === 'manual' ? 'asc' : 'desc'
-    const order = orderParam === 'asc' || orderParam === 'desc' ? orderParam : defaultOrder
+    const order: Prisma.SortOrder =
+      orderParam === 'asc' || orderParam === 'desc' ? orderParam : defaultOrder
     const hasSort = sortBy.length > 0
 
     const orderBy = (() => {
@@ -111,8 +113,8 @@ export async function GET(request: Request) {
           return [{ updatedAt: order }, { title: 'asc' as const }]
         case 'opened':
           return [
-            { lastOpenedAt: { sort: order, nulls: 'last' as const } },
-            { updatedAt: 'desc' as const },
+            { lastOpenedAt: { sort: order, nulls: 'last' } },
+            { updatedAt: 'desc' },
           ]
         case 'created':
           return [{ createdAt: order }, { title: 'asc' as const }]
