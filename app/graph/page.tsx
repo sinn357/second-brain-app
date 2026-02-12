@@ -54,6 +54,8 @@ export default function GraphPage() {
     y: number
     node: SimulationNode
   } | null>(null)
+  const longPressTimerRef = useRef<number | null>(null)
+  const longPressTriggeredRef = useRef(false)
   const nodeMap = useMemo(() => {
     if (!graphData) return new Map<string, { title: string; isMissing: boolean }>()
     return new Map(graphData.nodes.map((node) => [node.id, { title: node.title, isMissing: node.isMissing }]))
@@ -136,6 +138,12 @@ export default function GraphPage() {
 
     return { filteredNodes, filteredEdges, connectedNodeIds }
   }, [graphData, selectedFolders, showIsolated, showMissing])
+
+  const treeNodeIds = useMemo(() => {
+    if (!graphData) return new Set<string>()
+    const nodes = showMissing ? graphData.nodes : graphData.nodes.filter((n) => !n.isMissing)
+    return new Set(nodes.map((node) => node.id))
+  }, [graphData, showMissing])
 
   useEffect(() => {
     if (!graphData || !svgRef.current) return
@@ -252,8 +260,42 @@ export default function GraphPage() {
       .attr('stroke-dasharray', (d) => (d.isMissing ? '4,3' : null))
       .style('cursor', (d) => (d.isMissing ? 'default' : 'pointer'))
       .on('click', (_, d) => {
+        if (longPressTriggeredRef.current) {
+          longPressTriggeredRef.current = false
+          return
+        }
         if (d.isMissing) return
         router.push(`/notes?noteId=${d.id}`)
+      })
+      .on('pointerdown', (event, d) => {
+        if (event.pointerType !== 'touch') return
+        if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
+        longPressTimerRef.current = window.setTimeout(() => {
+          longPressTriggeredRef.current = true
+          setContextMenu({
+            x: event.clientX,
+            y: event.clientY,
+            node: d,
+          })
+        }, 600)
+      })
+      .on('pointerup', () => {
+        if (longPressTimerRef.current) {
+          window.clearTimeout(longPressTimerRef.current)
+          longPressTimerRef.current = null
+        }
+      })
+      .on('pointerleave', () => {
+        if (longPressTimerRef.current) {
+          window.clearTimeout(longPressTimerRef.current)
+          longPressTimerRef.current = null
+        }
+      })
+      .on('pointercancel', () => {
+        if (longPressTimerRef.current) {
+          window.clearTimeout(longPressTimerRef.current)
+          longPressTimerRef.current = null
+        }
       })
       .on('contextmenu', (event, d) => {
         event.preventDefault()
@@ -337,9 +379,7 @@ export default function GraphPage() {
     if (!graphData || !svgRef.current || !rootId) return
     if (layout !== 'tree') return
 
-    const allowedNodeIds = new Set(
-      (filteredGraph?.filteredNodes ?? graphData.nodes).map((node) => node.id)
-    )
+    const allowedNodeIds = treeNodeIds
     const visited = new Set<string>([rootId])
 
     type TreeNode = {
@@ -412,8 +452,42 @@ export default function GraphPage() {
       .attr('transform', (d) => `translate(${d.y},${d.x})`)
       .style('cursor', 'pointer')
       .on('click', (_, d) => {
+        if (longPressTriggeredRef.current) {
+          longPressTriggeredRef.current = false
+          return
+        }
         if (d.data.isMissing) return
         router.push(`/notes?noteId=${d.data.id}`)
+      })
+      .on('pointerdown', (event, d) => {
+        if (event.pointerType !== 'touch') return
+        if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current)
+        longPressTimerRef.current = window.setTimeout(() => {
+          longPressTriggeredRef.current = true
+          setContextMenu({
+            x: event.clientX,
+            y: event.clientY,
+            node: d.data as SimulationNode,
+          })
+        }, 600)
+      })
+      .on('pointerup', () => {
+        if (longPressTimerRef.current) {
+          window.clearTimeout(longPressTimerRef.current)
+          longPressTimerRef.current = null
+        }
+      })
+      .on('pointerleave', () => {
+        if (longPressTimerRef.current) {
+          window.clearTimeout(longPressTimerRef.current)
+          longPressTimerRef.current = null
+        }
+      })
+      .on('pointercancel', () => {
+        if (longPressTimerRef.current) {
+          window.clearTimeout(longPressTimerRef.current)
+          longPressTimerRef.current = null
+        }
       })
       .on('contextmenu', (event, d) => {
         event.preventDefault()
@@ -445,7 +519,7 @@ export default function GraphPage() {
         .attr('stroke', isDark ? '#0f172a' : 'white')
         .attr('stroke-width', 3)
     }
-  }, [graphData, rootId, depthLimit, adjacency, nodeMap, dimensions, layout, filteredGraph, showLabels])
+  }, [graphData, rootId, depthLimit, adjacency, nodeMap, dimensions, layout, filteredGraph, showLabels, treeNodeIds])
 
   if (isLoading) {
     return (
