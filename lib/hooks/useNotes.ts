@@ -27,11 +27,19 @@ interface UnlinkedMentionEntry {
 }
 
 // 노트 목록 조회
-export function useNotes(folderId?: string) {
+export function useNotes(
+  folderId?: string,
+  sortBy: 'title' | 'updated' | 'opened' | 'created' | 'manual' = 'title',
+  order: 'asc' | 'desc' = 'asc'
+) {
   return useQuery<Note[], Error>({
-    queryKey: folderId ? ['notes', folderId] : ['notes'],
+    queryKey: folderId ? ['notes', folderId, sortBy, order] : ['notes', sortBy, order],
     queryFn: async () => {
-      const url = folderId ? `/api/notes?folderId=${folderId}` : '/api/notes'
+      const params = new URLSearchParams()
+      if (folderId) params.set('folderId', folderId)
+      params.set('sortBy', sortBy)
+      params.set('order', order)
+      const url = `/api/notes?${params.toString()}`
       const response = await fetch(url)
       const data = await parseApiJson(response, notesListResponseSchema)
       return data.notes

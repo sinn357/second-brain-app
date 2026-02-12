@@ -9,6 +9,7 @@ import { Search, FileText, Tag, Folder, Hash, Loader2, SlidersHorizontal, Brain,
 import { useTags } from '@/lib/hooks/useTags'
 import { useFolders } from '@/lib/hooks/useFolders'
 import { useSearchHistory } from '@/lib/hooks/useSearchHistory'
+import { useNotesSortSetting } from '@/lib/hooks/useNotesSortSetting'
 import { AdvancedSearchDialog, type SearchParams } from '@/components/AdvancedSearchDialog'
 import { SearchHighlight } from '@/components/SearchHighlight'
 import { AskMyBrainDialog } from '@/components/AskMyBrainDialog'
@@ -43,6 +44,7 @@ export function CommandPalette() {
   // Data hooks (for tags and folders only)
   const { data: tagData } = useTags()
   const { data: folderData } = useFolders()
+  const { data: notesSortSetting } = useNotesSortSetting()
   const tags = (tagData ?? []) as TagEntity[]
   const folders = (folderData ?? []) as FolderEntity[]
   const { addToHistory } = useSearchHistory()
@@ -65,6 +67,10 @@ export function CommandPalette() {
           ...(advancedFilters.dateFrom && { dateFrom: advancedFilters.dateFrom }),
           ...(advancedFilters.dateTo && { dateTo: advancedFilters.dateTo }),
         })
+        if (notesSortSetting?.sortBy) {
+          params.set('sortBy', notesSortSetting.sortBy)
+          params.set('order', notesSortSetting.order)
+        }
 
         const endpoint =
           searchMode === 'semantic' ? '/api/notes/semantic-search' : '/api/notes/search'
@@ -92,7 +98,7 @@ export function CommandPalette() {
     }, 300) // 300ms debounce
 
     return () => clearTimeout(delaySearch)
-  }, [query, searchMode, advancedFilters])
+  }, [query, searchMode, advancedFilters, notesSortSetting?.sortBy, notesSortSetting?.order])
 
   // Filter results based on query
   const results: SearchResult[] = []

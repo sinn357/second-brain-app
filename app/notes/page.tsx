@@ -11,7 +11,7 @@ import { useDeleteNote, useNote, useParseLinks, useUpdateNote } from '@/lib/hook
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Trash2, FolderOpen, ChevronLeft, ChevronRight, History } from 'lucide-react'
+import { Trash2, FolderOpen, ChevronLeft, ChevronRight, History, ArrowUpDown } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { VersionHistoryPanel } from '@/components/VersionHistoryPanel'
 import { useFolders } from '@/lib/hooks/useFolders'
@@ -24,6 +24,8 @@ import { AutoLinkMenu } from '@/components/AutoLinkMenu'
 import { AICommandMenu } from '@/components/AICommandMenu'
 import { AIResultPanel } from '@/components/AIResultPanel'
 import { useNoteAI } from '@/lib/hooks/useNoteAI'
+import { useNotesSortSetting, useUpdateNotesSortSetting } from '@/lib/hooks/useNotesSortSetting'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { AICommand } from '@/lib/ai/types'
 import type { Folder } from '@/lib/contracts/entities'
 
@@ -130,11 +132,38 @@ function NotesPageContent() {
   const isHydratingRef = useRef(false)
   const autoLinkLastRunRef = useRef(0)
   const desktopGridRef = useRef<HTMLDivElement>(null)
+  const lastOpenedRef = useRef<string | null>(null)
   const resizeStateRef = useRef<{
     type: 'list' | null
     startX: number
     startList: number
   }>({ type: null, startX: 0, startList: 0 })
+  const { data: notesSortSetting } = useNotesSortSetting()
+  const updateNotesSortSetting = useUpdateNotesSortSetting()
+  const sortBy = notesSortSetting?.sortBy ?? 'title'
+  const sortOrder = notesSortSetting?.order ?? 'asc'
+  const sortOptions = [
+    { value: 'title', label: '이름' },
+    { value: 'updated', label: '최근 수정' },
+    { value: 'opened', label: '최근 열람' },
+    { value: 'created', label: '생성일' },
+    { value: 'manual', label: '수동 정렬' },
+  ] as const
+
+  const handleSortChange = (value: string) => {
+    const nextSort = value as (typeof sortOptions)[number]['value']
+    updateNotesSortSetting.mutate({
+      sortBy: nextSort,
+      order: sortOrder,
+    })
+  }
+
+  const handleToggleOrder = () => {
+    updateNotesSortSetting.mutate({
+      sortBy,
+      order: sortOrder === 'asc' ? 'desc' : 'asc',
+    })
+  }
 
   // Debounce title and body
   const debouncedTitle = useDebounce(title, AUTO_SAVE_DELAY)
@@ -208,6 +237,20 @@ function NotesPageContent() {
     pendingSave.current = null
     saveInFlight.current = false
   }, [note?.id, noteId, resetAI])
+
+  useEffect(() => {
+    if (!noteId || !note) return
+    if (lastOpenedRef.current === noteId) return
+    lastOpenedRef.current = noteId
+
+    fetch(`/api/notes/${noteId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lastOpenedAt: new Date().toISOString() }),
+    }).catch((error) => {
+      console.error('Update lastOpenedAt error:', error)
+    })
+  }, [note?.id, noteId, note])
 
   const handleDelete = async () => {
     if (!noteId) return
@@ -617,23 +660,46 @@ function NotesPageContent() {
                 </h1>
                 <p className="page-subtitle">노트를 탐색하고 연결하세요.</p>
               </div>
-              {/* 폴더 Bottom Sheet */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <FolderOpen className="h-4 w-4 mr-2" />
-                    폴더
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
-                  <SheetHeader>
-                    <SheetTitle>폴더 선택</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-4 overflow-y-auto max-h-[calc(70vh-80px)]">
-                    <FolderTree selectedFolderId={selectedFolderId} />
-                  </div>
-                </SheetContent>
-              </Sheet>
+              <div className="flex items-center gap-2">
+                <Select value={sortBy} onValueChange={handleSortChange}>
+                  <SelectTrigger className="w-28 text-xs">
+                    <SelectValue placeholder="정렬" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleToggleOrder}
+                  className="h-8 w-8"
+                  aria-label="정렬 방향 변경"
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+                {/* 폴더 Bottom Sheet */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <FolderOpen className="h-4 w-4 mr-2" />
+                      폴더
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
+                    <SheetHeader>
+                      <SheetTitle>폴더 선택</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-4 overflow-y-auto max-h-[calc(70vh-80px)]">
+                      <FolderTree selectedFolderId={selectedFolderId} />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
             </div>
             {/* 노트 리스트 (스와이프 삭제 지원) */}
             <div className="p-4">
@@ -642,6 +708,8 @@ function NotesPageContent() {
                 selectedId={noteId}
                 onSelect={handleMobileSelectNote}
                 enableSwipe
+                sortBy={sortBy}
+                order={sortOrder}
               />
             </div>
           </div>
@@ -793,20 +861,44 @@ function NotesPageContent() {
                   </h1>
                   <p className="page-subtitle">노트를 빠르게 탐색하고 연결하세요.</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsListCollapsed(true)}
-                  className="text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
-                  aria-label="노트 목록 접기"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Select value={sortBy} onValueChange={handleSortChange}>
+                    <SelectTrigger className="w-36 text-xs">
+                      <SelectValue placeholder="정렬" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sortOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleToggleOrder}
+                    aria-label="정렬 방향 변경"
+                  >
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsListCollapsed(true)}
+                    className="text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+                    aria-label="노트 목록 접기"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <NoteList
                 folderId={isAllFolders ? undefined : selectedFolderId}
                 selectedId={noteId}
                 onSelect={handleSelectNote}
+                sortBy={sortBy}
+                order={sortOrder}
               />
             </>
           )}

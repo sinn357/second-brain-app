@@ -30,6 +30,8 @@ export interface Note {
   folderId: string | null
   isPinned: boolean
   pinnedAt: Date | null
+  lastOpenedAt: Date | null
+  manualOrder: number
   createdAt: Date
   updatedAt: Date
   folder?: FolderSummary | null

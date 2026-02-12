@@ -12,6 +12,8 @@ export const noteUpdateSchema = z.object({
   body: z.string().optional(),
   folderId: z.string().optional().nullable(),
   isPinned: z.boolean().optional(),
+  lastOpenedAt: z.coerce.date().optional().nullable(),
+  manualOrder: z.number().int().optional(),
 })
 
 // 타입 추론

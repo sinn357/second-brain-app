@@ -34,6 +34,8 @@ export async function GET(request: Request) {
     const mode = searchParams.get('mode') || 'normal' // 'normal' | 'regex'
     const dateFrom = searchParams.get('dateFrom')
     const dateTo = searchParams.get('dateTo')
+    const sortBy = searchParams.get('sortBy') || ''
+    const orderParam = searchParams.get('order')
 
     if (title) {
       // 제목으로 정확히 찾기 (링크 미리보기용)
@@ -98,6 +100,31 @@ export async function GET(request: Request) {
       delete whereConditions.AND
     }
 
+    const defaultOrder =
+      sortBy === 'title' || sortBy === 'manual' ? 'asc' : 'desc'
+    const order = orderParam === 'asc' || orderParam === 'desc' ? orderParam : defaultOrder
+    const hasSort = sortBy.length > 0
+
+    const orderBy = (() => {
+      switch (sortBy) {
+        case 'updated':
+          return [{ updatedAt: order }, { title: 'asc' as const }]
+        case 'opened':
+          return [
+            { lastOpenedAt: { sort: order, nulls: 'last' as const } },
+            { updatedAt: 'desc' as const },
+          ]
+        case 'created':
+          return [{ createdAt: order }, { title: 'asc' as const }]
+        case 'manual':
+          return [{ manualOrder: order }, { title: 'asc' as const }]
+        case 'title':
+          return [{ title: order }, { id: 'asc' as const }]
+        default:
+          return [{ updatedAt: 'desc' as const }]
+      }
+    })()
+
     // 제목 또는 본문에서 검색
     let notes = await prisma.note.findMany({
       where: whereConditions,
@@ -107,6 +134,8 @@ export async function GET(request: Request) {
         body: true,
         createdAt: true,
         updatedAt: true,
+        lastOpenedAt: true,
+        manualOrder: true,
         folder: {
           select: {
             id: true,
@@ -119,7 +148,7 @@ export async function GET(request: Request) {
           },
         },
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy,
       take: mode === 'regex' ? 1000 : 20, // 정규식 모드에서는 더 많이 가져옴
     })
 
@@ -138,6 +167,29 @@ export async function GET(request: Request) {
       }
     }
 
+    if (mode === 'regex' && hasSort) {
+      notes.sort((a, b) => {
+        const direction = order === 'asc' ? 1 : -1
+        switch (sortBy) {
+          case 'title':
+            return a.title.localeCompare(b.title) * direction
+          case 'created':
+            return (a.createdAt.getTime() - b.createdAt.getTime()) * direction
+          case 'updated':
+            return (a.updatedAt.getTime() - b.updatedAt.getTime()) * direction
+          case 'opened': {
+            const aTime = a.lastOpenedAt ? new Date(a.lastOpenedAt).getTime() : 0
+            const bTime = b.lastOpenedAt ? new Date(b.lastOpenedAt).getTime() : 0
+            return (aTime - bTime) * direction
+          }
+          case 'manual':
+            return (a.manualOrder - b.manualOrder) * direction
+          default:
+            return 0
+        }
+      })
+    }
+
     // 검색 결과에 컨텍스트 추가
     const notesWithContext = notes.map((note) => ({
       ...note,
@@ -145,12 +197,14 @@ export async function GET(request: Request) {
       matchInTitle: note.title.toLowerCase().includes(query.toLowerCase()),
     }))
 
-    // 제목 매칭 우선 정렬
-    notesWithContext.sort((a, b) => {
-      if (a.matchInTitle && !b.matchInTitle) return -1
-      if (!a.matchInTitle && b.matchInTitle) return 1
-      return 0
-    })
+    if (!hasSort) {
+      // 제목 매칭 우선 정렬
+      notesWithContext.sort((a, b) => {
+        if (a.matchInTitle && !b.matchInTitle) return -1
+        if (!a.matchInTitle && b.matchInTitle) return 1
+        return 0
+      })
+    }
 
     return NextResponse.json({ success: true, notes: notesWithContext })
   } catch (error) {

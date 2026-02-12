@@ -7,6 +7,8 @@ interface Note {
   folderId: string | null
   isPinned: boolean
   pinnedAt: Date | null
+  lastOpenedAt: Date | null
+  manualOrder: number
   createdAt: Date
   updatedAt: Date
   folder?: {
@@ -31,14 +33,22 @@ interface NotesPage {
 const PAGE_SIZE = 20
 
 // 무한 스크롤 노트 목록 조회
-export function useNotesInfinite(folderId?: string) {
+export function useNotesInfinite(
+  folderId?: string,
+  sortBy: 'title' | 'updated' | 'opened' | 'created' | 'manual' = 'title',
+  order: 'asc' | 'desc' = 'asc'
+) {
   return useInfiniteQuery<NotesPage, Error>({
-    queryKey: folderId ? ['notes', 'infinite', folderId] : ['notes', 'infinite'],
+    queryKey: folderId
+      ? ['notes', 'infinite', folderId, sortBy, order]
+      : ['notes', 'infinite', sortBy, order],
     queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams()
       if (folderId) params.set('folderId', folderId)
       if (pageParam) params.set('cursor', pageParam as string)
       params.set('limit', String(PAGE_SIZE))
+      params.set('sortBy', sortBy)
+      params.set('order', order)
 
       const url = `/api/notes?${params.toString()}`
       const response = await fetch(url)

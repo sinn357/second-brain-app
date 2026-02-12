@@ -18,6 +18,8 @@ export const noteSchema = z.object({
   folderId: z.string().nullable(),
   isPinned: z.boolean().default(false),
   pinnedAt: z.coerce.date().nullable().default(null),
+  lastOpenedAt: z.coerce.date().nullable().default(null),
+  manualOrder: z.number().int().default(0),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   folder: folderSummarySchema.nullish(),

@@ -21,11 +21,20 @@ interface NoteListProps {
   selectedId?: string
   onSelect?: (noteId: string) => void
   enableSwipe?: boolean
+  sortBy?: 'title' | 'updated' | 'opened' | 'created' | 'manual'
+  order?: 'asc' | 'desc'
 }
 
 const ESTIMATED_ITEM_HEIGHT = 86
 
-export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }: NoteListProps) {
+export function NoteList({
+  folderId,
+  selectedId,
+  onSelect,
+  enableSwipe = false,
+  sortBy = 'title',
+  order = 'asc',
+}: NoteListProps) {
   const {
     data,
     isLoading,
@@ -33,7 +42,7 @@ export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useNotesInfinite(folderId)
+  } = useNotesInfinite(folderId, sortBy, order)
 
   // 모든 페이지의 노트를 평탄화
   const notes = useMemo(() => {
@@ -130,8 +139,51 @@ export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })
+      queryClient.invalidateQueries({ queryKey: ['notes', 'infinite'] })
     },
   })
+
+  const handleMoveManual = async (
+    noteId: string,
+    direction: 'up' | 'down' | 'top' | 'bottom'
+  ) => {
+    if (sortBy !== 'manual') return
+    const currentIndex = notes.findIndex((note) => note.id === noteId)
+    if (currentIndex === -1) return
+
+    const sortedNotes = notes
+    const current = sortedNotes[currentIndex]
+    const previous = sortedNotes[currentIndex - 1]
+    const next = sortedNotes[currentIndex + 1]
+    const currentOrder = current.manualOrder ?? 0
+    const directionFactor = order === 'asc' ? 1 : -1
+
+    let nextOrder = currentOrder
+    if (direction === 'up' && previous) {
+      const targetOrder = previous.manualOrder ?? currentOrder
+      nextOrder = targetOrder - 1 * directionFactor
+    } else if (direction === 'down' && next) {
+      const targetOrder = next.manualOrder ?? currentOrder
+      nextOrder = targetOrder + 1 * directionFactor
+    } else if (direction === 'top') {
+      const minOrder = Math.min(...sortedNotes.map((note) => note.manualOrder ?? 0))
+      nextOrder = minOrder - 1 * directionFactor
+    } else if (direction === 'bottom') {
+      const maxOrder = Math.max(...sortedNotes.map((note) => note.manualOrder ?? 0))
+      nextOrder = maxOrder + 1 * directionFactor
+    }
+
+    try {
+      await updateNoteMutation.mutateAsync({
+        id: noteId,
+        data: { manualOrder: nextOrder },
+      })
+      toast.success('순서를 변경했습니다')
+    } catch (error) {
+      console.error('Manual order update error:', error)
+      toast.error('순서 변경에 실패했습니다')
+    }
+  }
 
   const handleDuplicate = async (note: any) => {
     try {
@@ -259,6 +311,51 @@ export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }
           className="fixed z-50 w-48 rounded-md border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-indigo-950 shadow-lg py-1 text-sm"
           style={{ left: contextMenu.x, top: contextMenu.y }}
         >
+          {sortBy === 'manual' && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  handleMoveManual(contextMenu.note.id, 'top')
+                  setContextMenu(null)
+                }}
+                className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200"
+              >
+                맨 위로
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleMoveManual(contextMenu.note.id, 'up')
+                  setContextMenu(null)
+                }}
+                className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200"
+              >
+                위로 한 칸
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleMoveManual(contextMenu.note.id, 'down')
+                  setContextMenu(null)
+                }}
+                className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200"
+              >
+                아래로 한 칸
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleMoveManual(contextMenu.note.id, 'bottom')
+                  setContextMenu(null)
+                }}
+                className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-200"
+              >
+                맨 아래로
+              </button>
+              <div className="my-1 border-t border-indigo-100 dark:border-indigo-800" />
+            </>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -305,6 +402,7 @@ interface NoteItemProps {
     body: string
     folderId?: string | null
     isPinned?: boolean
+    manualOrder?: number
     updatedAt: Date
     folder?: { name: string } | null
     tags?: { tag: { id: string; name: string; color?: string | null } }[]

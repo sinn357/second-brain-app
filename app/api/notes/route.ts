@@ -9,6 +9,8 @@ export async function GET(request: Request) {
     const folderId = searchParams.get('folderId')
     const cursor = searchParams.get('cursor')
     const limit = parseInt(searchParams.get('limit') || '20', 10)
+    const sortBy = searchParams.get('sortBy') || 'title'
+    const orderParam = searchParams.get('order')
 
     const folderFilter = folderId ? { folderId } : {}
     const includeConfig = {
@@ -20,7 +22,30 @@ export async function GET(request: Request) {
       },
     }
 
-    // 노트는 커서 기반 페이지네이션 (이름 순 정렬)
+    const defaultOrder =
+      sortBy === 'title' || sortBy === 'manual' ? 'asc' : 'desc'
+    const order = orderParam === 'asc' || orderParam === 'desc' ? orderParam : defaultOrder
+
+    const orderBy = (() => {
+      switch (sortBy) {
+        case 'updated':
+          return [{ updatedAt: order }, { title: 'asc' as const }]
+        case 'opened':
+          return [
+            { lastOpenedAt: { sort: order, nulls: 'last' as const } },
+            { updatedAt: 'desc' as const },
+          ]
+        case 'created':
+          return [{ createdAt: order }, { title: 'asc' as const }]
+        case 'manual':
+          return [{ manualOrder: order }, { title: 'asc' as const }]
+        case 'title':
+        default:
+          return [{ title: order }, { id: 'asc' as const }]
+      }
+    })()
+
+    // 노트는 커서 기반 페이지네이션
     const notes = await prisma.note.findMany({
       where: { ...folderFilter },
       take: limit + 1, // 다음 페이지 존재 여부 확인용
@@ -28,7 +53,7 @@ export async function GET(request: Request) {
         cursor: { id: cursor },
         skip: 1, // 커서 아이템 스킵
       }),
-      orderBy: [{ title: 'asc' }, { id: 'asc' }],
+      orderBy,
       include: includeConfig,
     })
 

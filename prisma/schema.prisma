@@ -18,6 +18,8 @@ model Note {
   folderId  String?
   isPinned  Boolean  @default(false)
   pinnedAt  DateTime?
+  lastOpenedAt DateTime?
+  manualOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -33,6 +35,8 @@ model Note {
 
   @@index([folderId])
   @@index([createdAt])
+  @@index([lastOpenedAt])
+  @@index([manualOrder])
   @@map("notes")
 }
 
@@ -208,4 +212,15 @@ model IncubationQuestion {
   @@index([status])
   @@index([reviewAt])
   @@map("incubation_questions")
+}
+
+// 앱 설정 (단일 사용자 기준)
+model AppSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique @db.VarChar(100)
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
 }
