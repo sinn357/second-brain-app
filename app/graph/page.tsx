@@ -49,6 +49,11 @@ export default function GraphPage() {
   const [showLabels, setShowLabels] = useState(true)
   const [limitNodes, setLimitNodes] = useState(false)
   const [showMissing, setShowMissing] = useState(true)
+  const [contextMenu, setContextMenu] = useState<{
+    x: number
+    y: number
+    node: SimulationNode
+  } | null>(null)
   const nodeMap = useMemo(() => {
     if (!graphData) return new Map<string, { title: string; isMissing: boolean }>()
     return new Map(graphData.nodes.map((node) => [node.id, { title: node.title, isMissing: node.isMissing }]))
@@ -70,7 +75,9 @@ export default function GraphPage() {
     if (!graphData) return
     if (rootId) return
     if (graphData.nodes.length > 0) {
-      setRootId(graphData.nodes[0].id)
+      const latestId = graphData.latestUpdatedNoteId
+      const fallbackId = graphData.nodes.find((node) => !node.isMissing)?.id
+      setRootId(latestId ?? fallbackId ?? graphData.nodes[0].id)
     }
   }, [graphData, rootId])
 
@@ -90,6 +97,12 @@ export default function GraphPage() {
 
     resizeObserver.observe(containerRef.current)
     return () => resizeObserver.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const handleClose = () => setContextMenu(null)
+    window.addEventListener('click', handleClose)
+    return () => window.removeEventListener('click', handleClose)
   }, [])
 
   const filteredGraph = useMemo(() => {
@@ -242,6 +255,14 @@ export default function GraphPage() {
         if (d.isMissing) return
         router.push(`/notes?noteId=${d.id}`)
       })
+      .on('contextmenu', (event, d) => {
+        event.preventDefault()
+        setContextMenu({
+          x: event.clientX,
+          y: event.clientY,
+          node: d,
+        })
+      })
       .call(
         d3.drag<SVGCircleElement, SimulationNode>()
           .on('start', (event, d) => {
@@ -390,7 +411,18 @@ export default function GraphPage() {
       .append('g')
       .attr('transform', (d) => `translate(${d.y},${d.x})`)
       .style('cursor', 'pointer')
-      .on('click', (_, d) => setRootId(d.data.id))
+      .on('click', (_, d) => {
+        if (d.data.isMissing) return
+        router.push(`/notes?noteId=${d.data.id}`)
+      })
+      .on('contextmenu', (event, d) => {
+        event.preventDefault()
+        setContextMenu({
+          x: event.clientX,
+          y: event.clientY,
+          node: d.data as SimulationNode,
+        })
+      })
 
     node
       .append('circle')
@@ -481,6 +513,12 @@ export default function GraphPage() {
       console.error('Create missing note error:', error)
       toast.error('노트 생성에 실패했습니다')
     }
+  }
+
+  const handleSetRoot = (nodeId: string) => {
+    setLayout('tree')
+    setRootId(nodeId)
+    setContextMenu(null)
   }
 
   return (
@@ -706,6 +744,32 @@ export default function GraphPage() {
             className="w-full border border-indigo-200 dark:border-indigo-700 rounded-lg touch-none select-none"
           />
         </div>
+
+        {contextMenu && (
+          <div
+            className="fixed z-50 w-48 rounded-md border border-indigo-200 bg-white shadow-lg dark:border-indigo-700 dark:bg-indigo-900"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              className="w-full text-left px-3 py-2 text-sm text-indigo-900 hover:bg-indigo-50 dark:text-indigo-100 dark:hover:bg-indigo-800"
+              onClick={() => handleSetRoot(contextMenu.node.id)}
+            >
+              루트로 설정
+            </button>
+            {contextMenu.node.isMissing && (
+              <button
+                className="w-full text-left px-3 py-2 text-sm text-indigo-900 hover:bg-indigo-50 dark:text-indigo-100 dark:hover:bg-indigo-800"
+                onClick={() => {
+                  handleCreateMissing(contextMenu.node.title)
+                  setContextMenu(null)
+                }}
+              >
+                노트 생성
+              </button>
+            )}
+          </div>
+        )}
       </div>
       </div>
     </div>

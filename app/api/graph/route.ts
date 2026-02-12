@@ -11,6 +11,7 @@ export async function GET() {
         title: true,
         folderId: true,
         body: true,
+        updatedAt: true,
         folder: {
           select: {
             id: true,
@@ -94,12 +95,19 @@ export async function GET() {
       }))
     )
 
+    const latestUpdatedNoteId = notes.length
+      ? notes.reduce((latest, current) =>
+          current.updatedAt > latest.updatedAt ? current : latest
+        ).id
+      : null
+
     return NextResponse.json({
       success: true,
       graph: {
         nodes: [...nodes, ...unresolvedNodes],
         edges: [...edges, ...unresolvedEdges],
         folders,
+        latestUpdatedNoteId,
         unresolved: Array.from(unresolvedMap.values()),
       }
     })

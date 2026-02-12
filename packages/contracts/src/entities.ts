@@ -83,6 +83,7 @@ export interface GraphData {
   nodes: GraphNode[]
   edges: GraphEdge[]
   folders: GraphFolder[]
+  latestUpdatedNoteId?: string | null
   unresolved: Array<{
     title: string
     sources: Array<{ id: string; title: string }>

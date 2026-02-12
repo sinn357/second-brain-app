@@ -88,6 +88,7 @@ export const graphDataSchema = z.object({
       name: z.string(),
     })
   ),
+  latestUpdatedNoteId: z.string().nullable().optional(),
   unresolved: z.array(
     z.object({
       title: z.string(),
