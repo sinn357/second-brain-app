@@ -79,7 +79,7 @@ Phase 0~8 완료 ✅
 > **상세 명세**: `docs/APPLE_NOTES_PARITY.md` 참조
 
 ### Phase 1: 핵심 UX (즉시성/단순성/신뢰성)
-- [ ] Home 페이지 → 최신 메모 + 바로 작성
+- [x] Home 페이지 → 최신 메모 + 바로 작성 (최신 저장 노트로 진입 + Quick Add 유지)
 - [ ] Cmd+N 전역 단축키
 - [ ] 저장 상태 표시 강화
 - [ ] 테이블 기능 (Tiptap Table)
@@ -106,8 +106,10 @@ Phase 0~8 완료 ✅
 
 > **상세 명세**: `docs/MINDMAP_DECISION.md` 참조
 
-- [ ] Mindmap 페이지 삭제
-- [ ] Graph View에 레이아웃 토글 (Network/Tree)
+- [x] Mindmap 페이지 삭제
+- [x] Graph View에 레이아웃 토글 (Network/Tree)
+- [x] Tree 모드 기본 루트: 최근 수정 노트
+- [x] Tree 모드 컨텍스트 메뉴 (루트 설정, Missing 노트 생성)
 - [ ] Local Graph (현재 노트 중심 미니 그래프)
 
 ### Obsidian 기능 동등성
@@ -118,7 +120,7 @@ Phase 0~8 완료 ✅
 
 ### 코드 품질
 - [ ] DialogContent aria warning 수정
-- [ ] Mindmap useEffect 의존성 정리
+- [x] Mindmap useEffect 의존성 정리 (Graph View로 통합)
 - [ ] any 타입 정리
 
 ### 후순위 (Phase 3+)
@@ -189,14 +191,14 @@ Phase 0~8 완료 ✅
 
 | 페이지 | 완성도 | 상태 |
 |--------|--------|------|
-| Home (/) | 10% | 리다이렉트만 존재 (개선 검토) |
+| Home (/) | 60% | 최신 저장 노트로 자동 진입 |
 | Notes List | 95% | 가상 스크롤, debounce 완료 |
 | Note Detail | 90% | 완료 |
 | Daily | 90% | Debounce 완료 |
 | Folders | 90% | useMemo 적용 완료 |
 | Database | 90% | 빈 상태 UI 완료 |
-| Graph | 90% | 성능 최적화 완료 |
-| Mindmap | 85% | 기능 동작 |
+| Graph | 95% | Tree 모드 통합 완료 |
+| Mindmap | 0% | 페이지 제거됨 |
 | Calendar | 90% | 완료 |
 | Dashboard | 90% | 완료 |
 | Timeline | 90% | 완료 |
