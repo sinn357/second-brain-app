@@ -1,26 +1,26 @@
 # Second Brain App Roadmap
 
 ## Current Status
-Phase 0~7 완료 ✅  
-Phase 8 (AI Thinking) Phase 1 구현 완료 ✅  
+Phase 0~8 완료 ✅
+**Phase 8 (AI) 전체 구현 완료** (2026-02-10)
 **병행 트랙: 모바일 앱 전환(PWA -> Expo) 진행 중**
-**다음: Phase 8 (AI Thinking) 저장 플로우 보완 또는 Home 페이지 개선**
+**다음: 안정화 & UX 개선 또는 신규 기능 검토**
 
 ---
 
-## 🎯 경쟁 앱 대비 진행도 (2026-02-04 기준)
+## 🎯 경쟁 앱 대비 진행도 (2026-02-12 기준)
 
 | 앱 | 달성도 | 핵심 차이점 |
 |----|--------|------------|
 | 애플 메모 | **90%** | 이미지 첨부만 없음 |
-| 옵시디언 | **75%** | 플러그인/로컬 파일 없음 |
-| 노션 | **60%** | 블록 에디터/협업 부족 |
+| 옵시디언 | **85%** | AI 기능으로 차별화, 플러그인/로컬 파일 없음 |
+| 노션 | **65%** | AI 기능 추가, 블록 에디터/협업 부족 |
 | 마인드맵 | **40%** | 시각화만, 편집 불가 |
 
 ### 상세
 - **애플 메모 90%**: Quick Add, 폴더, 고정, 검색, 스와이프 ✅ / 이미지 ❌
-- **옵시디언 75%**: Wiki Links, 백링크, Graph, 태그, Daily, 템플릿, Export/Import ✅ / 플러그인 ❌
-- **노션 60%**: 속성, DB뷰, 필터, SavedView, 버전히스토리 ✅ / 블록에디터, 실시간협업 ⚠️
+- **옵시디언 85%**: Wiki Links, 백링크, Graph, 태그, Daily, 템플릿, Export/Import, **AI 20개 기능** ✅ / 플러그인 ❌
+- **노션 65%**: 속성, DB뷰, 필터, SavedView, 버전히스토리, **AI 기능** ✅ / 블록에디터, 실시간협업 ⚠️
 - **마인드맵 40%**: Graph View ✅ / 마인드맵 편집 ❌
 
 ---
@@ -74,28 +74,100 @@ Phase 8 (AI Thinking) Phase 1 구현 완료 ✅
 
 ---
 
-## Next Tasks (Optional)
+## Next Tasks
 
-### Phase 8: AI Thinking (Follow-up)
-- [ ] 저장 시 새 노트 본문 채우기 (현재는 빈 노트 생성)
-  - 옵션 A: 연결 이유만 저장
-  - 옵션 B: 연결 이유 + 미리보기 저장
-  - 옵션 C: 저장 전 간단 편집 UI
-- [ ] 저장 후 새 노트로 이동 또는 토스트 링크 제공
+> **상세 명세**: `docs/APPLE_NOTES_PARITY.md` 참조
 
-### Home 페이지 개선
-현재 `/notes`로 리다이렉트만 존재. 개선 옵션:
-- **옵션 A**: 랜딩 페이지 (앱 소개, 기능 하이라이트)
-- **옵션 B**: 대시보드로 리다이렉트
-- **옵션 C**: 온보딩/튜토리얼 화면
+### Phase 1: 핵심 UX (즉시성/단순성/신뢰성)
+- [ ] Home 페이지 → 최신 메모 + 바로 작성
+- [ ] Cmd+N 전역 단축키
+- [ ] 저장 상태 표시 강화
+- [ ] 테이블 기능 (Tiptap Table)
+- [ ] 텍스트 하이라이트
 
-### 코드 품질 개선
-- [ ] Mindmap 코드 리뷰 (useEffect 의존성)
-- [ ] any 타입 정리 (Graph, Dashboard)
+### Phase 2: 안정성 + 편의성
+- [ ] 오프라인 모드 (ServiceWorker)
+- [ ] 갤러리 뷰
+- [ ] 집중 모드
+- [ ] 접기 섹션
+- [ ] 노트 잠금
+
+### AI 기능 품질 개선
+
+> **상세 명세**: `docs/AI_ENHANCEMENT_PLAN.md` 참조
+
+- [ ] Phase 1: Ask My Brain 강화 (컨텍스트 확장, 출처 표시)
+- [ ] Phase 2: 실시간 연상 (글쓰기 중 관련 노트 제안)
+- [ ] Phase 3: Graph View + AI 통합
+- [ ] Phase 4: 개별 노트 AI 강화
+- [ ] Phase 5: 알림/자동화
+
+### 마인드맵 → Graph View 통합
+
+> **상세 명세**: `docs/MINDMAP_DECISION.md` 참조
+
+- [ ] Mindmap 페이지 삭제
+- [ ] Graph View에 레이아웃 토글 (Network/Tree)
+- [ ] Local Graph (현재 노트 중심 미니 그래프)
+
+### Obsidian 기능 동등성
+
+> **상세 명세**: `docs/OBSIDIAN_PARITY.md` 참조
+
+현재 달성도: **70%** (AI 기능으로 차별화)
+
+### 코드 품질
+- [ ] DialogContent aria warning 수정
+- [ ] Mindmap useEffect 의존성 정리
+- [ ] any 타입 정리
+
+### 후순위 (Phase 3+)
+- 이미지/파일 첨부
+- 오디오 녹음/전사
+- 실시간 협업
+- 모바일 네이티브
 
 ---
 
 ## Completed Phases
+
+### ✅ Phase 8: AI 기능 (완료 - 2026-02-10)
+
+#### 개별 노트 AI (7개)
+- [x] Summarize (요약)
+- [x] Expand (확장)
+- [x] Clarify (명확화)
+- [x] Structure (구조화)
+- [x] TagSuggest (태그 제안)
+- [x] Question (질문 생성)
+- [x] Action (액션 제안)
+
+#### 노트 연결 AI (4개)
+- [x] Connect (연결)
+- [x] Contrast (대조)
+- [x] Combine (결합)
+- [x] Bridge (브릿지)
+
+#### 네트워크 AI (9개)
+- [x] Auto-Link (자동 링크 제안/승인)
+- [x] Semantic Search (의미 검색)
+- [x] Ask My Brain (내 뇌에 질문)
+- [x] Synthesis (다중 노트 종합)
+- [x] Resurface (다시 떠오르기)
+- [x] Random Spark (랜덤 연결)
+- [x] Knowledge Gap (지식 빈틈)
+- [x] Incubation (부화 - DB 저장)
+- [x] Time Capsule (시간 캡슐)
+
+#### 핵심 철학
+```
+1. AI는 재료만 제공, 결론 금지
+2. 자동 저장 금지, 사용자 확정 필수
+3. 답이 아닌 질문/방향으로 제시
+4. 사용자 요청 시에만 작동
+```
+
+---
 
 ### ✅ Phase 5: UX 개선 & 최적화 (완료 - 2026-01-22)
 
@@ -250,15 +322,17 @@ Phase 8 (AI Thinking) Phase 1 구현 완료 ✅
 - Phase 5: UX 개선 & 최적화 ✅
 - Phase 6: 고급 검색 & 모바일 ✅
 - Phase 7: 성능 & 버전 관리 ✅
+- Phase 8: AI 기능 ✅
 
-### 🟡 남은 작업 (선택)
-1. **Phase 8: AI 기능** - 노트 요약, 태그 자동생성, 시맨틱 검색
+### 🟡 다음 단계 (검토 필요)
+1. **안정화 & UX 개선** - AI 기능 피드백 반영, 접근성 개선
 2. Home 페이지 개선 (랜딩/대시보드/온보딩)
 3. 이미지 첨부 기능 (애플 메모 100%)
 4. 마인드맵 편집 모드 (마인드맵 70%)
+5. 실시간 협업 (노션 80%)
 
 ---
 
-**Last Updated**: 2026-02-04
-**Current Phase**: Phase 7 완료
-**Status**: MVP 이상 완성, Phase 8 (AI) 또는 Home 개선 검토 중
+**Last Updated**: 2026-02-12
+**Current Phase**: Phase 8 완료
+**Status**: AI 20개 기능 구현 완료, 안정화/UX 개선 또는 신규 기능 검토 중

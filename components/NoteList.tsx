@@ -41,6 +41,11 @@ export function NoteList({ folderId, selectedId, onSelect, enableSwipe = false }
     return data.pages.flatMap((page) => page.notes)
   }, [data])
 
+  useEffect(() => {
+    if (selectedId || !onSelect || notes.length === 0) return
+    onSelect(notes[0].id)
+  }, [notes, onSelect, selectedId])
+
   const deleteNote = useDeleteNote()
   const createNote = useCreateNote()
   const queryClient = useQueryClient()
