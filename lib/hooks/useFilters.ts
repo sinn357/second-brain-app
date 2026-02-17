@@ -21,7 +21,7 @@ interface Note {
   properties?: Array<{
     id: string
     propertyId: string
-    value: any
+    value: unknown
     property: {
       id: string
       name: string

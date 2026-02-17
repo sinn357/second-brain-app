@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Keyboard } from 'lucide-react'
 import {
   Dialog,
@@ -34,11 +34,10 @@ export function ShortcutHelpButton({
   size = 'sm',
 }: ShortcutHelpButtonProps) {
   const { shortcuts } = useShortcutStore()
-  const [isMac, setIsMac] = useState(false)
-
-  useEffect(() => {
-    setIsMac(navigator.platform.includes('Mac'))
-  }, [])
+  const isMac = useMemo(
+    () => typeof navigator !== 'undefined' && navigator.platform.includes('Mac'),
+    []
+  )
 
   const appShortcuts = useMemo<ShortcutItem[]>(() => {
     return SHORTCUT_DEFINITIONS.map((def) => ({

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 const HISTORY_KEY = 'search-history'
 const MAX_HISTORY = 10
@@ -16,23 +16,17 @@ export interface SearchHistoryItem {
 }
 
 export function useSearchHistory() {
-  const [history, setHistory] = useState<SearchHistoryItem[]>([])
-  const [mounted, setMounted] = useState(false)
-
-  // 히스토리 로드 (클라이언트에서만)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(HISTORY_KEY)
-        if (stored) {
-          setHistory(JSON.parse(stored))
-        }
-      } catch (error) {
-        console.error('Failed to load search history:', error)
-      }
-      setMounted(true)
+  const mounted = typeof window !== 'undefined'
+  const [history, setHistory] = useState<SearchHistoryItem[]>(() => {
+    if (!mounted) return []
+    try {
+      const stored = localStorage.getItem(HISTORY_KEY)
+      return stored ? (JSON.parse(stored) as SearchHistoryItem[]) : []
+    } catch (error) {
+      console.error('Failed to load search history:', error)
+      return []
     }
-  }, [])
+  })
 
   // 히스토리 저장
   const saveHistory = (newHistory: SearchHistoryItem[]) => {

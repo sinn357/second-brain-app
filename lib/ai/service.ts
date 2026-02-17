@@ -59,7 +59,7 @@ export async function executeAICommand(request: AIRequest): Promise<AIResponse> 
 function safeParseJson(value: string) {
   try {
     return JSON.parse(value)
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -69,7 +69,16 @@ function ensureArray(value: unknown): string[] {
   return value.map((item) => String(item))
 }
 
-function formatResultToMarkdown(command: AICommand, data: any): string {
+type AIResultObject = Record<string, unknown>
+
+function ensureObjectArray(value: unknown): AIResultObject[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((item): item is AIResultObject =>
+    typeof item === 'object' && item !== null
+  )
+}
+
+function formatResultToMarkdown(command: AICommand, data: AIResultObject): string {
   switch (command) {
     case 'summarize': {
       const summary = ensureArray(data.summary)
@@ -91,12 +100,12 @@ function formatResultToMarkdown(command: AICommand, data: any): string {
     }
 
     case 'clarify': {
-      const ambiguous = Array.isArray(data.ambiguous) ? data.ambiguous : []
+      const ambiguous = ensureObjectArray(data.ambiguous)
       const missing = ensureArray(data.missing)
       const questions = ensureArray(data.questions)
       let clarifyMd = '## 명확화 필요 지점\n\n### 모호한 부분\n'
       clarifyMd += ambiguous
-        .map((a: any) => `- "${String(a.quote ?? '')}" — ${String(a.question ?? '')}`)
+        .map((a) => `- "${String(a.quote ?? '')}" — ${String(a.question ?? '')}`)
         .join('\n')
       clarifyMd += '\n\n### 빠진 것 같은 부분\n'
       clarifyMd += missing.map((m) => `- ${m}`).join('\n')
@@ -106,19 +115,23 @@ function formatResultToMarkdown(command: AICommand, data: any): string {
     }
 
     case 'structure': {
-      const currentStructure = Array.isArray(data.currentStructure) ? data.currentStructure : []
-      const suggestedStructure = Array.isArray(data.suggestedStructure)
-        ? data.suggestedStructure
-        : []
+      const currentStructure = ensureObjectArray(data.currentStructure)
+      const suggestedStructure = ensureObjectArray(data.suggestedStructure)
       const keyVariables = ensureArray(data.keyVariables)
       const redundancies = ensureArray(data.redundancies)
       let structMd = '## 구조 제안\n\n### 현재 구조\n'
       structMd += currentStructure
-        .map((s: any) => `${'  '.repeat(Math.max(0, Number(s.level || 1) - 1))}${s.level}. ${s.content}`)
+        .map(
+          (s) =>
+            `${'  '.repeat(Math.max(0, Number(s.level || 1) - 1))}${String(s.level ?? 1)}. ${String(s.content ?? '')}`
+        )
         .join('\n')
       structMd += '\n\n### 제안 구조\n'
       structMd += suggestedStructure
-        .map((s: any) => `${'  '.repeat(Math.max(0, Number(s.level || 1) - 1))}${s.level}. ${s.content}`)
+        .map(
+          (s) =>
+            `${'  '.repeat(Math.max(0, Number(s.level || 1) - 1))}${String(s.level ?? 1)}. ${String(s.content ?? '')}`
+        )
         .join('\n')
       structMd += '\n\n### 핵심 변수\n'
       structMd += keyVariables.map((v) => `- ${v}`).join('\n')

@@ -109,9 +109,10 @@ export function PropertyFilterItem({
       && selectedProperty.options
       && selectedProperty.options.length > 0
     ) {
+      const selectValue = typeof condition.value === 'string' ? condition.value : ''
       return (
         <Select
-          value={condition.value ?? ''}
+          value={selectValue}
           onValueChange={(value) => onChange({ ...condition, value })}
         >
           <SelectTrigger className="w-40 text-sm">
@@ -128,10 +129,11 @@ export function PropertyFilterItem({
       )
     }
 
+    const inputValue = typeof condition.value === 'string' ? condition.value : ''
     return (
       <Input
         type={selectedProperty.type === 'date' ? 'date' : 'text'}
-        value={condition.value ?? ''}
+        value={inputValue}
         onChange={(event) => onChange({ ...condition, value: event.target.value })}
         className="w-40 text-sm"
       />

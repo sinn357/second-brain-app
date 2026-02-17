@@ -16,6 +16,7 @@ export const noteSchema = z.object({
   title: z.string(),
   body: z.string(),
   folderId: z.string().nullable(),
+  isLocked: z.boolean().default(false),
   isPinned: z.boolean().default(false),
   pinnedAt: z.coerce.date().nullable().default(null),
   lastOpenedAt: z.coerce.date().nullable().default(null),

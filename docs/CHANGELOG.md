@@ -1,5 +1,35 @@
 # Second Brain App Changelog
 
+## 2026-02-18
+
+### Added (Phase 3: 옵시디언 차별화)
+
+#### Local Graph
+현재 노트 중심의 미니 그래프 구현 (D3.js)
+- incoming/outgoing 링크를 색상으로 구분 (파랑: 현재, 초록: Out, 주황: In)
+- 노드 클릭 시 해당 노트로 이동
+- ResizeObserver로 반응형 크기 조정
+- 연결된 노트가 없을 때 안내 메시지
+
+#### Outgoing Links 패널
+현재 노트가 링크한 노트들의 목록 표시
+- 실제 연결된 노트 (exists=true) + 미생성 링크 (exists=false) 분리 표시
+- 미생성 링크에 "생성" 버튼으로 즉시 노트 생성 가능
+- Link 테이블 + 위키링크 파싱 병합 방식
+
+### Technical Changes
+- `components/LocalGraph.tsx` - D3 기반 미니 그래프 컴포넌트
+- `components/OutgoingLinksPanel.tsx` - Outgoing Links 패널 컴포넌트
+- `app/api/notes/[id]/graph/route.ts` - Local Graph 데이터 API
+- `app/api/notes/[id]/outgoing/route.ts` - Outgoing Links 데이터 API
+- `lib/hooks/useNotes.ts` - useLocalGraph, useOutgoingLinks 훅 추가
+- `app/notes/page.tsx` - 모바일/데스크톱 편집 영역에 패널 통합
+
+### 달성도 변화
+- 옵시디언: 92% → **95%**
+
+---
+
 ## 2026-02-10
 
 ### Added (AI Network + Note AI Expansion)
@@ -379,4 +409,4 @@
 
 ---
 
-**Last Updated**: 2026-02-10
+**Last Updated**: 2026-02-18

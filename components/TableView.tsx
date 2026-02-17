@@ -4,9 +4,20 @@ import { useProperties } from '@/lib/hooks/useProperties'
 import { Skeleton } from '@/components/ui/skeleton'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import type { NotePropertyValue, PropertyDefinition } from '@/lib/types/property'
 
 interface TableViewProps {
-  notes?: any[]
+  notes?: TableNote[]
+}
+
+interface TableNote {
+  id: string
+  title: string
+  updatedAt: string | Date
+  folder?: {
+    name: string
+  } | null
+  properties?: NotePropertyValue[]
 }
 
 export function TableView({ notes = [] }: TableViewProps) {
@@ -18,26 +29,26 @@ export function TableView({ notes = [] }: TableViewProps) {
 
   // 속성 값 가져오기 헬퍼
   const getPropertyValue = (noteId: string, propertyId: string) => {
-    const note = notes.find(n => n.id === noteId)
-    if (!note || !(note as any).properties) return null
+    const note = notes.find((n) => n.id === noteId)
+    if (!note?.properties) return null
 
-    const noteProp = (note as any).properties.find((p: any) => p.propertyId === propertyId)
+    const noteProp = note.properties.find((p) => p.propertyId === propertyId)
     return noteProp?.value
   }
 
   // 속성 값 렌더링
-  const renderPropertyValue = (value: any, type: string) => {
+  const renderPropertyValue = (value: unknown, type: PropertyDefinition['type']) => {
     if (!value) return <span className="text-gray-400">-</span>
 
     switch (type) {
       case 'select':
-        return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">{value}</span>
+        return <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">{String(value)}</span>
       case 'multi_select':
         if (Array.isArray(value)) {
           return (
             <div className="flex gap-1 flex-wrap">
               {value.map((v, i) => (
-                <span key={i} className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
+                <span key={`${String(v)}-${i}`} className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
                   {v}
                 </span>
               ))}
@@ -46,7 +57,7 @@ export function TableView({ notes = [] }: TableViewProps) {
         }
         return <span className="text-gray-400">-</span>
       case 'date':
-        return <span className="text-sm">{value}</span>
+        return <span className="text-sm">{String(value)}</span>
       case 'checkbox':
         return value ? '✓' : '✗'
       default:

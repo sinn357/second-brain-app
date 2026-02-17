@@ -2,28 +2,17 @@
 
 import { useState } from 'react'
 import { useProperties, useSetNoteProperty } from '@/lib/hooks/useProperties'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
+import type { NotePropertyValue, PropertyDefinition } from '@/lib/types/property'
 
 interface PropertyPanelProps {
   noteId: string
-  currentProperties?: Array<{
-    id: string
-    propertyId: string
-    value: any
-    property: {
-      id: string
-      name: string
-      type: string
-      options: string[] | null
-    }
-  }>
+  currentProperties?: NotePropertyValue[]
 }
 
 export function PropertyPanel({ noteId, currentProperties = [] }: PropertyPanelProps) {
@@ -40,7 +29,7 @@ export function PropertyPanel({ noteId, currentProperties = [] }: PropertyPanelP
     )
   }
 
-  const handleSetProperty = async (propertyId: string, value: any) => {
+  const handleSetProperty = async (propertyId: string, value: unknown) => {
     try {
       await setNoteProperty.mutateAsync({
         noteId,
@@ -54,14 +43,14 @@ export function PropertyPanel({ noteId, currentProperties = [] }: PropertyPanelP
     }
   }
 
-  const renderPropertyValue = (prop: any) => {
+  const renderPropertyValue = (prop: PropertyDefinition) => {
     const currentValue = currentProperties.find((p) => p.propertyId === prop.id)?.value
 
     switch (prop.type) {
       case 'select':
         return (
           <Select
-            value={currentValue || ''}
+            value={typeof currentValue === 'string' ? currentValue : ''}
             onValueChange={(value) => handleSetProperty(prop.id, value)}
           >
             <SelectTrigger className="text-sm">
@@ -81,15 +70,18 @@ export function PropertyPanel({ noteId, currentProperties = [] }: PropertyPanelP
         return (
           <div className="space-y-2">
             {prop.options?.map((option: string) => {
-              const selected = Array.isArray(currentValue) && currentValue.includes(option)
+              const selectedValues = Array.isArray(currentValue)
+                ? currentValue.filter((v): v is string => typeof v === 'string')
+                : []
+              const selected = selectedValues.includes(option)
               return (
                 <div key={option} className="flex items-center gap-2">
                   <Checkbox
                     checked={selected}
                     onCheckedChange={(checked) => {
                       const newValue = checked
-                        ? [...(currentValue || []), option]
-                        : (currentValue || []).filter((v: string) => v !== option)
+                        ? [...selectedValues, option]
+                        : selectedValues.filter((v) => v !== option)
                       handleSetProperty(prop.id, newValue)
                     }}
                   />
@@ -104,7 +96,7 @@ export function PropertyPanel({ noteId, currentProperties = [] }: PropertyPanelP
         return (
           <Input
             type="date"
-            value={currentValue || ''}
+            value={typeof currentValue === 'string' ? currentValue : ''}
             onChange={(e) => handleSetProperty(prop.id, e.target.value)}
             className="text-sm"
           />
@@ -113,7 +105,7 @@ export function PropertyPanel({ noteId, currentProperties = [] }: PropertyPanelP
       case 'checkbox':
         return (
           <Checkbox
-            checked={currentValue === true}
+            checked={Boolean(currentValue)}
             onCheckedChange={(checked) => handleSetProperty(prop.id, checked)}
           />
         )

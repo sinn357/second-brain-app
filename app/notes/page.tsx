@@ -2,16 +2,17 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { NoteList } from '@/components/NoteList'
+import { NoteGallery } from '@/components/NoteGallery'
 import { QuickAddButton } from '@/components/QuickAddButton'
 import { FolderTree } from '@/components/FolderTree'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
 import { NoteEditorAdvanced } from '@/components/NoteEditorAdvanced'
-import { useDeleteNote, useNote, useParseLinks, useUpdateNote } from '@/lib/hooks/useNotes'
+import { useCreateNote, useDeleteNote, useLocalGraph, useNote, useOutgoingLinks, useParseLinks, useUpdateNote } from '@/lib/hooks/useNotes'
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Trash2, FolderOpen, ChevronLeft, ChevronRight, History, ArrowUpDown } from 'lucide-react'
+import { Trash2, FolderOpen, ChevronLeft, ChevronRight, History, ArrowUpDown, LayoutGrid, List, Lock } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { VersionHistoryPanel } from '@/components/VersionHistoryPanel'
 import { useFolders } from '@/lib/hooks/useFolders'
@@ -23,6 +24,9 @@ import { ThinkingButton } from '@/components/ThinkingButton'
 import { AutoLinkMenu } from '@/components/AutoLinkMenu'
 import { AICommandMenu } from '@/components/AICommandMenu'
 import { AIResultPanel } from '@/components/AIResultPanel'
+import { NoteLockDialog } from '@/components/NoteLockDialog'
+import { LocalGraph } from '@/components/LocalGraph'
+import { OutgoingLinksPanel } from '@/components/OutgoingLinksPanel'
 import { useNoteAI } from '@/lib/hooks/useNoteAI'
 import { useNotesSortSetting, useUpdateNotesSortSetting } from '@/lib/hooks/useNotesSortSetting'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -34,6 +38,8 @@ const MIN_LIST_WIDTH = 240
 const MIN_EDITOR_WIDTH = 360
 const RESIZE_HANDLE_WIDTH = 8
 const COLLAPSED_COLUMN_WIDTH = 56
+type ViewMode = 'list' | 'gallery'
+type LockDialogMode = 'set' | 'unlock' | 'remove' | null
 
 function NotesPageContent() {
   const searchParams = useSearchParams()
@@ -46,8 +52,11 @@ function NotesPageContent() {
   const folders = (data ?? []) as Folder[]
   const { data: note, isLoading: isNoteLoading } = useNote(noteId || '')
   const updateNote = useUpdateNote(noteId || '')
+  const createNote = useCreateNote()
   const deleteNote = useDeleteNote()
   const parseLinks = useParseLinks()
+  const { data: localGraphLinks = [] } = useLocalGraph(noteId || '')
+  const { data: outgoingLinks = [] } = useOutgoingLinks(noteId || '')
   const queryClient = useQueryClient()
   const [showAIResult, setShowAIResult] = useState(false)
   const [aiTitle, setAITitle] = useState('')
@@ -226,6 +235,8 @@ function NotesPageContent() {
       activeNoteIdRef.current = null
       pendingSave.current = null
       saveInFlight.current = false
+      setSaveStatus('idle')
+      setIsSaving(false)
       return
     }
     activeNoteIdRef.current = noteId
@@ -236,7 +247,15 @@ function NotesPageContent() {
     lastSavedRef.current = { noteId, title: note.title, body: note.body }
     pendingSave.current = null
     saveInFlight.current = false
+    setSaveStatus('idle')
+    setIsSaving(false)
   }, [note?.id, noteId, resetAI])
+
+  useEffect(() => {
+    if (saveStatus !== 'saved') return
+    const timer = setTimeout(() => setSaveStatus('idle'), 2000)
+    return () => clearTimeout(timer)
+  }, [saveStatus])
 
   useEffect(() => {
     if (!noteId || !note) return
@@ -430,6 +449,9 @@ function NotesPageContent() {
   const [listWidth, setListWidth] = useState(300)
   const [isListCollapsed, setIsListCollapsed] = useState(false)
   const [isThinkingOpen, setIsThinkingOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
+  const [lockDialogMode, setLockDialogMode] = useState<LockDialogMode>(null)
+  const [unlockedNotes, setUnlockedNotes] = useState<Record<string, boolean>>({})
 
   const fetchAutoLinkSuggestions = useCallback(async (id: string, content: string) => {
     if (!id) return
@@ -486,6 +508,7 @@ function NotesPageContent() {
   // 디바운스된 값으로 자동 저장
   useEffect(() => {
     if (!noteId || !note) return
+    if (note.isLocked && !unlockedNotes[noteId]) return
     if (isHydratingRef.current) return
     if (activeNoteIdRef.current !== noteId) return
     if (debouncedTitle !== title || debouncedBody !== body) return
@@ -544,7 +567,89 @@ function NotesPageContent() {
     }
 
     runSave()
-  }, [debouncedTitle, debouncedBody, noteId, updateNote, parseLinks, fetchAutoLinkSuggestions])
+  }, [debouncedTitle, debouncedBody, noteId, note, unlockedNotes, updateNote, parseLinks, fetchAutoLinkSuggestions])
+
+  const retrySave = useCallback(async () => {
+    if (!noteId || !title.trim()) return
+    if (saveInFlight.current) return
+
+    saveInFlight.current = true
+    setIsSaving(true)
+    setSaveStatus('saving')
+
+    try {
+      await updateNote.mutateAsync({ title, body })
+      await parseLinks.mutateAsync({ noteId, body })
+      lastSavedRef.current = { noteId, title, body }
+      setSaveStatus('saved')
+      toast.success('저장 재시도에 성공했습니다')
+    } catch (error) {
+      console.error('Retry save error:', error)
+      setSaveStatus('error')
+      toast.error('저장 재시도에 실패했습니다')
+    } finally {
+      saveInFlight.current = false
+      setIsSaving(false)
+    }
+  }, [body, noteId, parseLinks, title, updateNote])
+
+  const saveStatusLabel = {
+    idle: '',
+    saving: '저장 중...',
+    saved: '저장됨 ✓',
+    error: '저장 실패',
+  }[saveStatus]
+
+  const saveStatusClassName = {
+    idle: 'text-indigo-500 dark:text-indigo-300',
+    saving: 'text-indigo-500 dark:text-indigo-300',
+    saved: 'text-emerald-600 dark:text-emerald-400',
+    error: 'text-red-600 dark:text-red-400',
+  }[saveStatus]
+
+  useEffect(() => {
+    const savedViewMode = window.localStorage.getItem('noteViewMode')
+    if (savedViewMode === 'list' || savedViewMode === 'gallery') {
+      setViewMode(savedViewMode)
+    }
+  }, [])
+
+  useEffect(() => {
+    window.localStorage.setItem('noteViewMode', viewMode)
+  }, [viewMode])
+
+  const isLockedNote = Boolean(note?.isLocked)
+  const isNoteUnlocked = noteId ? Boolean(unlockedNotes[noteId]) : false
+  const isContentLocked = isLockedNote && !isNoteUnlocked
+
+  const invalidateNoteQueries = useCallback(() => {
+    if (!noteId) return
+    queryClient.invalidateQueries({ queryKey: ['notes', noteId] })
+    queryClient.invalidateQueries({ queryKey: ['notes'] })
+    queryClient.invalidateQueries({ queryKey: ['notes', 'infinite'] })
+  }, [noteId, queryClient])
+
+  const handleLockDialogSuccess = useCallback(() => {
+    if (!noteId || !lockDialogMode) return
+
+    if (lockDialogMode === 'unlock') {
+      setUnlockedNotes((prev) => ({ ...prev, [noteId]: true }))
+      toast.success('노트 잠금이 해제되었습니다.')
+    }
+
+    if (lockDialogMode === 'set') {
+      setUnlockedNotes((prev) => ({ ...prev, [noteId]: false }))
+      toast.success('노트가 잠겼습니다.')
+    }
+
+    if (lockDialogMode === 'remove') {
+      setUnlockedNotes((prev) => ({ ...prev, [noteId]: true }))
+      toast.success('노트 잠금이 제거되었습니다.')
+    }
+
+    setLockDialogMode(null)
+    invalidateNoteQueries()
+  }, [invalidateNoteQueries, lockDialogMode, noteId])
 
   const handleAICommand = (command: AICommand) => {
     if (!noteId) return
@@ -576,6 +681,35 @@ function NotesPageContent() {
     resetAI()
     toast.success('AI 결과를 노트에 추가했습니다')
   }
+
+  const handleCreateMissingOutgoing = useCallback(
+    async (linkTitle: string) => {
+      if (!noteId) return
+      try {
+        const created = await createNote.mutateAsync({
+          title: linkTitle,
+          body: '',
+          folderId: selectedFolderId ?? defaultFolder?.id ?? null,
+        })
+
+        await parseLinks.mutateAsync({ noteId, body })
+        queryClient.invalidateQueries({ queryKey: ['outgoing-links', noteId] })
+        queryClient.invalidateQueries({ queryKey: ['local-graph', noteId] })
+        toast.success(`"${linkTitle}" 노트를 생성했습니다`)
+
+        const nextParams = new URLSearchParams(searchParams.toString())
+        nextParams.set('noteId', created.id)
+        if (selectedFolderId) {
+          nextParams.set('folderId', selectedFolderId)
+        }
+        router.push(`/notes?${nextParams.toString()}`, { scroll: false })
+      } catch (createError) {
+        console.error('Create outgoing note error:', createError)
+        toast.error('노트 생성에 실패했습니다')
+      }
+    },
+    [body, createNote, defaultFolder?.id, noteId, parseLinks, queryClient, router, searchParams, selectedFolderId]
+  )
 
   useEffect(() => {
     if (!noteId) {
@@ -682,6 +816,26 @@ function NotesPageContent() {
                 >
                   <ArrowUpDown className="h-4 w-4" />
                 </Button>
+                <div className="flex items-center gap-1 rounded-md border border-indigo-200/70 p-1 dark:border-indigo-700/70">
+                  <Button
+                    variant={viewMode === 'list' ? 'default' : 'ghost'}
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setViewMode('list')}
+                    aria-label="리스트 뷰"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'gallery' ? 'default' : 'ghost'}
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setViewMode('gallery')}
+                    aria-label="갤러리 뷰"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                </div>
                 {/* 폴더 Bottom Sheet */}
                 <Sheet>
                   <SheetTrigger asChild>
@@ -703,14 +857,24 @@ function NotesPageContent() {
             </div>
             {/* 노트 리스트 (스와이프 삭제 지원) */}
             <div className="p-4">
-              <NoteList
-                folderId={isAllFolders ? undefined : selectedFolderId}
-                selectedId={noteId}
-                onSelect={handleMobileSelectNote}
-                enableSwipe
-                sortBy={sortBy}
-                order={sortOrder}
-              />
+              {viewMode === 'list' ? (
+                <NoteList
+                  folderId={isAllFolders ? undefined : selectedFolderId}
+                  selectedId={noteId}
+                  onSelect={handleMobileSelectNote}
+                  enableSwipe
+                  sortBy={sortBy}
+                  order={sortOrder}
+                />
+              ) : (
+                <NoteGallery
+                  folderId={isAllFolders ? undefined : selectedFolderId}
+                  selectedId={noteId}
+                  onSelect={handleMobileSelectNote}
+                  sortBy={sortBy}
+                  order={sortOrder}
+                />
+              )}
             </div>
           </div>
         ) : (
@@ -723,12 +887,40 @@ function NotesPageContent() {
                 목록
               </Button>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-indigo-500 dark:text-indigo-300">
-                  {saveStatus === 'saving' && '저장 중...'}
-                  {saveStatus === 'saved' && '✓ 저장됨'}
-                  {saveStatus === 'error' && '⚠ 실패'}
-                </span>
-                {noteId && (
+                {isContentLocked ? (
+                  <span className="text-xs text-amber-600 dark:text-amber-400">잠긴 노트</span>
+                ) : saveStatusLabel ? (
+                  <span className={`text-xs ${saveStatusClassName}`}>
+                    {saveStatusLabel}
+                  </span>
+                ) : null}
+                {!isContentLocked && saveStatus === 'error' ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void retrySave()}
+                    disabled={isSaving}
+                    className="h-7 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300"
+                  >
+                    재시도
+                  </Button>
+                ) : null}
+                {noteId ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (!isLockedNote) {
+                        setLockDialogMode('set')
+                        return
+                      }
+                      setLockDialogMode(isContentLocked ? 'unlock' : 'remove')
+                    }}
+                  >
+                    <Lock className="h-4 w-4" />
+                  </Button>
+                ) : null}
+                {noteId && !isContentLocked && (
                   <AutoLinkMenu
                     suggestions={autoLinkSuggestions}
                     isLoading={isAutoLinkLoading}
@@ -743,10 +935,10 @@ function NotesPageContent() {
                     }
                   />
                 )}
-                {noteId && (
+                {noteId && !isContentLocked && (
                   <AICommandMenu onCommand={handleAICommand} isLoading={isAILoading} />
                 )}
-                {noteId && (
+                {noteId && !isContentLocked && (
                   <ThinkingButton
                     onClick={() => setIsThinkingOpen((prev) => !prev)}
                     isActive={isThinkingOpen}
@@ -786,6 +978,14 @@ function NotesPageContent() {
             <div className="p-4">
               {isNoteLoading ? (
                 <Skeleton className="h-96" />
+              ) : isContentLocked ? (
+                <div className="panel-soft flex min-h-[40vh] flex-col items-center justify-center gap-3 rounded-xl border border-amber-200/60 p-6 text-center dark:border-amber-700/40">
+                  <Lock className="h-7 w-7 text-amber-500" />
+                  <p className="text-sm text-indigo-700 dark:text-indigo-200">
+                    이 노트는 잠겨 있습니다.
+                  </p>
+                  <Button onClick={() => setLockDialogMode('unlock')}>잠금 해제</Button>
+                </div>
               ) : note ? (
                 <div className="space-y-4">
                   <NoteEditorAdvanced
@@ -795,6 +995,15 @@ function NotesPageContent() {
                     currentFolderId={selectedFolderId ?? defaultFolder?.id ?? null}
                     placeholder="내용을 입력하세요..."
                     forceFirstHeading
+                  />
+                  <LocalGraph
+                    noteId={note.id}
+                    noteTitle={note.title || '제목 없음'}
+                    links={localGraphLinks}
+                  />
+                  <OutgoingLinksPanel
+                    links={outgoingLinks}
+                    onCreateMissing={handleCreateMissingOutgoing}
                   />
                 </div>
               ) : (
@@ -825,10 +1034,42 @@ function NotesPageContent() {
             </div>
           </SheetContent>
         </Sheet>
-        <div className="text-xs text-indigo-500 dark:text-indigo-300">
-          {saveStatus === 'saving' && '저장 중...'}
-          {saveStatus === 'saved' && '✓ 저장됨'}
-          {saveStatus === 'error' && '⚠ 저장 실패'}
+        <div className="flex items-center gap-2">
+          {isContentLocked ? (
+            <span className="text-xs text-amber-600 dark:text-amber-400">잠긴 노트</span>
+          ) : saveStatusLabel ? (
+            <span className={`text-xs ${saveStatusClassName}`}>
+              {saveStatusLabel}
+            </span>
+          ) : null}
+          {!isContentLocked && saveStatus === 'error' ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void retrySave()}
+              disabled={isSaving}
+              className="h-7 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300"
+            >
+              재시도
+            </Button>
+          ) : null}
+          {noteId ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (!isLockedNote) {
+                  setLockDialogMode('set')
+                  return
+                }
+                setLockDialogMode(isContentLocked ? 'unlock' : 'remove')
+              }}
+              className="gap-1"
+            >
+              <Lock className="h-4 w-4" />
+              {!isLockedNote ? '잠금' : isContentLocked ? '잠금 해제' : '잠금 제거'}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -882,6 +1123,26 @@ function NotesPageContent() {
                   >
                     <ArrowUpDown className="h-4 w-4" />
                   </Button>
+                  <div className="flex items-center gap-1 rounded-md border border-indigo-200/70 p-1 dark:border-indigo-700/70">
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setViewMode('list')}
+                      aria-label="리스트 뷰"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'gallery' ? 'default' : 'ghost'}
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setViewMode('gallery')}
+                      aria-label="갤러리 뷰"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -893,13 +1154,23 @@ function NotesPageContent() {
                   </Button>
                 </div>
               </div>
-              <NoteList
-                folderId={isAllFolders ? undefined : selectedFolderId}
-                selectedId={noteId}
-                onSelect={handleSelectNote}
-                sortBy={sortBy}
-                order={sortOrder}
-              />
+              {viewMode === 'list' ? (
+                <NoteList
+                  folderId={isAllFolders ? undefined : selectedFolderId}
+                  selectedId={noteId}
+                  onSelect={handleSelectNote}
+                  sortBy={sortBy}
+                  order={sortOrder}
+                />
+              ) : (
+                <NoteGallery
+                  folderId={isAllFolders ? undefined : selectedFolderId}
+                  selectedId={noteId}
+                  onSelect={handleSelectNote}
+                  sortBy={sortBy}
+                  order={sortOrder}
+                />
+              )}
             </>
           )}
         </section>
@@ -926,15 +1197,46 @@ function NotesPageContent() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-xs text-indigo-500 dark:text-indigo-300">
-                    {saveStatus === 'saving' && '저장 중...'}
-                    {saveStatus === 'saved' && '✓ 모든 변경사항 저장됨'}
-                    {saveStatus === 'error' && '⚠ 저장 실패'}
-                    {saveStatus === 'idle' && ''}
+                  <div className="flex items-center gap-2">
+                    {isContentLocked ? (
+                      <span className="text-xs text-amber-600 dark:text-amber-400">잠긴 노트</span>
+                    ) : saveStatusLabel ? (
+                      <span className={`text-xs ${saveStatusClassName}`}>
+                        {saveStatusLabel}
+                      </span>
+                    ) : null}
+                    {!isContentLocked && saveStatus === 'error' ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void retrySave()}
+                        disabled={isSaving}
+                        className="h-7 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300"
+                      >
+                        재시도
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {noteId && (
+                  {noteId ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => {
+                        if (!isLockedNote) {
+                          setLockDialogMode('set')
+                          return
+                        }
+                        setLockDialogMode(isContentLocked ? 'unlock' : 'remove')
+                      }}
+                    >
+                      <Lock className="h-4 w-4" />
+                      {!isLockedNote ? '잠금' : isContentLocked ? '잠금 해제' : '잠금 제거'}
+                    </Button>
+                  ) : null}
+                  {noteId && !isContentLocked && (
                     <AutoLinkMenu
                       suggestions={autoLinkSuggestions}
                       isLoading={isAutoLinkLoading}
@@ -949,10 +1251,10 @@ function NotesPageContent() {
                       }
                     />
                   )}
-                  {noteId && (
+                  {noteId && !isContentLocked && (
                     <AICommandMenu onCommand={handleAICommand} isLoading={isAILoading} />
                   )}
-                  {noteId && (
+                  {noteId && !isContentLocked && (
                     <ThinkingButton
                       onClick={() => setIsThinkingOpen((prev) => !prev)}
                       isActive={isThinkingOpen}
@@ -990,14 +1292,35 @@ function NotesPageContent() {
                   </Button>
                 </div>
               </div>
-              <NoteEditorAdvanced
-                content={editorContent}
-                onUpdate={handleEditorUpdate}
-                currentNoteId={noteId}
-                currentFolderId={selectedFolderId ?? defaultFolder?.id ?? null}
-                placeholder="내용을 입력하세요. [[노트제목]]으로 링크, #태그로 태그를 추가할 수 있습니다."
-                forceFirstHeading
-              />
+              {isContentLocked ? (
+                <div className="panel-soft flex min-h-[40vh] flex-col items-center justify-center gap-3 rounded-xl border border-amber-200/60 p-8 text-center dark:border-amber-700/40">
+                  <Lock className="h-8 w-8 text-amber-500" />
+                  <p className="text-sm text-indigo-700 dark:text-indigo-200">
+                    이 노트는 잠겨 있습니다.
+                  </p>
+                  <Button onClick={() => setLockDialogMode('unlock')}>잠금 해제</Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <NoteEditorAdvanced
+                    content={editorContent}
+                    onUpdate={handleEditorUpdate}
+                    currentNoteId={noteId}
+                    currentFolderId={selectedFolderId ?? defaultFolder?.id ?? null}
+                    placeholder="내용을 입력하세요. [[노트제목]]으로 링크, #태그로 태그를 추가할 수 있습니다."
+                    forceFirstHeading
+                  />
+                  <LocalGraph
+                    noteId={note.id}
+                    noteTitle={note.title || '제목 없음'}
+                    links={localGraphLinks}
+                  />
+                  <OutgoingLinksPanel
+                    links={outgoingLinks}
+                    onCreateMissing={handleCreateMissingOutgoing}
+                  />
+                </div>
+              )}
             </div>
           ) : (
             <div className="h-full flex items-center justify-center text-indigo-600 dark:text-indigo-300">
@@ -1017,7 +1340,7 @@ function NotesPageContent() {
           onSave={handleSaveAIResult}
         />
       )}
-      {noteId && (
+      {noteId && !isContentLocked && (
         <ThinkingPanel
           noteId={noteId}
           isOpen={isThinkingOpen}
@@ -1032,6 +1355,17 @@ function NotesPageContent() {
           }}
         />
       )}
+      {noteId && lockDialogMode ? (
+        <NoteLockDialog
+          noteId={noteId}
+          mode={lockDialogMode}
+          open={Boolean(lockDialogMode)}
+          onOpenChange={(open) => {
+            if (!open) setLockDialogMode(null)
+          }}
+          onSuccess={handleLockDialogSuccess}
+        />
+      ) : null}
     </div>
   )
 }

@@ -37,7 +37,7 @@ export function QuickAddButton() {
       let title = 'Untitled'
 
       if (templateId) {
-        const template = templates.find((t: any) => t.id === templateId)
+        const template = templates.find((t) => t.id === templateId)
         if (template) {
           // 템플릿 변수 치환
           content = template.content
@@ -101,7 +101,7 @@ export function QuickAddButton() {
             </Button>
 
             {/* 템플릿 목록 */}
-            {templates.map((template: any) => (
+            {templates.map((template) => (
               <Button
                 key={template.id}
                 variant="outline"

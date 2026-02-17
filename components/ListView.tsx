@@ -8,8 +8,34 @@ import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 
+type PropertyType = string
+
+interface NotePropertyValue {
+  id: string
+  propertyId: string
+  value: unknown
+}
+
+interface ListViewNote {
+  id: string
+  title: string
+  body: string
+  updatedAt: string | Date
+  folder?: {
+    name: string
+  } | null
+  tags?: Array<{
+    tag: {
+      id: string
+      name: string
+      color?: string | null
+    }
+  }>
+  properties?: NotePropertyValue[]
+}
+
 interface ListViewProps {
-  notes?: any[]
+  notes?: ListViewNote[]
 }
 
 export function ListView({ notes = [] }: ListViewProps) {
@@ -28,17 +54,17 @@ export function ListView({ notes = [] }: ListViewProps) {
   // 속성 값 가져오기
   const getNoteProperties = (noteId: string) => {
     const note = notes.find(n => n.id === noteId)
-    if (!note || !(note as any).properties) return []
-    return (note as any).properties
+    if (!note || !note.properties) return []
+    return note.properties
   }
 
   // 속성 값 렌더링
-  const renderPropertyValue = (value: any, type: string) => {
+  const renderPropertyValue = (value: unknown, type: PropertyType) => {
     if (!value) return null
 
     switch (type) {
       case 'select':
-        return <Badge variant="outline" className="bg-blue-50">{value}</Badge>
+        return <Badge variant="outline" className="bg-blue-50">{String(value)}</Badge>
       case 'multi_select':
         if (Array.isArray(value)) {
           return value.map((v, i) => (
@@ -47,9 +73,13 @@ export function ListView({ notes = [] }: ListViewProps) {
         }
         return null
       case 'date':
-        return <Badge variant="outline">{value}</Badge>
+        return <Badge variant="outline">{String(value)}</Badge>
       case 'checkbox':
-        return <Badge variant={value ? 'default' : 'outline'}>{value ? '완료' : '미완료'}</Badge>
+        return (
+          <Badge variant={Boolean(value) ? 'default' : 'outline'}>
+            {Boolean(value) ? '완료' : '미완료'}
+          </Badge>
+        )
       default:
         return <span className="text-sm">{String(value)}</span>
     }
@@ -86,7 +116,7 @@ export function ListView({ notes = [] }: ListViewProps) {
 
               {noteProperties.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {noteProperties.map((np: any) => {
+                  {noteProperties.map((np) => {
                     const property = properties.find(p => p.id === np.propertyId)
                     if (!property) return null
 
@@ -103,7 +133,7 @@ export function ListView({ notes = [] }: ListViewProps) {
               <div className="flex items-center gap-4 text-xs text-indigo-500 dark:text-indigo-300">
                 {note.tags && note.tags.length > 0 && (
                   <div className="flex gap-1">
-                    {note.tags.slice(0, 3).map((nt: any) => (
+                    {note.tags.slice(0, 3).map((nt) => (
                       <Badge
                         key={nt.tag.id}
                         variant="secondary"

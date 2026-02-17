@@ -1,22 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 import { Providers } from "./providers";
 import { AppMenuSheet } from "@/components/AppMenuSheet";
 import { CommandPalette } from "@/components/CommandPalette";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { Toaster } from "sonner";
 import { ShortcutManager } from "@/components/ShortcutManager";
-import { PWARegister } from "@/components/PWARegister";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Nexus - Second Brain",
@@ -47,11 +37,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <PWARegister />
+      <body className="antialiased">
         <Providers>
+          <OfflineBanner />
           <CommandPalette />
           <ShortcutManager />
           <Toaster position="top-right" richColors />

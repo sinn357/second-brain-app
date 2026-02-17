@@ -8,6 +8,12 @@ function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequest
   return error instanceof Prisma.PrismaClientKnownRequestError
 }
 
+function sanitizeNote<T extends { lockHash?: string | null }>(note: T): Omit<T, 'lockHash'> {
+  const safe = { ...note } as T
+  delete safe.lockHash
+  return safe as Omit<T, 'lockHash'>
+}
+
 // GET /api/notes/[id] - 노트 상세 조회
 export async function GET(
   request: Request,
@@ -60,7 +66,7 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({ success: true, note })
+    return NextResponse.json({ success: true, note: sanitizeNote(note) })
   } catch (error) {
     console.error('GET /api/notes/[id] error:', error)
     return NextResponse.json(
@@ -132,7 +138,7 @@ export async function PATCH(
       },
     })
 
-    return NextResponse.json({ success: true, note })
+    return NextResponse.json({ success: true, note: sanitizeNote(note) })
   } catch (error: unknown) {
     console.error('PATCH /api/notes/[id] error:', error)
 

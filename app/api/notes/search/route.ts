@@ -60,13 +60,11 @@ export async function GET(request: Request) {
     }
 
     // 필터 조건 구성
-    const whereConditions: any = {
-      AND: [],
-    }
+    const andConditions: Prisma.NoteWhereInput[] = []
 
     // 검색 조건 (정규식 모드는 나중에 JavaScript로 필터링)
     if (mode === 'normal') {
-      whereConditions.AND.push({
+      andConditions.push({
         OR: [
           { title: { contains: query, mode: 'insensitive' } },
           { body: { contains: query, mode: 'insensitive' } },
@@ -76,12 +74,12 @@ export async function GET(request: Request) {
 
     // 폴더 필터
     if (folderId) {
-      whereConditions.AND.push({ folderId })
+      andConditions.push({ folderId })
     }
 
     // 태그 필터
     if (tagId) {
-      whereConditions.AND.push({
+      andConditions.push({
         tags: {
           some: { tagId },
         },
@@ -90,16 +88,14 @@ export async function GET(request: Request) {
 
     // 날짜 범위 필터
     if (dateFrom || dateTo) {
-      const dateFilter: any = {}
+      const dateFilter: Prisma.DateTimeFilter<'Note'> = {}
       if (dateFrom) dateFilter.gte = new Date(dateFrom)
       if (dateTo) dateFilter.lte = new Date(dateTo)
-      whereConditions.AND.push({ createdAt: dateFilter })
+      andConditions.push({ createdAt: dateFilter })
     }
 
-    // AND 조건이 없으면 제거
-    if (whereConditions.AND.length === 0) {
-      delete whereConditions.AND
-    }
+    const whereConditions: Prisma.NoteWhereInput =
+      andConditions.length > 0 ? { AND: andConditions } : {}
 
     const defaultOrder: Prisma.SortOrder =
       sortBy === 'title' || sortBy === 'manual' ? 'asc' : 'desc'
@@ -161,7 +157,7 @@ export async function GET(request: Request) {
         notes = notes.filter(
           (note) => regex.test(note.title) || regex.test(note.body)
         ).slice(0, 20)
-      } catch (error) {
+      } catch {
         return NextResponse.json(
           { success: false, error: '잘못된 정규식입니다' },
           { status: 400 }

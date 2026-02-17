@@ -1,6 +1,6 @@
 # Codex(X) 작업 지시서
 
-> **작성일**: 2026-02-10
+> **작성일**: 2026-02-18
 > **작성자**: Arch (Claude)
 > **상태**: 즉시 실행
 
@@ -8,45 +8,136 @@
 
 ## 📋 할 일
 
-**개별 노트 AI 기능 구현 (Phase 2)**
+**Phase 4: lint 정리**
 
-7개 AI 명령 (Summarize, Expand, Clarify, Structure, TagSuggest, Question, Action)을 노트 에디터에서 사용할 수 있도록 구현
-
----
-
-## 📖 읽어야 할 문서 (순서대로)
-
-```
-1. docs/AI_THINKING_DESIGN.md        ← 철학/원칙 (필수)
-2. docs/AI_FEATURES_SPEC.md          ← 전체 기능 명세 (Part A 집중)
-3. docs/AI_INDIVIDUAL_NOTE_TASKS.md  ← 작업 명세서 (이대로 구현)
-```
+13 errors / 27 warnings → 0 errors / 최소 warnings
 
 ---
 
-## 🎯 구현할 Task (순서대로)
+## 🎯 Error 수정 (13개)
 
-| Task | 내용 | 파일 |
-|------|------|------|
-| 1 | AI 서비스 기반 구축 | `lib/ai/types.ts`, `lib/ai/prompts.ts`, `lib/ai/service.ts` |
-| 2 | API 엔드포인트 | `app/api/ai/note/route.ts` |
-| 3 | React Hook | `lib/hooks/useNoteAI.ts` |
-| 4 | AI 결과 패널 UI | `components/AIResultPanel.tsx` |
-| 5 | AI 메뉴 컴포넌트 | `components/AICommandMenu.tsx` |
-| 6 | 노트 에디터 통합 | `app/notes/[id]/page.tsx` 수정 |
-| 7 | 통합 테스트 | 빌드 + 기능 테스트 |
+### 1. PropertyPanel.tsx (3 errors)
+`@typescript-eslint/no-explicit-any`
+
+```tsx
+// 19:12, 43:63, 57:38
+// any → 구체적 타입으로 변경
+
+// 예시: Property 타입 정의
+interface PropertyValue {
+  type: 'text' | 'number' | 'date' | 'select' | 'multi-select' | 'checkbox'
+  value: string | number | Date | string[] | boolean
+}
+```
+
+### 2. TableView.tsx (5 errors)
+`@typescript-eslint/no-explicit-any`
+
+```tsx
+// 9:11, 22:28, 24:31, 24:56, 29:39
+// Property 관련 any → 구체적 타입으로 변경
+```
+
+### 3. ShortcutHelpButton.tsx (1 error)
+`react-hooks/set-state-in-effect`
+
+```tsx
+// 40:5 - useEffect 내 직접 setState 호출
+// 해결: 초기값으로 설정하거나 useMemo 사용
+
+// Before
+const [isMac, setIsMac] = useState(false)
+useEffect(() => {
+  setIsMac(navigator.platform.includes('Mac'))
+}, [])
+
+// After (옵션 1: 초기값에서 판단)
+const [isMac] = useState(() =>
+  typeof navigator !== 'undefined' && navigator.platform.includes('Mac')
+)
+
+// After (옵션 2: useMemo)
+const isMac = useMemo(() =>
+  typeof navigator !== 'undefined' && navigator.platform.includes('Mac'),
+  []
+)
+```
+
+### 4. SearchHighlight.tsx (2 errors)
+`react-hooks/error-boundaries`, `react-hooks/missing-return-value`
+
+```tsx
+// 69:5 - try/catch 내 JSX 구성 금지
+// 해결: try/catch를 데이터 처리에만 사용, JSX는 외부에서 구성
+
+// Before
+try {
+  return <span>{/* JSX */}</span>
+} catch (error) {
+  return <span>{text}</span>
+}
+
+// After
+let segments: Array<{text: string, highlight: boolean}> = []
+try {
+  // 데이터 처리만
+  segments = computeHighlightSegments(text, query)
+} catch {
+  segments = [{text, highlight: false}]
+}
+return <span>{segments.map(...)}</span>
+```
+
+### 5. lib/thinking/commands.ts (1 error)
+`@typescript-eslint/no-explicit-any`
+
+```tsx
+// 251:43
+// any → 구체적 타입으로 변경
+```
 
 ---
 
-## ⚠️ 핵심 원칙 (구현 시 항상 기억)
+## ⚠️ Warning 수정 (27개) - 선택적
 
-```
-1. AI는 재료만 제공, 결론 금지
-2. 자동 저장 금지, 사용자 확정 필수
-3. 모든 출력은 "임시" 상태 (점선 테두리)
-4. 사용자 요청 시에만 작동
-5. 답이 아닌 질문/방향으로 제시
-```
+우선순위 높은 것만 처리:
+
+### 높음 (수정 권장)
+- **unused vars** (8개): 사용하지 않는 import/변수 제거
+  - `Card`, `Button` in PropertyPanel.tsx
+  - `error` in 여러 파일
+  - `Suggestion`, `SuggestionProps` in WikiLinkSuggestion.ts
+  - `useCallback` in usePresence.ts
+  - `get` in shortcutStore.ts
+  - `pendingValue` in useDebounce.ts
+
+### 중간 (시간 여유 시)
+- **exhaustive-deps** (10개): 의도적 생략이면 `// eslint-disable-next-line` 추가
+
+### 낮음 (무시 가능)
+- **folders logical expression** (6개): 복잡한 리팩토링 필요
+- **incompatible-library** (1개): TanStack Virtual 관련, 무시 가능
+
+---
+
+## 📁 수정 파일 목록
+
+| 파일 | Errors | Warnings |
+|------|--------|----------|
+| `components/PropertyPanel.tsx` | 3 | 2 |
+| `components/TableView.tsx` | 5 | 0 |
+| `components/ShortcutHelpButton.tsx` | 1 | 0 |
+| `components/SearchHighlight.tsx` | 2 | 1 |
+| `lib/thinking/commands.ts` | 1 | 1 |
+
+---
+
+## ⚠️ 주의사항
+
+1. **타입 정의**: Property 관련 타입이 여러 파일에서 사용됨 → `lib/types/property.ts` 생성 고려
+2. **기능 유지**: lint 수정으로 기능이 깨지지 않도록 주의
+3. **빌드 테스트**: `npm run build` 확인
+4. **lint 재확인**: `npm run lint` 0 errors 확인
 
 ---
 
@@ -54,39 +145,28 @@
 
 ```bash
 cd /Users/woocheolshin/Documents/Vibecoding/projects/second-brain-app
-npm run dev
+npm run lint
 ```
 
 ---
 
 ## ✅ 완료 보고 형식
 
-각 Task 완료 시:
-
 ```markdown
-✅ Task N 완료
+✅ Phase 4 완료
 
-**작업 내용**:
-- [수행한 작업]
+**수정 내역**:
+- Errors: 13 → 0
+- Warnings: 27 → N
 
-**생성/수정된 파일**:
+**수정된 파일**:
 - path/to/file.ts
 
 **테스트 결과**:
-- [테스트 항목]: 통과/실패
-
-**이슈**:
-- (있으면 기록)
+- npm run lint: 통과
+- npm run build: 통과
 ```
 
 ---
 
-## 📍 참고
-
-- 상세 코드는 `docs/AI_INDIVIDUAL_NOTE_TASKS.md`에 모두 있음
-- 그대로 복사해서 사용 가능
-- 의문 있으면 Arch에게 질문
-
----
-
-**시작하세요!**
+**시작하세요! 🚀**

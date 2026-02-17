@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link2, X } from 'lucide-react'
 
 interface AutoLinkSuggestion {
@@ -30,12 +30,6 @@ export function AutoLinkMenu({
   onDismissAll,
 }: AutoLinkMenuProps) {
   const [isOpen, setIsOpen] = useState(false)
-
-  useEffect(() => {
-    if (suggestions.length === 0) {
-      setIsOpen(false)
-    }
-  }, [suggestions.length])
 
   if (suggestions.length === 0) return null
 

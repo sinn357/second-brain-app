@@ -13,7 +13,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { useDraggable } from '@dnd-kit/core'
-import { Pin, PinOff, Copy, Trash2, Loader2 } from 'lucide-react'
+import { Pin, PinOff, Copy, Trash2, Loader2, Lock } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 interface NoteListProps {
@@ -23,6 +23,28 @@ interface NoteListProps {
   enableSwipe?: boolean
   sortBy?: 'title' | 'updated' | 'opened' | 'created' | 'manual'
   order?: 'asc' | 'desc'
+}
+
+interface NoteListItem {
+  id: string
+  title: string
+  body: string
+  folderId: string | null
+  isLocked: boolean
+  isPinned: boolean
+  manualOrder: number
+  updatedAt: string | Date
+  tags?: Array<{
+    tag: {
+      id: string
+      name: string
+      color?: string | null
+    }
+  }>
+  folder?: {
+    id: string
+    name: string
+  } | null
 }
 
 const ESTIMATED_ITEM_HEIGHT = 86
@@ -63,7 +85,7 @@ export function NoteList({
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
-    note: any
+    note: NoteListItem
   } | null>(null)
 
   useEffect(() => {
@@ -185,7 +207,7 @@ export function NoteList({
     }
   }
 
-  const handleDuplicate = async (note: any) => {
+  const handleDuplicate = async (note: NoteListItem) => {
     try {
       const duplicated = await createNote.mutateAsync({
         title: `${note.title} 복사본`,
@@ -202,7 +224,7 @@ export function NoteList({
     }
   }
 
-  const handleTogglePin = async (note: any) => {
+  const handleTogglePin = async (note: NoteListItem) => {
     try {
       await updateNoteMutation.mutateAsync({
         id: note.id,
@@ -401,6 +423,7 @@ interface NoteItemProps {
     title: string
     body: string
     folderId?: string | null
+    isLocked?: boolean
     isPinned?: boolean
     manualOrder?: number
     updatedAt: Date
@@ -414,7 +437,9 @@ interface NoteItemProps {
 
 function NoteItem({ note, isSelected, onSelect, onContextMenu }: NoteItemProps) {
   const previewSource = note.body?.split('\n').find((line) => line.trim()) ?? ''
-  const previewText = previewSource.replace(/\s+/g, ' ').trim()
+  const previewText = note.isLocked
+    ? '잠긴 노트입니다.'
+    : previewSource.replace(/\s+/g, ' ').trim()
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `note:${note.id}`,
     data: { type: 'note', id: note.id, folderId: note.folderId ?? null },
@@ -437,6 +462,9 @@ function NoteItem({ note, isSelected, onSelect, onContextMenu }: NoteItemProps) 
           <div className="flex items-center gap-2">
             {note.isPinned && (
               <Pin className="h-3.5 w-3.5 text-amber-500" />
+            )}
+            {note.isLocked && (
+              <Lock className="h-3.5 w-3.5 text-indigo-500" />
             )}
             <h3 className="font-semibold text-base mb-1 text-indigo-900 dark:text-indigo-100">
               {note.title}

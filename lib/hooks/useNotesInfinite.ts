@@ -5,6 +5,7 @@ interface Note {
   title: string
   body: string
   folderId: string | null
+  isLocked: boolean
   isPinned: boolean
   pinnedAt: Date | null
   lastOpenedAt: Date | null

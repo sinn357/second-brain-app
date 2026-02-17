@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -39,16 +39,12 @@ const BROWSER_SHORTCUTS = [
 
 export default function ShortcutsPage() {
   const { shortcuts, setShortcut, resetShortcut, resetAll } = useShortcutStore()
-  const [isMac, setIsMac] = useState(true)
+  const isMac = typeof navigator !== 'undefined' && navigator.userAgent.includes('Mac')
   const [editingId, setEditingId] = useState<ShortcutId | null>(null)
   const [recordingKeys, setRecordingKeys] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState('')
 
-  useEffect(() => {
-    setIsMac(navigator.userAgent.includes('Mac'))
-  }, [])
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>, id: ShortcutId) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     event.preventDefault()
 
     const parts: string[] = []
@@ -166,7 +162,7 @@ export default function ShortcutsPage() {
                       <Input
                         autoFocus
                         value={recordingKeys ? formatShortcut(recordingKeys, isMac) : '키 입력...'}
-                        onKeyDown={(e) => handleKeyDown(e, def.id)}
+                        onKeyDown={handleKeyDown}
                         onKeyUp={() => handleKeyUp(def.id)}
                         onBlur={cancelEditing}
                         className="w-32 text-center font-mono text-sm"

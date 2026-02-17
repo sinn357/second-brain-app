@@ -1,11 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PropertyInput, PropertyUpdateInput, NotePropertyInput } from '@/lib/validations/property'
+import type { PropertyDefinition } from '@/lib/types/property'
 
-interface Property {
-  id: string
-  name: string
-  type: string
-  options: string[] | null
+interface Property extends PropertyDefinition {
   _count?: {
     values: number
   }
@@ -15,7 +12,7 @@ interface NoteProperty {
   id: string
   noteId: string
   propertyId: string
-  value: any
+  value: unknown
   property: Property
 }
 

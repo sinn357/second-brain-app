@@ -3,6 +3,12 @@ import { noteSchema } from '@/lib/validations/note'
 import { prisma } from '@/lib/db'
 import { Prisma } from '@prisma/client'
 
+function sanitizeNote<T extends { lockHash?: string | null }>(note: T): Omit<T, 'lockHash'> {
+  const safe = { ...note } as T
+  delete safe.lockHash
+  return safe as Omit<T, 'lockHash'>
+}
+
 // GET /api/notes - 노트 목록 조회 (커서 기반 페이지네이션)
 export async function GET(request: Request) {
   try {
@@ -63,10 +69,11 @@ export async function GET(request: Request) {
     const hasMore = notes.length > limit
     const paginatedNotes = hasMore ? notes.slice(0, limit) : notes
     const nextCursor = hasMore ? paginatedNotes[paginatedNotes.length - 1]?.id : null
+    const safeNotes = paginatedNotes.map((note) => sanitizeNote(note))
 
     return NextResponse.json({
       success: true,
-      notes: paginatedNotes,
+      notes: safeNotes,
       nextCursor,
       hasMore,
     })
@@ -112,7 +119,7 @@ export async function POST(request: Request) {
       },
     })
 
-    return NextResponse.json({ success: true, note }, { status: 201 })
+    return NextResponse.json({ success: true, note: sanitizeNote(note) }, { status: 201 })
   } catch (error) {
     console.error('POST /api/notes error:', error)
     return NextResponse.json(

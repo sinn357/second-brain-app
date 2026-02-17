@@ -26,6 +26,18 @@ interface UnlinkedMentionEntry {
   mentionCount: number
 }
 
+interface OutgoingLinkEntry {
+  id: string
+  title: string
+  exists: boolean
+}
+
+interface LocalGraphLinkEntry {
+  id: string
+  title: string
+  direction: 'outgoing' | 'incoming'
+}
+
 // 노트 목록 조회
 export function useNotes(
   folderId?: string,
@@ -143,6 +155,34 @@ export function useBacklinks(noteId: string) {
       const data = await response.json()
       if (!data.success) throw new Error(data.error)
       return data.backlinks
+    },
+    enabled: !!noteId,
+  })
+}
+
+// Outgoing Links 조회
+export function useOutgoingLinks(noteId: string) {
+  return useQuery<OutgoingLinkEntry[], Error>({
+    queryKey: ['outgoing-links', noteId],
+    queryFn: async () => {
+      const response = await fetch(`/api/notes/${noteId}/outgoing`)
+      const data = await response.json()
+      if (!data.success) throw new Error(data.error)
+      return data.links
+    },
+    enabled: !!noteId,
+  })
+}
+
+// Local Graph 조회
+export function useLocalGraph(noteId: string) {
+  return useQuery<LocalGraphLinkEntry[], Error>({
+    queryKey: ['local-graph', noteId],
+    queryFn: async () => {
+      const response = await fetch(`/api/notes/${noteId}/graph`)
+      const data = await response.json()
+      if (!data.success) throw new Error(data.error)
+      return data.links
     },
     enabled: !!noteId,
   })

@@ -1,6 +1,6 @@
 'use client'
 
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 
 interface Note {
   id: string
@@ -34,8 +34,6 @@ export const WikiLinkSuggestionList = forwardRef((props: SuggestionListProps, re
   const enterHandler = () => {
     selectItem(selectedIndex)
   }
-
-  useEffect(() => setSelectedIndex(0), [props.items])
 
   useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }: { event: KeyboardEvent }) => {
@@ -90,7 +88,13 @@ export const WikiLinkSuggestionList = forwardRef((props: SuggestionListProps, re
 
 WikiLinkSuggestionList.displayName = 'WikiLinkSuggestionList'
 
+declare global {
+  interface Window {
+    WikiLinkSuggestionListComponent?: typeof WikiLinkSuggestionList
+  }
+}
+
 // 글로벌에 등록하여 Tiptap extension에서 사용 가능하도록
 if (typeof window !== 'undefined') {
-  (window as any).WikiLinkSuggestionListComponent = WikiLinkSuggestionList
+  window.WikiLinkSuggestionListComponent = WikiLinkSuggestionList
 }

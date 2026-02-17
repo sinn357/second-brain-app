@@ -16,12 +16,37 @@ export interface FilterCondition {
     | 'is_not_checked'
     | 'is_empty'
     | 'is_not_empty'
-  value: any
+  value: unknown
 }
 
 export interface FilterGroup {
   operator: 'AND' | 'OR'
   conditions: FilterCondition[]
+}
+
+function toJsonInputValue(value: unknown): Prisma.InputJsonValue {
+  if (value === null) {
+    return ''
+  }
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return value
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => toJsonInputValue(item))
+  }
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    const result: Record<string, Prisma.InputJsonValue> = {}
+    for (const [key, val] of Object.entries(record)) {
+      result[key] = toJsonInputValue(val)
+    }
+    return result
+  }
+  return String(value ?? '')
 }
 
 /**
@@ -61,7 +86,7 @@ function buildConditionQuery(condition: FilterCondition): Prisma.NoteWhereInput 
         properties: {
           some: {
             propertyId,
-            value: { equals: value },
+            value: { equals: toJsonInputValue(value) },
           },
         },
       }
@@ -72,7 +97,7 @@ function buildConditionQuery(condition: FilterCondition): Prisma.NoteWhereInput 
           properties: {
             some: {
               propertyId,
-              value: { equals: value },
+              value: { equals: toJsonInputValue(value) },
             },
           },
         },
@@ -84,7 +109,7 @@ function buildConditionQuery(condition: FilterCondition): Prisma.NoteWhereInput 
         properties: {
           some: {
             propertyId,
-            value: { array_contains: value },
+            value: { array_contains: String(value ?? '') },
           },
         },
       }
@@ -95,7 +120,7 @@ function buildConditionQuery(condition: FilterCondition): Prisma.NoteWhereInput 
           properties: {
             some: {
               propertyId,
-              value: { array_contains: value },
+              value: { array_contains: String(value ?? '') },
             },
           },
         },
@@ -107,7 +132,7 @@ function buildConditionQuery(condition: FilterCondition): Prisma.NoteWhereInput 
         properties: {
           some: {
             propertyId,
-            value: { lt: value },
+            value: { lt: String(value ?? '') },
           },
         },
       }
@@ -118,7 +143,7 @@ function buildConditionQuery(condition: FilterCondition): Prisma.NoteWhereInput 
         properties: {
           some: {
             propertyId,
-            value: { gt: value },
+            value: { gt: String(value ?? '') },
           },
         },
       }
@@ -173,7 +198,7 @@ function buildConditionQuery(condition: FilterCondition): Prisma.NoteWhereInput 
 function buildSystemConditionQuery(
   propertyId: string,
   operator: FilterCondition['operator'],
-  value: any
+  value: unknown
 ): Prisma.NoteWhereInput {
   switch (propertyId) {
     case 'sys:title':
@@ -198,7 +223,7 @@ function buildSystemConditionQuery(
 function buildTextConditionQuery(
   field: 'title' | 'body',
   operator: FilterCondition['operator'],
-  value: any
+  value: unknown
 ): Prisma.NoteWhereInput {
   const safeValue = String(value ?? '')
 
@@ -222,7 +247,7 @@ function buildTextConditionQuery(
 
 function buildFolderConditionQuery(
   operator: FilterCondition['operator'],
-  value: any
+  value: unknown
 ): Prisma.NoteWhereInput {
   const safeValue = String(value ?? '')
 
@@ -246,7 +271,7 @@ function buildFolderConditionQuery(
 
 function buildTagConditionQuery(
   operator: FilterCondition['operator'],
-  value: any
+  value: unknown
 ): Prisma.NoteWhereInput {
   const safeValue = String(value ?? '')
 
@@ -283,9 +308,12 @@ function buildTagConditionQuery(
 function buildDateConditionQuery(
   field: 'createdAt' | 'updatedAt',
   operator: FilterCondition['operator'],
-  value: any
+  value: unknown
 ): Prisma.NoteWhereInput {
   if (!value) return {}
+  if (!(typeof value === 'string' || typeof value === 'number' || value instanceof Date)) {
+    return {}
+  }
   const dateValue = new Date(value)
 
   if (operator === 'before') {

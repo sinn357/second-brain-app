@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { FileText, Network, Table, Search, Moon, Sun, CalendarDays, Settings, LayoutTemplate, Keyboard, Home } from 'lucide-react'
@@ -10,12 +9,8 @@ import { MobileNav } from '@/components/MobileNav'
 
 export function Navigation() {
   const pathname = usePathname()
-  const [isMac, setIsMac] = useState(false)
+  const isMac = typeof navigator !== 'undefined' && navigator.platform.includes('Mac')
   const { theme, toggleTheme, mounted } = useTheme()
-
-  useEffect(() => {
-    setIsMac(navigator.platform.includes('Mac'))
-  }, [])
 
   const navItems = [
     { href: '/notes', label: 'Notes', icon: FileText },

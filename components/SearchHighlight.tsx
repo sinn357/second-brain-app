@@ -15,9 +15,9 @@ export function SearchHighlight({ text, query, mode = 'normal', className = '' }
     return <span className={className}>{text}</span>
   }
 
-  try {
-    let parts: { text: string; highlight: boolean }[] = []
+  let parts: { text: string; highlight: boolean }[] = []
 
+  try {
     if (mode === 'regex') {
       // 정규식 모드
       const regex = new RegExp(`(${query})`, 'gi')
@@ -61,25 +61,25 @@ export function SearchHighlight({ text, query, mode = 'normal', className = '' }
         })
       }
     }
-
-    return (
-      <span className={className}>
-        {parts.map((part, i) =>
-          part.highlight ? (
-            <mark
-              key={i}
-              className="bg-yellow-200 dark:bg-yellow-900 text-inherit font-semibold rounded px-0.5"
-            >
-              {part.text}
-            </mark>
-          ) : (
-            <span key={i}>{part.text}</span>
-          )
-        )}
-      </span>
-    )
-  } catch (error) {
+  } catch {
     // 정규식 에러 시 원본 텍스트 반환
-    return <span className={className}>{text}</span>
+    parts = [{ text, highlight: false }]
   }
+
+  return (
+    <span className={className}>
+      {parts.map((part, i) =>
+        part.highlight ? (
+          <mark
+            key={i}
+            className="bg-yellow-200 dark:bg-yellow-900 text-inherit font-semibold rounded px-0.5"
+          >
+            {part.text}
+          </mark>
+        ) : (
+          <span key={i}>{part.text}</span>
+        )
+      )}
+    </span>
+  )
 }

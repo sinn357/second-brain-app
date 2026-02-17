@@ -52,7 +52,7 @@ export function DeleteConfirmDialog({
         <DialogHeader>
           <DialogTitle>템플릿 삭제</DialogTitle>
           <DialogDescription>
-            정말 삭제하시겠습니까? "{templateName}" 템플릿이 완전히 삭제됩니다.
+            정말 삭제하시겠습니까? &quot;{templateName}&quot; 템플릿이 완전히 삭제됩니다.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

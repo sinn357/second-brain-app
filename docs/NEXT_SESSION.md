@@ -1,83 +1,141 @@
 # Next Session Guide
 
-**업데이트**: 2026-02-12
+**업데이트**: 2026-02-18
 **목적**: 다음 세션에서 바로 작업 가능한 가이드
 
 ---
 
-## ✅ 2026-02-12 완료된 작업
+## 🔜 다음 세션에서 할 일
 
-### Graph View 통합 (Mindmap 제거)
-- Mindmap 페이지 제거 및 네비게이션 정리
-- Graph View 레이아웃 토글 (Network / Tree)
-- Tree 기본 루트: 최근 수정 노트
-- Tree 컨텍스트 메뉴: 루트로 설정 + Missing 노트 생성
-- 모바일 길게 눌러 컨텍스트 메뉴 표시
+### Phase 4: lint 정리
 
-### Home/Notes UX 개선
-- Home 진입 시 최신 저장 노트로 자동 이동
-- 노트 리스트 기본 정렬: 이름순
-- 노트 헤더 레이아웃 깨짐 수정 (PC 텍스트 세로 깨짐 방지)
-- Select 드롭다운 배경 불투명 처리 (정렬/폴더 선택 UI 겹침 해결)
+```
+lint 13 errors / 27 warnings 일괄 처리
+```
 
-### 정렬 기능 (전역 적용)
-- 정렬 옵션: 이름/최근 수정/최근 열람/생성일/수동
-- 정렬 상태 DB 저장 (`app_settings`)
-- 노트 열람 시 lastOpenedAt 업데이트
-- 수동 정렬: 노트 우클릭 메뉴로 이동
+### Phase 5: 미디어 (저장소 결정 후)
 
-### 문서 정비
-- Apple Notes/AI/Mindmap/Obsidian 문서 정리
-
-### AI 기능 설계 완료
-- 개별 노트 AI 7개 기능 정의 (Summarize, Expand, Clarify, Structure, TagSuggest, Question, Action)
-- 노트 연결 AI 4개 기능 정의 (Connect, Contrast, Combine, Bridge)
-- 네트워크 AI 9개 기능 정의 (Auto-Link, Semantic Search, Ask My Brain, Synthesis, Resurface, Random Spark, Knowledge Gap, Incubation, Time Capsule)
-
-### 문서 생성
-- `AI_FEATURES_SPEC.md` - 전체 AI 기능 명세
-- `AI_INDIVIDUAL_NOTE_TASKS.md` - Codex용 개별 노트 AI 작업 명세서
+```
+- 이미지 첨부
+- YouTube 임베드
+```
 
 ---
 
-## ✅ 2026-02-10 구현 완료
+## ✅ 2026-02-18 완료된 작업
 
-### 개별 노트 AI 구현 완료
-- AI 서비스 레이어 + API + React Hook
-- 결과 패널 UI + AI 메뉴 + 노트 에디터 통합
+### 옵시디언 차별화 (Phase 3) ✅
 
-### 노트 연결 AI 구현 완료
-- Connect / Contrast / Combine / Bridge
-- 저장 시 결과 노트 생성 및 폴더 유지
+1. **Local Graph**
+   - 현재 노트 중심 incoming/outgoing 링크 미니 그래프 (D3)
+   - 노드 클릭 시 해당 노트로 이동
+   - 파일: `components/LocalGraph.tsx`, `app/api/notes/[id]/graph/route.ts`
 
-### 네트워크 AI 구현 완료 (1~9)
-- Auto-Link (제안/승인)
-- Semantic Search (Advanced + 아이콘)
-- Ask My Brain
-- Synthesis
-- Resurface
-- Random Spark
-- Knowledge Gap
-- Incubation (DB 저장)
-- Time Capsule
+2. **Outgoing Links 패널**
+   - 현재 노트가 링크한 노트 목록
+   - 실제 연결된 노트 + 미생성 링크 분리 표시
+   - 미생성 링크 "생성" 버튼으로 즉시 노트 생성
+   - 파일: `components/OutgoingLinksPanel.tsx`, `app/api/notes/[id]/outgoing/route.ts`
+
+3. **Notes 화면 통합**
+   - 모바일/데스크톱 편집 영역 하단에 LocalGraph, OutgoingLinksPanel 배치
 
 ---
 
-## 📁 AI 관련 문서
+## ✅ 2026-02-17 완료된 작업
 
-| 문서 | 내용 |
-|------|------|
-| `AI_THINKING_DESIGN.md` | 철학 + 설계 원칙 |
-| `AI_THINKING_PHASE1_TASKS.md` | Connect 구현 명세 (완료) |
-| `AI_FEATURES_SPEC.md` | 전체 AI 기능 명세 (NEW) |
-| `AI_INDIVIDUAL_NOTE_TASKS.md` | 개별 노트 AI 작업 명세 (NEW) |
+### 에디터 맥시마이징 (Phase 1~3)
+- 하이라이트 (다중 색상) ✅
+- 텍스트 색상 ✅
+- 텍스트 정렬 (좌/중/우) ✅
+- 밑줄/취소선 UI 버튼 ✅
+- 코드블록 구문 강조 (lowlight) ✅
+- 콜아웃 (info/warning) ✅
+- 토글 (접기 섹션) ✅
+- 수학 수식 (KaTeX) ✅
+- 목차 (TOC) ✅
+
+### 공통 UX (Phase 1)
+- Cmd+N 전역 단축키 ✅
+- 저장 상태 표시 강화 (saving/saved/error) ✅
+- 오프라인 모드 (next-pwa) ✅
+- 오프라인 배너 + /offline 페이지 ✅
+
+### 애플 메모 차별화 (Phase 2)
+- 갤러리 뷰 (노트 썸네일 그리드) ✅
+- 노트 잠금 (비밀번호, bcrypt) ✅
+- 잠긴 노트 본문 마스킹 ✅
+- lockHash 클라이언트 비노출 ✅
+
+### lint 정리
+- 73 errors → 13 errors
+- lib/filterEngine.ts, lib/ai/service.ts 타입 정의
+- tiptap-extensions 폴더 no-explicit-any 예외 처리
+
+### 결정사항
+- webpack 빌드 유지 (next-pwa가 Turbopack 미지원)
+- 노트 잠금은 UX 레벨 보호 유지 (서버 세션 기반 차단 안 함)
+- 미디어 기능은 후순위 (저장소 결정 후)
 
 ---
 
-## ⚠️ 보류 상태
+## 📊 현재 달성도 (2026-02-18)
 
-- 모바일 앱스토어 등록 (잠정 보류)
-- 접근성 경고: DialogContent aria warning (추후 정리)
+| 앱 | 달성도 | 변화 | 남은 것 |
+|----|--------|------|---------|
+| 애플 메모 | **98%** | - | 미디어만 |
+| 옵시디언 | **95%** | +3% | 플러그인 시스템 |
+| 노션 | **77%** | - | 실시간 협업 |
+
+---
+
+## 📁 주요 변경 파일
+
+### 옵시디언 Phase 3 (2026-02-18)
+- `components/LocalGraph.tsx`
+- `components/OutgoingLinksPanel.tsx`
+- `app/api/notes/[id]/graph/route.ts`
+- `app/api/notes/[id]/outgoing/route.ts`
+- `lib/hooks/useNotes.ts` (useLocalGraph, useOutgoingLinks)
+- `app/notes/page.tsx`
+
+### 에디터
+- `components/NoteEditor.tsx`
+- `components/NoteEditorAdvanced.tsx`
+- `lib/tiptap-extensions/Callout.ts`
+- `lib/tiptap-extensions/ToggleBlock.ts`
+
+### 공통 UX
+- `components/ShortcutManager.tsx` (Cmd+N)
+- `components/OfflineBanner.tsx`
+- `lib/hooks/useOnlineStatus.ts`
+- `app/offline/page.tsx`
+- `next.config.ts` (next-pwa)
+
+### 애플 메모
+- `components/NoteGallery.tsx`
+- `components/NoteLockDialog.tsx`
+- `app/api/notes/[id]/lock/route.ts`
+- `prisma/schema.prisma` (isLocked, lockHash)
+
+---
+
+## 🔜 다음 작업 로드맵
+
+```
+✅ Phase 3: Local Graph + Outgoing Links 완료 (옵시디언 95%)
+현재 → Phase 4: lint 13 errors 정리
+     → Phase 5: 미디어 (저장소 결정 후)
+     → 노션 실시간 협업 (별도 큰 프로젝트)
+```
+
+---
+
+## ⚠️ 주의사항
+
+- **빌드**: `npm run build` (webpack 모드)
+- **lint**: 13 errors / 27 warnings 잔여 (Phase 3 후 정리)
+- **DB**: 노트 잠금 필드 추가됨 (isLocked, lockHash)
 
 ---
 
@@ -92,22 +150,4 @@
 
 ---
 
-**Status**: AI 기능 구현 완료, 안정화/UX 개선 단계
-
----
-
-## 🔜 다음 작업 후보 (바로 이어서)
-
-### 정렬 기능 마감
-- 수동 정렬 UX 개선 (드래그 방식 검토)
-- 정렬 설정 API 실패 시 기본값 fallback 처리
-
-### Graph View
-- Local Graph (현재 노트 중심 미니 그래프)
-- Tree 모드 UX 미세 조정 (표시 규칙 정리)
-
-### Home UX
-- 최신 노트 자동 진입 + 최근 목록 병행 여부 결정
-
-### DB 마이그레이션 정리
-- 초기 마이그레이션 베이스라인 생성 (shadow DB 에러 해결)
+**Status**: Phase 3 완료 ✅ → Phase 4 대기 (lint 정리)

@@ -244,11 +244,24 @@ ${contextNotes
       throw new Error('AI 응답 없음')
     }
 
-    const parsed = JSON.parse(content)
-    const aiReasons = Array.isArray(parsed) ? parsed : parsed.results || []
+    const parsed = JSON.parse(content) as unknown
+    const aiReasonsRaw = Array.isArray(parsed)
+      ? parsed
+      : typeof parsed === 'object' && parsed !== null && 'results' in parsed
+        ? (parsed as { results?: unknown }).results
+        : []
+    const aiReasons = Array.isArray(aiReasonsRaw)
+      ? aiReasonsRaw.filter(
+          (item): item is { noteId: string; reason?: string } =>
+            typeof item === 'object' &&
+            item !== null &&
+            'noteId' in item &&
+            typeof (item as { noteId: unknown }).noteId === 'string'
+        )
+      : []
 
     return contextNotes.map((cn) => {
-      const aiResult = aiReasons.find((r: any) => r.noteId === cn.noteId)
+      const aiResult = aiReasons.find((r) => r.noteId === cn.noteId)
       const candidate = candidateMap.get(cn.noteId)
 
       return {

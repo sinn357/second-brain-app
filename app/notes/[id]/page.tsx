@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation'
 
-interface Props {
-  params: { id: string }
+interface NoteRedirectPageProps {
+  params: Promise<{ id: string }>
 }
 
-export default function NoteRedirectPage({ params }: Props) {
-  redirect(`/notes?noteId=${params.id}`)
+export default async function NoteRedirectPage({ params }: NoteRedirectPageProps) {
+  const { id } = await params
+  redirect(`/notes?noteId=${id}`)
 }

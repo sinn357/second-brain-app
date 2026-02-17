@@ -86,27 +86,35 @@ export const VimMode = Extension.create<VimModeOptions>({
   },
 
   addProseMirrorPlugins() {
-    const extension = this
-
     return [
       new Plugin({
         key: VimModeKey,
         props: {
-          handleKeyDown(view: EditorView, event: KeyboardEvent) {
-            const storage = extension.editor?.storage.vimMode as VimStorage | undefined
+          handleKeyDown: (view: EditorView, event: KeyboardEvent) => {
+            const storage = this.editor?.storage.vimMode as VimStorage | undefined
             if (!storage?.enabled) return false
 
             const mode = storage.mode
 
             // Normal 모드 키 처리
             if (mode === 'normal') {
-              return handleNormalMode(view, event, storage, extension)
+              return handleNormalMode(view, event, storage, {
+                options: this.options,
+                editor: this.editor
+                  ? {
+                      commands: {
+                        undo: () => this.editor!.commands.undo(),
+                        redo: () => this.editor!.commands.redo(),
+                      },
+                    }
+                  : undefined,
+              })
             }
 
             // Insert 모드에서 Escape -> Normal
             if (mode === 'insert' && event.key === 'Escape') {
               storage.mode = 'normal'
-              extension.options.onModeChange?.('normal')
+              this.options.onModeChange?.('normal')
               return true
             }
 

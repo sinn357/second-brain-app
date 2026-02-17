@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -12,13 +12,9 @@ import { useTheme } from '@/lib/hooks/useTheme'
 
 export function FloatingNav() {
   const pathname = usePathname()
-  const [isMac, setIsMac] = useState(false)
+  const isMac = typeof navigator !== 'undefined' && navigator.platform.includes('Mac')
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const { theme, toggleTheme, mounted } = useTheme()
-
-  useEffect(() => {
-    setIsMac(navigator.platform.includes('Mac'))
-  }, [])
 
   const navItems = [
     { href: '/notes', label: 'Notes', icon: FileText },

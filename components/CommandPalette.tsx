@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription } from '@/components/ui/dialog
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { Search, FileText, Tag, Folder, Hash, Loader2, SlidersHorizontal, Brain, Network, RotateCcw, Lightbulb, AlertTriangle, Clock, Hourglass } from 'lucide-react'
+import { Search, FileText, Folder, Hash, Loader2, SlidersHorizontal, Brain, Network, RotateCcw, Lightbulb, AlertTriangle, Clock, Hourglass } from 'lucide-react'
 import { useTags } from '@/lib/hooks/useTags'
 import { useFolders } from '@/lib/hooks/useFolders'
 import { useSearchHistory } from '@/lib/hooks/useSearchHistory'
@@ -31,11 +31,20 @@ type SearchResult = {
   url: string
 }
 
+type SearchNoteResult = {
+  id: string
+  title: string
+  context?: string
+  folder?: {
+    name?: string | null
+  } | null
+}
+
 export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<SearchNoteResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [searchMode, setSearchMode] = useState<'normal' | 'regex' | 'semantic'>('normal')
   const [advancedFilters, setAdvancedFilters] = useState<Partial<SearchParams>>({})

@@ -41,6 +41,7 @@ export function ShortcutManager() {
         },
         {
           id: 'new_note',
+          allowInInput: true,
           fn: async () => {
             try {
               const note = await createNote.mutateAsync({

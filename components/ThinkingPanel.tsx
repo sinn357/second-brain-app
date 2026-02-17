@@ -37,11 +37,14 @@ export function ThinkingPanel({ noteId, isOpen, onClose, onNoteClick }: Thinking
   }
 
   useEffect(() => {
-    setSessionId(null)
-    setResults([])
-    setSavingId(null)
-    setSavedIds(new Set())
-    setActiveCommand('connect')
+    const timer = window.setTimeout(() => {
+      setSessionId(null)
+      setResults([])
+      setSavingId(null)
+      setSavedIds(new Set())
+      setActiveCommand('connect')
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [noteId])
 
   const commandMutation = useMutation({

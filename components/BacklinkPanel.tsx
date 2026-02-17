@@ -12,6 +12,13 @@ interface BacklinkPanelProps {
   noteId: string
 }
 
+type BacklinkItem = {
+  id: string
+  title: string
+  mentionCount: number
+  contexts?: string[]
+}
+
 export function BacklinkPanel({ noteId }: BacklinkPanelProps) {
   const [activeTab, setActiveTab] = useState<'backlinks' | 'unlinked'>('backlinks')
   const { data: backlinks = [], isLoading: backlinksLoading, error: backlinksError } = useBacklinks(noteId)
@@ -64,7 +71,7 @@ export function BacklinkPanel({ noteId }: BacklinkPanelProps) {
         </p>
       ) : (
         <div className="space-y-3">
-          {items.map((note: any) => (
+          {items.map((note: BacklinkItem) => (
             <Link key={note.id} href={`/notes?noteId=${note.id}`}>
               <Card className="p-3 hover:bg-gray-50 dark:hover:bg-indigo-900/50 transition-colors cursor-pointer">
                 <div className="flex items-start justify-between mb-2">
@@ -81,7 +88,7 @@ export function BacklinkPanel({ noteId }: BacklinkPanelProps) {
                   <div className="space-y-1">
                     {note.contexts.slice(0, 2).map((context: string, idx: number) => (
                       <p key={idx} className="text-xs text-gray-600 dark:text-gray-400 italic">
-                        "{context}"
+                        &quot;{context}&quot;
                       </p>
                     ))}
                     {note.contexts.length > 2 && (

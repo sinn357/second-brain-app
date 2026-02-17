@@ -12,6 +12,7 @@ import { useSearchHistory } from '@/lib/hooks/useSearchHistory'
 import { SlidersHorizontal, X, Clock } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { Folder, Tag } from '@/lib/contracts/entities'
+import type { SearchHistoryItem } from '@/lib/hooks/useSearchHistory'
 
 interface AdvancedSearchDialogProps {
   children: ReactNode
@@ -70,7 +71,7 @@ export function AdvancedSearchDialog({ children, onSearch }: AdvancedSearchDialo
     setOpen(false)
   }
 
-  const handleHistoryClick = (item: any) => {
+  const handleHistoryClick = (item: SearchHistoryItem) => {
     setQuery(item.query)
     setMode(item.mode || 'normal')
     setFolderId(item.filters?.folderId)
@@ -113,7 +114,10 @@ export function AdvancedSearchDialog({ children, onSearch }: AdvancedSearchDialo
           {/* 검색 모드 */}
           <div className="space-y-2">
             <Label>Search Mode</Label>
-            <Select value={mode} onValueChange={(v) => setMode(v as any)}>
+            <Select
+              value={mode}
+              onValueChange={(v: SearchParams['mode']) => setMode(v)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

@@ -16,6 +16,8 @@ model Note {
   title     String   @db.VarChar(500)
   body      String   @db.Text
   folderId  String?
+  isLocked  Boolean  @default(false)
+  lockHash  String?  @db.VarChar(255)
   isPinned  Boolean  @default(false)
   pinnedAt  DateTime?
   lastOpenedAt DateTime?

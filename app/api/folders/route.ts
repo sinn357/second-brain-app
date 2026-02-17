@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
 import { folderSchema } from '@/lib/validations/folder'
 import { prisma } from '@/lib/db'
+import type { Folder } from '@prisma/client'
+
+type FolderTreeNode = Folder & {
+  children: FolderTreeNode[]
+  _count: {
+    notes: number
+  }
+}
 
 async function ensureDefaultFolder() {
   const existingDefault = await prisma.folder.findFirst({
@@ -69,12 +77,12 @@ export async function GET() {
       }
     })
 
-    const folderMap = new Map(
+    const folderMap = new Map<string, FolderTreeNode>(
       folders.map((folder) => [
         folder.id,
         {
           ...folder,
-          children: [] as any[],
+          children: [],
           _count: { notes: countMap.get(folder.id) ?? 0 },
         },
       ])

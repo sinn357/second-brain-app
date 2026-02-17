@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { openai } from '@/lib/openai'
+import { Prisma } from '@prisma/client'
 
 interface SemanticPick {
   id: string
@@ -31,16 +32,14 @@ export async function GET(request: Request) {
       )
     }
 
-    const whereConditions: any = {
-      AND: [],
-    }
+    const andConditions: Prisma.NoteWhereInput[] = []
 
     if (folderId) {
-      whereConditions.AND.push({ folderId })
+      andConditions.push({ folderId })
     }
 
     if (tagId) {
-      whereConditions.AND.push({
+      andConditions.push({
         tags: {
           some: { tagId },
         },
@@ -48,15 +47,14 @@ export async function GET(request: Request) {
     }
 
     if (dateFrom || dateTo) {
-      const dateFilter: any = {}
+      const dateFilter: Prisma.DateTimeFilter<'Note'> = {}
       if (dateFrom) dateFilter.gte = new Date(dateFrom)
       if (dateTo) dateFilter.lte = new Date(dateTo)
-      whereConditions.AND.push({ createdAt: dateFilter })
+      andConditions.push({ createdAt: dateFilter })
     }
 
-    if (whereConditions.AND.length === 0) {
-      delete whereConditions.AND
-    }
+    const whereConditions: Prisma.NoteWhereInput =
+      andConditions.length > 0 ? { AND: andConditions } : {}
 
     const candidates = await prisma.note.findMany({
       where: whereConditions,
