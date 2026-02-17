@@ -7,12 +7,6 @@
 
 ## 🔜 다음 세션에서 할 일
 
-### Phase 4: lint 정리
-
-```
-lint 13 errors / 27 warnings 일괄 처리
-```
-
 ### Phase 5: 미디어 (저장소 결정 후)
 
 ```
@@ -23,6 +17,18 @@ lint 13 errors / 27 warnings 일괄 처리
 ---
 
 ## ✅ 2026-02-18 완료된 작업
+
+### 배포 핫픽스 ✅
+
+- Vercel 빌드 에러 해결: `Module not found: Can't resolve 'bcryptjs'`
+- 수정: `bcryptjs` 런타임 의존성 추가
+- 커밋: `6b06265`
+
+### lint 정리 (Phase 4) ✅
+
+- Errors: 13 → **0**
+- Warnings: 27 → 24
+- 커밋: `717050c`
 
 ### 옵시디언 차별화 (Phase 3) ✅
 
@@ -124,8 +130,9 @@ lint 13 errors / 27 warnings 일괄 처리
 
 ```
 ✅ Phase 3: Local Graph + Outgoing Links 완료 (옵시디언 95%)
-현재 → Phase 4: lint 13 errors 정리
-     → Phase 5: 미디어 (저장소 결정 후)
+✅ Phase 4: lint 정리 완료 (0 errors)
+✅ Deploy hotfix: bcryptjs 의존성 복구
+현재 → Phase 5: 미디어 (저장소 결정 후)
      → 노션 실시간 협업 (별도 큰 프로젝트)
 ```
 
@@ -134,7 +141,7 @@ lint 13 errors / 27 warnings 일괄 처리
 ## ⚠️ 주의사항
 
 - **빌드**: `npm run build` (webpack 모드)
-- **lint**: 13 errors / 27 warnings 잔여 (Phase 3 후 정리)
+- **lint**: 0 errors / 24 warnings ✅
 - **DB**: 노트 잠금 필드 추가됨 (isLocked, lockHash)
 
 ---
@@ -150,4 +157,4 @@ lint 13 errors / 27 warnings 일괄 처리
 
 ---
 
-**Status**: Phase 3 완료 ✅ → Phase 4 대기 (lint 정리)
+**Status**: Phase 4 완료 ✅ → Phase 5 대기 (미디어)

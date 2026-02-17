@@ -2,6 +2,13 @@
 
 ## 2026-02-18
 
+### Fixed (Deploy Hotfix)
+
+Vercel 프로덕션 빌드 실패 핫픽스 적용
+- 원인: `app/api/notes/[id]/lock/route.ts`에서 사용하는 `bcryptjs` 런타임 의존성 누락
+- 조치: `package.json`, `package-lock.json`에 `bcryptjs` 추가
+- 결과: `npm run build` 로컬 재검증 통과, Vercel 재배포 가능 상태
+
 ### Added (Phase 3: 옵시디언 차별화)
 
 #### Local Graph
@@ -27,6 +34,22 @@
 
 ### 달성도 변화
 - 옵시디언: 92% → **95%**
+
+---
+
+### Fixed (Phase 4: lint 정리)
+
+lint errors 13 → 0 달성
+
+- `components/PropertyPanel.tsx` - any 타입 → 구체적 타입
+- `components/TableView.tsx` - any 타입 → 구체적 타입
+- `components/ShortcutHelpButton.tsx` - useEffect 내 setState 수정
+- `components/SearchHighlight.tsx` - try/catch 내 JSX 구조 개선
+- `lib/thinking/commands.ts` - any 타입 → 구체적 타입
+
+### Commits
+- `717050c`: feat: complete editor/ux parity and phase4 lint cleanup
+- `6b06265`: fix: add bcryptjs runtime dependency
 
 ---
 
