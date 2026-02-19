@@ -3,9 +3,9 @@
 import { useOnlineStatus } from '@/lib/hooks/useOnlineStatus'
 
 export function OfflineBanner() {
-  const isOnline = useOnlineStatus()
+  const { isOnline, isChecking } = useOnlineStatus()
 
-  if (isOnline) return null
+  if (isOnline || isChecking) return null
 
   return (
     <div className="fixed left-0 right-0 top-0 z-[60] bg-amber-400 px-3 py-2 text-center text-xs font-medium text-amber-950">
