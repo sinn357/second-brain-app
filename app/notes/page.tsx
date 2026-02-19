@@ -27,6 +27,7 @@ import { AIResultPanel } from '@/components/AIResultPanel'
 import { NoteLockDialog } from '@/components/NoteLockDialog'
 import { LocalGraph } from '@/components/LocalGraph'
 import { OutgoingLinksPanel } from '@/components/OutgoingLinksPanel'
+import { ExportPdfButton } from '@/components/ExportPdfButton'
 import { useNoteAI } from '@/lib/hooks/useNoteAI'
 import { useNotesSortSetting, useUpdateNotesSortSetting } from '@/lib/hooks/useNotesSortSetting'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -48,6 +49,7 @@ function NotesPageContent() {
   const isAllFolders = folderIdParam === 'all'
   const folderId = !folderIdParam || isAllFolders ? undefined : folderIdParam
   const noteId = searchParams.get('noteId') || undefined
+  const headingParam = searchParams.get('heading') || undefined
   const { data } = useFolders()
   const folders = (data ?? []) as Folder[]
   const { data: note, isLoading: isNoteLoading } = useNote(noteId || '')
@@ -270,6 +272,28 @@ function NotesPageContent() {
       console.error('Update lastOpenedAt error:', error)
     })
   }, [note?.id, noteId, note])
+
+  useEffect(() => {
+    if (!noteId || !note || !headingParam) return
+
+    const timer = setTimeout(() => {
+      const editorRoot = document.querySelector('.ProseMirror')
+      if (!editorRoot) return
+      const headingNodes = editorRoot.querySelectorAll('h1, h2, h3, h4, h5, h6')
+      const target = headingParam.toLowerCase().trim()
+
+      for (const node of headingNodes) {
+        const text = node.textContent?.toLowerCase().trim() ?? ''
+        if (!text) continue
+        if (text.includes(target)) {
+          node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          break
+        }
+      }
+    }, 350)
+
+    return () => clearTimeout(timer)
+  }, [headingParam, note?.id, noteId])
 
   const handleDelete = async () => {
     if (!noteId) return
@@ -1025,6 +1049,9 @@ function NotesPageContent() {
                     </SheetContent>
                   </Sheet>
                 ) : null}
+                {note && !isContentLocked ? (
+                  <ExportPdfButton noteTitle={note.title || 'note'} variant="ghost" size="sm" />
+                ) : null}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1103,23 +1130,6 @@ function NotesPageContent() {
               className="h-7 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:text-red-300"
             >
               재시도
-            </Button>
-          ) : null}
-          {noteId ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (!isLockedNote) {
-                  setLockDialogMode('set')
-                  return
-                }
-                setLockDialogMode(isContentLocked ? 'unlock' : 'remove')
-              }}
-              className="gap-1"
-            >
-              <Lock className="h-4 w-4" />
-              {!isLockedNote ? '잠금' : isContentLocked ? '잠금 해제' : '잠금 제거'}
             </Button>
           ) : null}
         </div>
@@ -1360,6 +1370,9 @@ function NotesPageContent() {
                         </div>
                       </SheetContent>
                     </Sheet>
+                  ) : null}
+                  {noteId && note && !isContentLocked ? (
+                    <ExportPdfButton noteTitle={note.title || 'note'} />
                   ) : null}
                   <Button
                     variant="ghost"

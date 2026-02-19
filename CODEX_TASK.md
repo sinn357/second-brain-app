@@ -1,177 +1,653 @@
-# Codex(X) 작업 지시서
+# Codex(X) 작업 지시서: Obsidian Parity 99%
 
-> **작성일**: 2026-02-18
-> **완료일**: 2026-02-18
+> **작성일**: 2026-02-19
 > **작성자**: Arch (Claude)
-> **상태**: ✅ 완료 (아카이브)
+> **목표**: 옵시디언 95% → 99% 달성
+> **상태**: Ready for X
 
 ---
 
-## 📋 이 문서 상태
+## 📋 Task 목록
 
-본 문서는 **Phase 4 lint 정리 작업 기록**입니다.
-현재는 완료되었고, 다음 실행 기준은 `docs/NEXT_SESSION.md`를 따릅니다.
-
-완료 결과:
-- Errors: 13 → 0
-- Warnings: 27 → 24
-- 후속 핫픽스: `bcryptjs` 런타임 의존성 추가 (`6b06265`)
+| # | Task | 난이도 | 예상 기여도 | 상태 |
+|---|------|:------:|:-----------:|:----:|
+| 1 | 검색 연산자 확장 | 낮 | +1% | |
+| 2 | Periodic Notes (Weekly/Monthly) | 낮 | +1% | |
+| 3 | 헤딩 링크 `[[Note#Heading]]` | 중 | +1% | |
+| 4 | 중첩 태그 `#a/b` | 중 | +1% | |
+| 5 | PDF Export | 중 | +0.5% | |
 
 ---
 
-## 🎯 Error 수정 (13개)
+## Task 1: 검색 연산자 확장
 
-### 1. PropertyPanel.tsx (3 errors)
-`@typescript-eslint/no-explicit-any`
+### 목표
+검색창에서 `tag:태그명`, `path:폴더명`, `file:파일명` 연산자 지원
 
-```tsx
-// 19:12, 43:63, 57:38
-// any → 구체적 타입으로 변경
+### 구현 방법
 
-// 예시: Property 타입 정의
-interface PropertyValue {
-  type: 'text' | 'number' | 'date' | 'select' | 'multi-select' | 'checkbox'
-  value: string | number | Date | string[] | boolean
+**1. 검색 쿼리 파서 추가**
+
+파일: `lib/searchParser.ts` (새 파일)
+
+```typescript
+export interface ParsedQuery {
+  text: string           // 일반 검색어
+  tags: string[]         // tag:xxx
+  paths: string[]        // path:xxx
+  files: string[]        // file:xxx
+}
+
+export function parseSearchQuery(query: string): ParsedQuery {
+  const result: ParsedQuery = { text: '', tags: [], paths: [], files: [] }
+
+  const operatorRegex = /(tag|path|file):(\S+)/gi
+  let match
+
+  let remaining = query
+  while ((match = operatorRegex.exec(query)) !== null) {
+    const [full, operator, value] = match
+    remaining = remaining.replace(full, '')
+
+    switch (operator.toLowerCase()) {
+      case 'tag': result.tags.push(value); break
+      case 'path': result.paths.push(value); break
+      case 'file': result.files.push(value); break
+    }
+  }
+
+  result.text = remaining.trim()
+  return result
 }
 ```
 
-### 2. TableView.tsx (5 errors)
-`@typescript-eslint/no-explicit-any`
+**2. 검색 API 수정**
 
-```tsx
-// 9:11, 22:28, 24:31, 24:56, 29:39
-// Property 관련 any → 구체적 타입으로 변경
-```
+파일: `app/api/notes/search/route.ts`
 
-### 3. ShortcutHelpButton.tsx (1 error)
-`react-hooks/set-state-in-effect`
+```typescript
+import { parseSearchQuery } from '@/lib/searchParser'
 
-```tsx
-// 40:5 - useEffect 내 직접 setState 호출
-// 해결: 초기값으로 설정하거나 useMemo 사용
+// GET 핸들러 내부 (기존 query 파라미터 처리 부분 수정)
+const parsed = parseSearchQuery(query)
 
-// Before
-const [isMac, setIsMac] = useState(false)
-useEffect(() => {
-  setIsMac(navigator.platform.includes('Mac'))
-}, [])
-
-// After (옵션 1: 초기값에서 판단)
-const [isMac] = useState(() =>
-  typeof navigator !== 'undefined' && navigator.platform.includes('Mac')
-)
-
-// After (옵션 2: useMemo)
-const isMac = useMemo(() =>
-  typeof navigator !== 'undefined' && navigator.platform.includes('Mac'),
-  []
-)
-```
-
-### 4. SearchHighlight.tsx (2 errors)
-`react-hooks/error-boundaries`, `react-hooks/missing-return-value`
-
-```tsx
-// 69:5 - try/catch 내 JSX 구성 금지
-// 해결: try/catch를 데이터 처리에만 사용, JSX는 외부에서 구성
-
-// Before
-try {
-  return <span>{/* JSX */}</span>
-} catch (error) {
-  return <span>{text}</span>
+// tag: 연산자
+if (parsed.tags.length > 0) {
+  andConditions.push({
+    tags: {
+      some: {
+        tag: { name: { in: parsed.tags } }
+      }
+    }
+  })
 }
 
-// After
-let segments: Array<{text: string, highlight: boolean}> = []
-try {
-  // 데이터 처리만
-  segments = computeHighlightSegments(text, query)
-} catch {
-  segments = [{text, highlight: false}]
+// path: 연산자
+if (parsed.paths.length > 0) {
+  andConditions.push({
+    folder: {
+      name: { in: parsed.paths, mode: 'insensitive' }
+    }
+  })
 }
-return <span>{segments.map(...)}</span>
+
+// file: 연산자
+if (parsed.files.length > 0) {
+  andConditions.push({
+    OR: parsed.files.map(f => ({
+      title: { contains: f, mode: 'insensitive' }
+    }))
+  })
+}
+
+// 일반 텍스트 검색 (기존 로직 유지하되 parsed.text 사용)
+if (parsed.text && mode === 'normal') {
+  andConditions.push({
+    OR: [
+      { title: { contains: parsed.text, mode: 'insensitive' } },
+      { body: { contains: parsed.text, mode: 'insensitive' } },
+    ]
+  })
+}
 ```
 
-### 5. lib/thinking/commands.ts (1 error)
-`@typescript-eslint/no-explicit-any`
+**3. CommandPalette UI 힌트**
 
-```tsx
-// 251:43
-// any → 구체적 타입으로 변경
+파일: `components/CommandPalette.tsx`
+
+- placeholder 수정: `"검색... (tag:, path:, file: 지원)"`
+
+### 참고 파일
+- `app/api/notes/search/route.ts:28-215` (기존 검색)
+- `lib/filterEngine.ts` (필터 쿼리 빌더)
+- `components/CommandPalette.tsx`
+
+### 테스트 케이스
+```
+tag:프로젝트
+path:Daily Notes
+file:회의록
+tag:중요 path:업무
+검색어 tag:메모
 ```
 
 ---
 
-## ⚠️ Warning 수정 (27개) - 선택적
+## Task 2: Periodic Notes (Weekly/Monthly)
 
-우선순위 높은 것만 처리:
+### 목표
+Daily Notes처럼 Weekly Notes, Monthly Notes 자동 생성
 
-### 높음 (수정 권장)
-- **unused vars** (8개): 사용하지 않는 import/변수 제거
-  - `Card`, `Button` in PropertyPanel.tsx
-  - `error` in 여러 파일
-  - `Suggestion`, `SuggestionProps` in WikiLinkSuggestion.ts
-  - `useCallback` in usePresence.ts
-  - `get` in shortcutStore.ts
-  - `pendingValue` in useDebounce.ts
+### 구현 방법
 
-### 중간 (시간 여유 시)
-- **exhaustive-deps** (10개): 의도적 생략이면 `// eslint-disable-next-line` 추가
+**1. Weekly Notes API**
 
-### 낮음 (무시 가능)
-- **folders logical expression** (6개): 복잡한 리팩토링 필요
-- **incompatible-library** (1개): TanStack Virtual 관련, 무시 가능
+파일: `app/api/weekly-notes/route.ts` (새 파일)
+
+```typescript
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/db'
+import { format, startOfWeek, endOfWeek } from 'date-fns'
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const dateParam = searchParams.get('date')
+    const targetDate = dateParam ? new Date(dateParam) : new Date()
+
+    const weekStart = startOfWeek(targetDate, { weekStartsOn: 1 })
+    const weekEnd = endOfWeek(targetDate, { weekStartsOn: 1 })
+    const weekTitle = `${format(weekStart, 'yyyy-MM-dd')} ~ ${format(weekEnd, 'MM-dd')}`
+
+    let folder = await prisma.folder.findFirst({
+      where: { name: 'Weekly Notes' }
+    })
+    if (!folder) {
+      folder = await prisma.folder.create({
+        data: { name: 'Weekly Notes', position: 1 }
+      })
+    }
+
+    let note = await prisma.note.findFirst({
+      where: { title: weekTitle, folderId: folder.id },
+      include: { folder: true, tags: { include: { tag: true } } }
+    })
+
+    if (!note) {
+      const template = await prisma.template.findFirst({
+        where: { name: 'Weekly Note' }
+      })
+
+      const content = template?.content
+        .replace(/\{\{week_start\}\}/g, format(weekStart, 'yyyy-MM-dd'))
+        .replace(/\{\{week_end\}\}/g, format(weekEnd, 'yyyy-MM-dd'))
+        || `# ${weekTitle}\n\n## Goals\n\n- [ ] \n\n## Review\n\n`
+
+      note = await prisma.note.create({
+        data: { title: weekTitle, body: content, folderId: folder.id },
+        include: { folder: true, tags: { include: { tag: true } } }
+      })
+    }
+
+    return NextResponse.json({ success: true, note })
+  } catch (error) {
+    console.error('GET /api/weekly-notes error:', error)
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
+  }
+}
+```
+
+**2. Monthly Notes API**
+
+파일: `app/api/monthly-notes/route.ts` (새 파일)
+
+```typescript
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/db'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const dateParam = searchParams.get('date')
+    const targetDate = dateParam ? new Date(dateParam) : new Date()
+
+    const monthTitle = format(targetDate, 'yyyy-MM')
+
+    let folder = await prisma.folder.findFirst({
+      where: { name: 'Monthly Notes' }
+    })
+    if (!folder) {
+      folder = await prisma.folder.create({
+        data: { name: 'Monthly Notes', position: 2 }
+      })
+    }
+
+    let note = await prisma.note.findFirst({
+      where: { title: monthTitle, folderId: folder.id },
+      include: { folder: true, tags: { include: { tag: true } } }
+    })
+
+    if (!note) {
+      const template = await prisma.template.findFirst({
+        where: { name: 'Monthly Note' }
+      })
+
+      const content = template?.content
+        .replace(/\{\{month\}\}/g, monthTitle)
+        || `# ${monthTitle}\n\n## Goals\n\n- [ ] \n\n## Review\n\n`
+
+      note = await prisma.note.create({
+        data: { title: monthTitle, body: content, folderId: folder.id },
+        include: { folder: true, tags: { include: { tag: true } } }
+      })
+    }
+
+    return NextResponse.json({ success: true, note })
+  } catch (error) {
+    console.error('GET /api/monthly-notes error:', error)
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
+  }
+}
+```
+
+**3. Weekly 페이지**
+
+파일: `app/weekly/page.tsx` (새 파일)
+
+- `app/daily/page.tsx` 패턴 복사
+- API: `/api/weekly-notes`
+- 이전/다음 주 네비게이션: `addWeeks`, `subWeeks` 사용
+
+**4. Monthly 페이지**
+
+파일: `app/monthly/page.tsx` (새 파일)
+
+- 이전/다음 월 네비게이션: `addMonths`, `subMonths` 사용
+
+**5. 네비게이션 추가**
+
+파일: `components/SidebarNav.tsx`
+
+```typescript
+// Daily Notes 아래에 추가
+{ name: 'Weekly', href: '/weekly', icon: CalendarDaysIcon },
+{ name: 'Monthly', href: '/monthly', icon: CalendarIcon },
+```
+
+### 참고 파일
+- `app/api/daily-notes/route.ts` (패턴 참고)
+- `app/daily/page.tsx` (UI 패턴)
+- `lib/hooks/useDailyNote.ts` (훅 패턴)
 
 ---
 
-## 📁 수정 파일 목록
+## Task 3: 헤딩 링크 `[[Note#Heading]]`
 
-| 파일 | Errors | Warnings |
-|------|--------|----------|
-| `components/PropertyPanel.tsx` | 3 | 2 |
-| `components/TableView.tsx` | 5 | 0 |
-| `components/ShortcutHelpButton.tsx` | 1 | 0 |
-| `components/SearchHighlight.tsx` | 2 | 1 |
-| `lib/thinking/commands.ts` | 1 | 1 |
+### 목표
+`[[노트명#헤딩]]` 형식으로 특정 헤딩으로 직접 링크
+
+### 구현 방법
+
+**1. WikiLink 정규식 수정**
+
+파일: `lib/tiptap-extensions/WikiLink.ts:70`
+
+```typescript
+// 기존
+const regex = /\[\[([^\]]+)\]\]/g
+
+// 변경 (# 뒤 헤딩 캡처)
+const regex = /\[\[([^\]#]+)(?:#([^\]]+))?\]\]/g
+// match[1] = 노트명
+// match[2] = 헤딩 (optional)
+```
+
+**2. 클릭 핸들러 수정**
+
+파일: `lib/tiptap-extensions/WikiLink.ts:101-134`
+
+```typescript
+// foundTitle 처리 부분
+if (foundTitle && this.options.onLinkClick) {
+  // '#' 기준으로 분리
+  const hashIndex = foundTitle.indexOf('#')
+  if (hashIndex > -1) {
+    const noteTitle = foundTitle.substring(0, hashIndex)
+    const heading = foundTitle.substring(hashIndex + 1)
+    this.options.onLinkClick(noteTitle, heading)
+  } else {
+    this.options.onLinkClick(foundTitle)
+  }
+  return true
+}
+```
+
+**3. onLinkClick 타입 수정**
+
+파일: `lib/tiptap-extensions/WikiLink.ts:7`
+
+```typescript
+export interface WikiLinkOptions {
+  HTMLAttributes: Record<string, unknown>
+  onLinkClick?: (title: string, heading?: string) => void  // heading 추가
+}
+```
+
+**4. NoteEditor에서 헤딩 스크롤 처리**
+
+파일: `components/NoteEditor.tsx` (handleWikiLinkClick 부분)
+
+```typescript
+const handleWikiLinkClick = async (title: string, heading?: string) => {
+  // 기존 노트 찾기 로직...
+  const note = await findNoteByTitle(title)
+  if (!note) return
+
+  router.push(`/notes?id=${note.id}`)
+
+  // 헤딩이 있으면 스크롤
+  if (heading) {
+    setTimeout(() => {
+      const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
+      for (const el of headings) {
+        if (el.textContent?.toLowerCase().includes(heading.toLowerCase())) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          break
+        }
+      }
+    }, 500)  // 노트 로드 대기
+  }
+}
+```
+
+### 참고 파일
+- `lib/tiptap-extensions/WikiLink.ts` (메인 수정)
+- `components/NoteEditor.tsx` (클릭 핸들러)
+
+### 주의사항
+- 헤딩에 특수문자 있을 수 있음 → 정규식 이스케이프 고려
+- 헤딩 없으면 기존처럼 노트 상단으로 이동
 
 ---
 
-## ⚠️ 주의사항
+## Task 4: 중첩 태그 `#a/b`
 
-1. **타입 정의**: Property 관련 타입이 여러 파일에서 사용됨 → `lib/types/property.ts` 생성 고려
-2. **기능 유지**: lint 수정으로 기능이 깨지지 않도록 주의
-3. **빌드 테스트**: `npm run build` 확인
-4. **lint 재확인**: `npm run lint` 0 errors 확인
+### 목표
+`#project/personal` 같은 계층적 태그 지원
+
+### 구현 방법
+
+**1. HashTag 정규식 수정**
+
+파일: `lib/tiptap-extensions/HashTag.ts`
+
+```typescript
+// 기존
+const tagRegex = /#[\w가-힣]+/g
+
+// 변경 (슬래시 허용)
+const tagRegex = /#[\w가-힣]+(\/[\w가-힣]+)*/g
+```
+
+**2. 태그 유효성 검사 수정**
+
+파일: `lib/validations/tag.ts`
+
+```typescript
+// 슬래시 허용하도록 스키마 수정
+export const tagNameSchema = z.string()
+  .min(1)
+  .max(100)
+  .regex(/^[\w가-힣]+(\/[\w가-힣]+)*$/, '유효하지 않은 태그명')
+```
+
+**3. 필터 엔진 수정 (하위 태그 포함 검색)**
+
+파일: `lib/filterEngine.ts:272-306`
+
+```typescript
+function buildTagConditionQuery(
+  operator: FilterCondition['operator'],
+  value: unknown
+): Prisma.NoteWhereInput {
+  const safeValue = String(value ?? '')
+
+  switch (operator) {
+    case 'equals':
+    case 'contains':
+      return {
+        tags: {
+          some: {
+            tag: {
+              OR: [
+                { name: { equals: safeValue } },
+                { name: { startsWith: safeValue + '/' } }  // 하위 태그도 매칭
+              ]
+            }
+          }
+        }
+      }
+    // ... 나머지 케이스
+  }
+}
+```
+
+**4. UI 힌트 (선택)**
+
+- 태그 입력 시 `#project/` 입력하면 하위 태그 자동완성 표시
+- 복잡하면 생략 가능
+
+### 참고 파일
+- `lib/tiptap-extensions/HashTag.ts`
+- `lib/validations/tag.ts`
+- `lib/filterEngine.ts:272-306`
+
+### 테스트 케이스
+```
+#project
+#project/personal
+#project/work/urgent
+```
 
 ---
 
-## 🛠️ 시작 명령어
+## Task 5: PDF Export
+
+### 목표
+노트를 PDF로 내보내기
+
+### 구현 방법 (브라우저 print 활용 - 가장 간단)
+
+**1. 의존성 추가**
 
 ```bash
-cd /Users/woocheolshin/Documents/Vibecoding/projects/second-brain-app
-npm run lint
+npm install html2pdf.js
 ```
+
+**2. ExportPdfButton 컴포넌트**
+
+파일: `components/ExportPdfButton.tsx` (새 파일)
+
+```typescript
+'use client'
+
+import { Button } from '@/components/ui/button'
+import { FileDown } from 'lucide-react'
+
+interface ExportPdfButtonProps {
+  noteTitle: string
+  contentElementId?: string
+}
+
+export function ExportPdfButton({
+  noteTitle,
+  contentElementId = 'note-content'
+}: ExportPdfButtonProps) {
+  const handleExport = async () => {
+    const element = document.getElementById(contentElementId)
+    if (!element) return
+
+    const html2pdf = (await import('html2pdf.js')).default
+
+    const opt = {
+      margin: 10,
+      filename: `${noteTitle}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }
+
+    html2pdf().from(element).set(opt).save()
+  }
+
+  return (
+    <Button variant="ghost" size="sm" onClick={handleExport}>
+      <FileDown className="h-4 w-4 mr-1" />
+      PDF
+    </Button>
+  )
+}
+```
+
+**3. 노트 편집기에 버튼 추가**
+
+파일: `components/NoteEditor.tsx` 또는 `NoteEditorAdvanced.tsx`
+
+- 상단 툴바에 `<ExportPdfButton noteTitle={note.title} />` 추가
+- 노트 본문 영역에 `id="note-content"` 추가
+
+**4. 프린트 스타일**
+
+파일: `app/globals.css`
+
+```css
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  #note-content {
+    max-width: 100%;
+    padding: 20px;
+  }
+}
+```
+
+### 참고 파일
+- `app/api/export/markdown/route.ts` (Export 패턴)
+- `components/NoteEditor.tsx`
+
+---
+
+## ⚠️ 공통 주의사항
+
+1. **빌드 확인**: 각 Task 완료 후 `npm run build`
+2. **lint 유지**: 현재 0 errors 상태 유지
+3. **기존 패턴**: 이미 있는 코드 스타일 준수
+4. **타입 안전성**: TypeScript 타입 명시
+5. **에러 핸들링**: try-catch 사용
+
+---
+
+## 📁 파일 구조
+
+```
+새로 만들 파일:
+├── lib/searchParser.ts              # Task 1
+├── app/api/weekly-notes/route.ts    # Task 2
+├── app/api/monthly-notes/route.ts   # Task 2
+├── app/weekly/page.tsx              # Task 2
+├── app/monthly/page.tsx             # Task 2
+├── components/ExportPdfButton.tsx   # Task 5
+
+수정할 파일:
+├── app/api/notes/search/route.ts    # Task 1
+├── components/CommandPalette.tsx    # Task 1
+├── lib/tiptap-extensions/WikiLink.ts        # Task 3
+├── components/NoteEditor.tsx        # Task 3
+├── lib/tiptap-extensions/HashTag.ts # Task 4
+├── lib/validations/tag.ts           # Task 4
+├── lib/filterEngine.ts              # Task 4
+├── components/SidebarNav.tsx        # Task 2
+├── app/globals.css                  # Task 5
+```
+
+---
+
+## ✅ 완료 기준
+
+- [ ] Task 1: `tag:`, `path:`, `file:` 검색 작동
+- [ ] Task 2: `/weekly`, `/monthly` 페이지 작동
+- [ ] Task 3: `[[Note#Heading]]` 클릭 시 헤딩으로 스크롤
+- [ ] Task 4: `#a/b/c` 태그 생성/필터 가능
+- [ ] Task 5: PDF 다운로드 작동
 
 ---
 
 ## ✅ 완료 보고 형식
 
 ```markdown
-✅ Phase 4 완료
+✅ Obsidian Parity 99% 완료
 
-**수정 내역**:
-- Errors: 13 → 0
-- Warnings: 27 → N
-
-**수정된 파일**:
-- path/to/file.ts
+**완료 Task**:
+- [x] Task 1: 검색 연산자
+- [x] Task 2: Periodic Notes
+- [x] Task 3: 헤딩 링크
+- [x] Task 4: 중첩 태그
+- [x] Task 5: PDF Export
 
 **테스트 결과**:
-- npm run lint: 통과
+- npm run lint: 0 errors
 - npm run build: 통과
+
+**수정된 파일 목록**:
+- (파일 리스트)
 ```
 
 ---
 
-**참고**: 다음 작업은 `Phase 5: 미디어 (저장소 결정 후)`입니다.
+## 📞 질문 시
+
+- Arch (Claude)에게 질문
+- 또는 사용자에게 직접 질문
+
+---
+
+**Status**: Ready for X (Codex)
+**이전 작업 (아카이브)**: Phase 4 lint 정리 완료 (2026-02-18)
+
+---
+
+## ✅ X 완료 보고 (2026-02-19)
+
+✅ Obsidian Parity 99% 완료
+
+**완료 Task**:
+- [x] Task 1: 검색 연산자
+- [x] Task 2: Periodic Notes
+- [x] Task 3: 헤딩 링크
+- [x] Task 4: 중첩 태그
+- [x] Task 5: PDF Export
+
+**테스트 결과**:
+- npm run lint: 0 errors (warnings only)
+- npm run build: 통과
+
+**수정된 파일 목록**:
+- app/notes/page.tsx
+- lib/searchParser.ts
+- app/api/notes/search/route.ts
+- components/CommandPalette.tsx
+- app/api/weekly-notes/route.ts
+- app/api/monthly-notes/route.ts
+- app/weekly/page.tsx
+- app/monthly/page.tsx
+- components/AppMenuSheet.tsx
+- components/SidebarNav.tsx
+- lib/tiptap-extensions/WikiLink.ts
+- components/NoteEditorAdvanced.tsx
+- lib/tiptap-extensions/HashTag.ts
+- lib/validations/tag.ts
+- lib/filterEngine.ts
+- components/ExportPdfButton.tsx
+- app/globals.css

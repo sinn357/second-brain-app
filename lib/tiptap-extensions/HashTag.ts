@@ -68,7 +68,7 @@ export const HashTag = Mark.create<HashTagOptions>({
 
               const text = node.text || ''
               // #로 시작하고 공백 전까지가 태그 (영문, 한글, 숫자, _ 허용)
-              const regex = /#([\w가-힣_]+)/g
+              const regex = /#([\w가-힣_]+(?:\/[\w가-힣_]+)*)/g
               let match
 
               while ((match = regex.exec(text)) !== null) {
@@ -94,7 +94,7 @@ export const HashTag = Mark.create<HashTagOptions>({
             if (node.isText) {
               const text = node.text || ''
               const offset = $pos.parentOffset
-              const regex = /#([\w가-힣_]+)/g
+              const regex = /#([\w가-힣_]+(?:\/[\w가-힣_]+)*)/g
               let match
 
               while ((match = regex.exec(text)) !== null) {

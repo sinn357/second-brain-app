@@ -12,6 +12,8 @@ import {
   Search,
   Settings,
   Table,
+  CalendarDays,
+  Calendar,
   Moon,
   Sun,
   Menu,
@@ -23,6 +25,9 @@ import { useTheme } from '@/lib/hooks/useTheme'
 
 const primaryItems = [
   { href: '/notes', label: 'Notes', icon: FileText },
+  { href: '/daily', label: 'Daily', icon: CalendarDays },
+  { href: '/weekly', label: 'Weekly', icon: CalendarDays },
+  { href: '/monthly', label: 'Monthly', icon: Calendar },
   { href: '/graph', label: 'Graph', icon: Network },
   { href: '/templates', label: 'Templates', icon: LayoutTemplate },
   { href: '/db', label: 'Database', icon: Table },

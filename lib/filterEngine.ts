@@ -281,7 +281,12 @@ function buildTagConditionQuery(
       return {
         tags: {
           some: {
-            tag: { name: { equals: safeValue } },
+            tag: {
+              OR: [
+                { name: { equals: safeValue } },
+                { name: { startsWith: `${safeValue}/` } },
+              ],
+            },
           },
         },
       }
@@ -291,7 +296,12 @@ function buildTagConditionQuery(
         NOT: {
           tags: {
             some: {
-              tag: { name: { equals: safeValue } },
+              tag: {
+                OR: [
+                  { name: { equals: safeValue } },
+                  { name: { startsWith: `${safeValue}/` } },
+                ],
+              },
             },
           },
         },

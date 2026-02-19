@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { Prisma } from '@prisma/client'
+import { parseSearchQuery } from '@/lib/searchParser'
 
 // 검색어 주변 컨텍스트 추출 (50자)
 function extractContext(text: string, query: string, contextLength = 50): string {
@@ -59,15 +60,52 @@ export async function GET(request: Request) {
       )
     }
 
+    const parsedQuery = parseSearchQuery(query)
+
     // 필터 조건 구성
     const andConditions: Prisma.NoteWhereInput[] = []
 
-    // 검색 조건 (정규식 모드는 나중에 JavaScript로 필터링)
-    if (mode === 'normal') {
+    // tag: 연산자
+    if (parsedQuery.tags.length > 0) {
+      andConditions.push({
+        tags: {
+          some: {
+            tag: {
+              name: { in: parsedQuery.tags },
+            },
+          },
+        },
+      })
+    }
+
+    // path: 연산자
+    if (parsedQuery.paths.length > 0) {
+      andConditions.push({
+        OR: parsedQuery.paths.map((path) => ({
+          folder: {
+            is: {
+              name: { contains: path, mode: 'insensitive' },
+            },
+          },
+        })),
+      })
+    }
+
+    // file: 연산자
+    if (parsedQuery.files.length > 0) {
+      andConditions.push({
+        OR: parsedQuery.files.map((file) => ({
+          title: { contains: file, mode: 'insensitive' },
+        })),
+      })
+    }
+
+    // 일반 텍스트 검색 (정규식 모드는 나중에 JavaScript로 필터링)
+    if (parsedQuery.text && mode === 'normal') {
       andConditions.push({
         OR: [
-          { title: { contains: query, mode: 'insensitive' } },
-          { body: { contains: query, mode: 'insensitive' } },
+          { title: { contains: parsedQuery.text, mode: 'insensitive' } },
+          { body: { contains: parsedQuery.text, mode: 'insensitive' } },
         ],
       })
     }
@@ -152,8 +190,11 @@ export async function GET(request: Request) {
 
     // 정규식 검색 모드
     if (mode === 'regex') {
+      if (!parsedQuery.text) {
+        notes = notes.slice(0, 20)
+      } else {
       try {
-        const regex = new RegExp(query, 'i')
+          const regex = new RegExp(parsedQuery.text, 'i')
         notes = notes.filter(
           (note) => regex.test(note.title) || regex.test(note.body)
         ).slice(0, 20)
@@ -162,6 +203,7 @@ export async function GET(request: Request) {
           { success: false, error: '잘못된 정규식입니다' },
           { status: 400 }
         )
+      }
       }
     }
 
@@ -188,11 +230,13 @@ export async function GET(request: Request) {
       })
     }
 
+    const contextQuery = parsedQuery.text || parsedQuery.files[0] || query
+
     // 검색 결과에 컨텍스트 추가
     const notesWithContext = notes.map((note) => ({
       ...note,
-      context: extractContext(note.body, query),
-      matchInTitle: note.title.toLowerCase().includes(query.toLowerCase()),
+      context: extractContext(note.body, contextQuery),
+      matchInTitle: note.title.toLowerCase().includes(contextQuery.toLowerCase()),
     }))
 
     if (!hasSort) {

@@ -121,17 +121,26 @@ export function NoteEditorAdvanced({
   }, [creatingLinkTitle])
 
   const handleWikiLinkClick = useCallback(
-    async (title: string) => {
+    async (title: string, heading?: string) => {
       const matches = notesRef.current.filter((note) => note.title === title)
       if (matches.length === 1) {
-        router.push(`/notes?noteId=${matches[0].id}`)
+        const noteId = matches[0].id
+        if (heading) {
+          router.push(`/notes?noteId=${noteId}&heading=${encodeURIComponent(heading)}`)
+        } else {
+          router.push(`/notes?noteId=${noteId}`)
+        }
         return
       }
 
       if (matches.length > 1) {
         const sameFolder = matches.find((note) => note.folderId === currentFolderId)
         if (sameFolder) {
-          router.push(`/notes?noteId=${sameFolder.id}`)
+          if (heading) {
+            router.push(`/notes?noteId=${sameFolder.id}&heading=${encodeURIComponent(heading)}`)
+          } else {
+            router.push(`/notes?noteId=${sameFolder.id}`)
+          }
           return
         }
         setLinkChoices({ title, candidates: matches })
@@ -148,7 +157,11 @@ export function NoteEditorAdvanced({
           folderId: currentFolderId ?? null,
         })
         toast.success(`"${title}" 노트를 생성했습니다`)
-        router.push(`/notes?noteId=${newNote.id}`)
+        if (heading) {
+          router.push(`/notes?noteId=${newNote.id}&heading=${encodeURIComponent(heading)}`)
+        } else {
+          router.push(`/notes?noteId=${newNote.id}`)
+        }
       } catch (error) {
         console.error('Create note from link failed:', error)
         toast.error(`"${title}" 노트 생성에 실패했습니다`)
@@ -282,6 +295,7 @@ export function NoteEditorAdvanced({
     content: getEditorContent(content),
     editorProps: {
       attributes: {
+        id: 'note-content',
         class: 'note-content max-w-none focus:outline-none min-h-[60vh] px-0 py-6',
       },
     },
@@ -390,9 +404,10 @@ export function NoteEditorAdvanced({
       const linkEl = element?.closest('.wiki-link-decoration') as HTMLElement | null
       if (!linkEl) return
       const title = linkEl.getAttribute('data-title')
+      const heading = linkEl.getAttribute('data-heading') ?? undefined
       if (title) {
         event.preventDefault()
-        void handleWikiLinkClick(title)
+        void handleWikiLinkClick(title, heading)
       }
     }
 

@@ -237,7 +237,7 @@ export function CommandPalette() {
           <div className="flex items-center border-b px-3">
             <Search className="h-4 w-4 mr-2 text-gray-500" />
             <Input
-              placeholder="Search notes, tags, folders..."
+              placeholder="검색... (tag:, path:, file: 지원)"
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value)
