@@ -618,6 +618,17 @@ function NotesPageContent() {
     window.localStorage.setItem('noteViewMode', viewMode)
   }, [viewMode])
 
+  useEffect(() => {
+    const savedListCollapsed = window.localStorage.getItem('noteListCollapsed')
+    if (savedListCollapsed === 'true') {
+      setIsListCollapsed(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    window.localStorage.setItem('noteListCollapsed', String(isListCollapsed))
+  }, [isListCollapsed])
+
   const isLockedNote = Boolean(note?.isLocked)
   const isNoteUnlocked = noteId ? Boolean(unlockedNotes[noteId]) : false
   const isContentLocked = isLockedNote && !isNoteUnlocked
@@ -836,6 +847,19 @@ function NotesPageContent() {
                     <LayoutGrid className="h-4 w-4" />
                   </Button>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsListCollapsed((prev) => !prev)}
+                  className="h-8 w-8 text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+                  aria-label={isListCollapsed ? '노트 목록 펼치기' : '노트 목록 접기'}
+                >
+                  {isListCollapsed ? (
+                    <ChevronRight className="h-4 w-4" />
+                  ) : (
+                    <ChevronLeft className="h-4 w-4" />
+                  )}
+                </Button>
                 {/* 폴더 Bottom Sheet */}
                 <Sheet>
                   <SheetTrigger asChild>
@@ -857,7 +881,19 @@ function NotesPageContent() {
             </div>
             {/* 노트 리스트 (스와이프 삭제 지원) */}
             <div className="p-4">
-              {viewMode === 'list' ? (
+              {isListCollapsed ? (
+                <div className="panel-soft flex min-h-[35vh] items-center justify-center rounded-xl border border-indigo-200/60 dark:border-indigo-700/40">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsListCollapsed(false)}
+                    className="text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+                    aria-label="노트 목록 펼치기"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </div>
+              ) : viewMode === 'list' ? (
                 <NoteList
                   folderId={isAllFolders ? undefined : selectedFolderId}
                   selectedId={noteId}
