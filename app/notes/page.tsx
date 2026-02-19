@@ -1138,7 +1138,7 @@ function NotesPageContent() {
                   </h1>
                   <p className="page-subtitle whitespace-normal">노트를 빠르게 탐색하고 연결하세요.</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 pr-2">
                   <Select value={sortBy} onValueChange={handleSortChange}>
                     <SelectTrigger className="w-36 text-xs">
                       <SelectValue placeholder="정렬" />
@@ -1183,7 +1183,7 @@ function NotesPageContent() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setIsListCollapsed(true)}
-                    className="text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+                    className="relative z-10 h-9 w-9 shrink-0 text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
                     aria-label="노트 목록 접기"
                   >
                     <ChevronLeft className="h-4 w-4" />
