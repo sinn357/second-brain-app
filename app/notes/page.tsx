@@ -38,8 +38,6 @@ const MIN_LIST_WIDTH = 240
 const MIN_EDITOR_WIDTH = 360
 const RESIZE_HANDLE_WIDTH = 6
 const COLLAPSED_COLUMN_WIDTH = 56
-const MAX_LIST_WIDTH_RATIO = 0.5
-const RESIZE_HANDLE_TOP_GAP = 168
 type ViewMode = 'list' | 'gallery'
 type LockDialogMode = 'set' | 'unlock' | 'remove' | null
 
@@ -754,10 +752,8 @@ function NotesPageContent() {
         return Math.min(max, Math.max(min, value))
       }
 
-      const maxByEditor =
+      const maxList =
         containerWidth - MIN_EDITOR_WIDTH - RESIZE_HANDLE_WIDTH
-      const maxByRatio = Math.floor(containerWidth * MAX_LIST_WIDTH_RATIO)
-      const maxList = Math.min(maxByEditor, maxByRatio)
       setListWidth(clampWithin(resizeState.startList + delta, MIN_LIST_WIDTH, maxList))
     }
 
@@ -775,21 +771,6 @@ function NotesPageContent() {
       window.removeEventListener('mouseup', handleMouseUp)
     }
   }, [listWidth])
-
-  useEffect(() => {
-    const clampOnResize = () => {
-      const containerWidth = desktopGridRef.current?.clientWidth ?? 0
-      if (!containerWidth) return
-      const maxByEditor = containerWidth - MIN_EDITOR_WIDTH - RESIZE_HANDLE_WIDTH
-      const maxByRatio = Math.floor(containerWidth * MAX_LIST_WIDTH_RATIO)
-      const maxList = Math.max(MIN_LIST_WIDTH, Math.min(maxByEditor, maxByRatio))
-      setListWidth((prev) => Math.min(prev, maxList))
-    }
-
-    clampOnResize()
-    window.addEventListener('resize', clampOnResize)
-    return () => window.removeEventListener('resize', clampOnResize)
-  }, [])
 
   const startResize = (type: 'list') => (event: React.MouseEvent) => {
     event.preventDefault()
@@ -1137,13 +1118,7 @@ function NotesPageContent() {
         }}
       >
         {/* 중앙: 노트 리스트 */}
-        <section
-          className={
-            isListCollapsed
-              ? 'm-2 flex items-center justify-center rounded-2xl border border-indigo-200/60 bg-white/70 p-2 shadow-sm backdrop-blur-sm dark:border-indigo-700/40 dark:bg-indigo-950/40'
-              : 'relative m-2 rounded-2xl border border-indigo-200/60 bg-white/70 p-3 pr-12 shadow-sm backdrop-blur-sm dark:border-indigo-700/40 dark:bg-indigo-950/40'
-          }
-        >
+        <section className={isListCollapsed ? 'p-2 flex items-center justify-center' : 'relative p-3 pr-12'}>
           {isListCollapsed ? (
             <Button
               variant="ghost"
@@ -1237,20 +1212,19 @@ function NotesPageContent() {
         </section>
 
         {/* 리사이즈 핸들: 노트 리스트 */}
-        <div className="group relative">
+        <div className="group">
           <div
             onMouseDown={startResize('list')}
             role="separator"
             aria-orientation="vertical"
-            className="absolute inset-x-0 bottom-0 mx-auto w-1 cursor-col-resize"
-            style={{ top: `${RESIZE_HANDLE_TOP_GAP}px` }}
+            className="mx-auto mt-24 h-[calc(100%-6rem)] w-full cursor-col-resize"
           >
             <div className="mx-auto h-full w-px bg-indigo-200/70 dark:bg-indigo-700/60 group-hover:bg-indigo-400/80 transition-colors" />
           </div>
         </div>
 
         {/* 우측: 노트 편집 */}
-        <section className="m-2 min-h-[600px] rounded-2xl border border-indigo-200/60 bg-white/70 px-8 py-6 shadow-sm backdrop-blur-sm dark:border-indigo-700/40 dark:bg-indigo-950/35">
+        <section className="px-10 py-8 min-h-[600px]">
           {!noteId ? (
             <div className="h-full flex items-center justify-center text-indigo-600 dark:text-indigo-300">
               오른쪽에서 편집할 노트를 선택하세요.
