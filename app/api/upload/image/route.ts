@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { uploadImage } from '@/lib/cloudinary'
 
+export const runtime = 'nodejs'
+
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024
 
 export async function POST(request: Request) {
@@ -41,8 +43,9 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('POST /api/upload/image error:', error)
+    const message = error instanceof Error ? error.message : 'Upload failed'
     return NextResponse.json(
-      { success: false, error: 'Upload failed' },
+      { success: false, error: message },
       { status: 500 }
     )
   }

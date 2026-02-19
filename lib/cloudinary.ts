@@ -1,5 +1,20 @@
 import { v2 as cloudinary } from 'cloudinary'
 
+function getMissingCloudinaryEnv(): string[] {
+  const missing: string[] = []
+  if (!process.env.CLOUDINARY_CLOUD_NAME) missing.push('CLOUDINARY_CLOUD_NAME')
+  if (!process.env.CLOUDINARY_API_KEY) missing.push('CLOUDINARY_API_KEY')
+  if (!process.env.CLOUDINARY_API_SECRET) missing.push('CLOUDINARY_API_SECRET')
+  return missing
+}
+
+function ensureCloudinaryConfigured() {
+  const missing = getMissingCloudinaryEnv()
+  if (missing.length > 0) {
+    throw new Error(`Cloudinary env missing: ${missing.join(', ')}`)
+  }
+}
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -25,6 +40,7 @@ export async function uploadImage(
     maxHeight?: number
   }
 ): Promise<UploadResult> {
+  ensureCloudinaryConfigured()
   const { folder = 'second-brain', maxWidth = 1920, maxHeight = 1080 } = options || {}
 
   return new Promise((resolve, reject) => {
@@ -40,7 +56,7 @@ export async function uploadImage(
         },
         (error, result) => {
           if (error || !result) {
-            reject(error || new Error('Upload failed'))
+            reject(new Error(error?.message || 'Upload failed'))
             return
           }
 
@@ -63,6 +79,7 @@ export async function uploadFile(
   filename: string,
   options?: { folder?: string }
 ): Promise<UploadResult> {
+  ensureCloudinaryConfigured()
   const { folder = 'second-brain/files' } = options || {}
 
   return new Promise((resolve, reject) => {
@@ -77,7 +94,7 @@ export async function uploadFile(
         },
         (error, result) => {
           if (error || !result) {
-            reject(error || new Error('Upload failed'))
+            reject(new Error(error?.message || 'Upload failed'))
             return
           }
 
