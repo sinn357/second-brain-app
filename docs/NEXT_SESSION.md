@@ -1,148 +1,156 @@
 # Next Session Guide
 
-**업데이트**: 2026-02-18
-**목적**: 다음 세션에서 바로 작업 가능한 가이드
+**업데이트**: 2026-02-19
+**목적**: v0.1 출시를 위한 작업 가이드
+**상세 로드맵**: `V01_LAUNCH_ROADMAP.md`
 
 ---
 
-## 🔜 다음 세션에서 할 일
+## 🎯 v0.1 출시 목표
 
-### Phase 5: 미디어 (저장소 결정 후)
+**"AI가 당신의 생각을 연결하고, 새로운 아이디어를 창조합니다"**
 
-```
-- 이미지 첨부
-- YouTube 임베드
-```
+타겟: 연구자, 개발자, 작가, 기획자 (아이디어가 필요한 사람들)
 
 ---
 
-## ✅ 2026-02-18 완료된 작업
+## 📊 현재 달성도 (2026-02-19)
 
-### 배포 핫픽스 ✅
-
-- Vercel 빌드 에러 해결: `Module not found: Can't resolve 'bcryptjs'`
-- 수정: `bcryptjs` 런타임 의존성 추가
-- 커밋: `6b06265`
-
-### lint 정리 (Phase 4) ✅
-
-- Errors: 13 → **0**
-- Warnings: 27 → 24
-- 커밋: `717050c`
-
-### 옵시디언 차별화 (Phase 3) ✅
-
-1. **Local Graph**
-   - 현재 노트 중심 incoming/outgoing 링크 미니 그래프 (D3)
-   - 노드 클릭 시 해당 노트로 이동
-   - 파일: `components/LocalGraph.tsx`, `app/api/notes/[id]/graph/route.ts`
-
-2. **Outgoing Links 패널**
-   - 현재 노트가 링크한 노트 목록
-   - 실제 연결된 노트 + 미생성 링크 분리 표시
-   - 미생성 링크 "생성" 버튼으로 즉시 노트 생성
-   - 파일: `components/OutgoingLinksPanel.tsx`, `app/api/notes/[id]/outgoing/route.ts`
-
-3. **Notes 화면 통합**
-   - 모바일/데스크톱 편집 영역 하단에 LocalGraph, OutgoingLinksPanel 배치
+| 앱 | 달성도 | v0.1 후 예상 |
+|----|:------:|:-----------:|
+| 애플 메모 | **98%** | 100% |
+| 옵시디언 | **99%** | 99.5% |
+| 노션 | **77%** | 85% |
 
 ---
 
-## ✅ 2026-02-17 완료된 작업
+## 🔴 v0.1 필수 작업
 
-### 에디터 맥시마이징 (Phase 1~3)
-- 하이라이트 (다중 색상) ✅
-- 텍스트 색상 ✅
-- 텍스트 정렬 (좌/중/우) ✅
-- 밑줄/취소선 UI 버튼 ✅
-- 코드블록 구문 강조 (lowlight) ✅
-- 콜아웃 (info/warning) ✅
-- 토글 (접기 섹션) ✅
-- 수학 수식 (KaTeX) ✅
-- 목차 (TOC) ✅
+### 1. 미디어 기능 (최우선)
 
-### 공통 UX (Phase 1)
-- Cmd+N 전역 단축키 ✅
-- 저장 상태 표시 강화 (saving/saved/error) ✅
-- 오프라인 모드 (next-pwa) ✅
-- 오프라인 배너 + /offline 페이지 ✅
+**저장소**: Cloudinary (서버 업로드 API 적용)
 
-### 애플 메모 차별화 (Phase 2)
-- 갤러리 뷰 (노트 썸네일 그리드) ✅
-- 노트 잠금 (비밀번호, bcrypt) ✅
-- 잠긴 노트 본문 마스킹 ✅
-- lockHash 클라이언트 비노출 ✅
+| Task | 상태 | 담당 |
+|------|:----:|:----:|
+| Cloudinary 설정 | ✅ | X |
+| 이미지 업로드 API | ✅ | X |
+| Tiptap 이미지 확장 | ✅ | X |
+| 이미지 드래그&드롭/붙여넣기 | ✅ | X |
+| 파일 첨부 | ✅ | X |
+| 링크 미리보기 (OG) | ✅ | X |
+| 업로드 진단/에러 메시지 개선 | ✅ | X |
 
-### lint 정리
-- 73 errors → 13 errors
-- lib/filterEngine.ts, lib/ai/service.ts 타입 정의
-- tiptap-extensions 폴더 no-explicit-any 예외 처리
+### 2. 안정성 테스트
 
-### 결정사항
-- webpack 빌드 유지 (next-pwa가 Turbopack 미지원)
-- 노트 잠금은 UX 레벨 보호 유지 (서버 세션 기반 차단 안 함)
-- 미디어 기능은 후순위 (저장소 결정 후)
+| Task | 상태 |
+|------|:----:|
+| 전체 기능 수동 테스트 | ❌ |
+| 에러 시나리오 테스트 | ❌ |
+| 모바일 UI 검증 | ❌ |
+| 성능 테스트 (1000 노트) | ❌ |
+
+### 3. UX 보강
+
+| Task | 상태 |
+|------|:----:|
+| 로딩 상태 일관성 | ⚠️ |
+| 빈 상태 UI | ⚠️ |
+| 에러 메시지 사용자 친화적 | ⚠️ |
 
 ---
 
-## 📊 현재 달성도 (2026-02-18)
+## 🟡 v0.1 권장 작업
 
-| 앱 | 달성도 | 변화 | 남은 것 |
-|----|--------|------|---------|
-| 애플 메모 | **98%** | - | 미디어만 |
-| 옵시디언 | **95%** | +3% | 플러그인 시스템 |
-| 노션 | **77%** | - | 실시간 협업 |
+### 4. 온보딩
 
----
+| Task | 상태 |
+|------|:----:|
+| 첫 방문 가이드 (3-5단계) | ❌ |
+| 샘플 노트 3-5개 | ❌ |
+| 기능 툴팁 | ❌ |
 
-## 📁 주요 변경 파일
+### 5. 타겟별 템플릿
 
-### 옵시디언 Phase 3 (2026-02-18)
-- `components/LocalGraph.tsx`
-- `components/OutgoingLinksPanel.tsx`
-- `app/api/notes/[id]/graph/route.ts`
-- `app/api/notes/[id]/outgoing/route.ts`
-- `lib/hooks/useNotes.ts` (useLocalGraph, useOutgoingLinks)
-- `app/notes/page.tsx`
+| 템플릿 | 타겟 | 상태 |
+|--------|------|:----:|
+| Daily/Weekly/Monthly | 공통 | ✅ |
+| 연구 노트 | 연구자 | ❌ |
+| 프로젝트 노트 | 기획자 | ❌ |
+| 아이디어 노트 | 작가 | ❌ |
 
-### 에디터
-- `components/NoteEditor.tsx`
-- `components/NoteEditorAdvanced.tsx`
-- `lib/tiptap-extensions/Callout.ts`
-- `lib/tiptap-extensions/ToggleBlock.ts`
+### 6. 모니터링
 
-### 공통 UX
-- `components/ShortcutManager.tsx` (Cmd+N)
-- `components/OfflineBanner.tsx`
-- `lib/hooks/useOnlineStatus.ts`
-- `app/offline/page.tsx`
-- `next.config.ts` (next-pwa)
+| Task | 상태 |
+|------|:----:|
+| Sentry 연동 | ❌ |
+| 에러 알림 (Slack) | ❌ |
 
-### 애플 메모
-- `components/NoteGallery.tsx`
-- `components/NoteLockDialog.tsx`
-- `app/api/notes/[id]/lock/route.ts`
-- `prisma/schema.prisma` (isLocked, lockHash)
+### 7. 랜딩 페이지
+
+| Task | 상태 |
+|------|:----:|
+| 히어로 + 가치 제안 | ❌ |
+| 기능 소개 | ❌ |
+| 데모 GIF/영상 | ❌ |
 
 ---
 
-## 🔜 다음 작업 로드맵
+## ✅ 2026-02-19 완료된 작업
 
-```
-✅ Phase 3: Local Graph + Outgoing Links 완료 (옵시디언 95%)
-✅ Phase 4: lint 정리 완료 (0 errors)
-✅ Deploy hotfix: bcryptjs 의존성 복구
-현재 → Phase 5: 미디어 (저장소 결정 후)
-     → 노션 실시간 협업 (별도 큰 프로젝트)
-```
+### 옵시디언 99% 달성 (X 작업)
+
+- [x] 검색 연산자 (tag:, path:, file:)
+- [x] Periodic Notes (Weekly/Monthly)
+- [x] 헤딩 링크 [[Note#Heading]]
+- [x] 중첩 태그 #a/b
+- [x] PDF Export
+
+### 문서 정리
+
+- [x] OBSIDIAN_PARITY.md 업데이트 (99%)
+- [x] APPLE_NOTES_PARITY.md 업데이트 (98%)
+- [x] NOTION_PARITY.md 신규 작성 (77%)
+- [x] V01_LAUNCH_ROADMAP.md 신규 작성
+
+### 미디어 기능 완료 (X 작업)
+
+- [x] Cloudinary 서버 업로드 API (`/api/upload/image`, `/api/upload/file`)
+- [x] Tiptap 이미지/파일/링크 미리보기 extension 통합
+- [x] 이미지 드래그&드롭 + 붙여넣기 업로드
+- [x] 파일 첨부 노드 렌더링
+- [x] URL OG 미리보기 카드 삽입
+- [x] Cloudinary env fallback/진단 메시지 개선
 
 ---
 
-## ⚠️ 주의사항
+## 🚫 v0.1 이후 (Not Now)
 
-- **빌드**: `npm run build` (webpack 모드)
-- **lint**: 0 errors / 24 warnings ✅
-- **DB**: 노트 잠금 필드 추가됨 (isLocked, lockHash)
+| 기능 | 예상 버전 |
+|------|----------|
+| 플러그인 시스템 | v1.0+ |
+| 실시간 협업 | v0.5+ |
+| 팀 워크스페이스 | v0.5+ |
+| 퍼블릭 페이지 공유 | v0.3 |
+| Board View (Kanban) | v0.2 |
+
+---
+
+## 📁 주요 문서 위치
+
+| 문서 | 경로 |
+|------|------|
+| v0.1 로드맵 | `docs/V01_LAUNCH_ROADMAP.md` |
+| 옵시디언 분석 | `docs/OBSIDIAN_PARITY.md` |
+| 애플 메모 분석 | `docs/APPLE_NOTES_PARITY.md` |
+| 노션 분석 | `docs/NOTION_PARITY.md` |
+
+---
+
+## ⚠️ 의사결정 필요
+
+1. **Cloudinary 운영 정책** — 폴더 구조/삭제 정책/비용 상한
+2. **출시 타겟 날짜** — 언제까지?
+3. **베타 테스터** — 누구에게 먼저?
 
 ---
 
@@ -157,4 +165,5 @@
 
 ---
 
-**Status**: Phase 4 완료 ✅ → Phase 5 대기 (미디어)
+**Status**: v0.1 출시 준비 중
+**다음 작업**: 안정성 테스트 + 모바일 UI 검증
