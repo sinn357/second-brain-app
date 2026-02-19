@@ -25,10 +25,16 @@ import { WikiLinkAutocomplete } from '@/lib/tiptap-extensions/WikiLinkAutocomple
 import { VimMode } from '@/lib/tiptap-extensions/VimMode'
 import { Callout } from '@/lib/tiptap-extensions/Callout'
 import { ToggleBlock } from '@/lib/tiptap-extensions/ToggleBlock'
+import { ResizableImage } from '@/lib/tiptap-extensions/ResizableImage'
+import { FileAttachment } from '@/lib/tiptap-extensions/FileAttachment'
+import { LinkPreview } from '@/lib/tiptap-extensions/LinkPreview'
 import { useEditorStore } from '@/lib/stores/editorStore'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useCreateNote, useNotes } from '@/lib/hooks/useNotes'
 import { useCreateTag } from '@/lib/hooks/useTags'
+import { useImageUpload } from '@/lib/hooks/useImageUpload'
+import { useFileUpload } from '@/lib/hooks/useFileUpload'
+import { useOgPreview } from '@/lib/hooks/useOgPreview'
 import { useRouter } from 'next/navigation'
 import tippy, { Instance as TippyInstance } from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
@@ -65,6 +71,8 @@ import {
   Sigma,
   SlidersHorizontal,
   X,
+  ImagePlus,
+  Paperclip,
 } from 'lucide-react'
 
 const lowlight = createLowlight(common)
@@ -109,8 +117,13 @@ export function NoteEditorAdvanced({
   const [isMobileToolbarOpen, setIsMobileToolbarOpen] = useState(false)
   const lastSyncedMarkdown = useRef<string | null>(null)
   const { vimMode } = useEditorStore()
+  const { uploadImage, isUploading: isImageUploading } = useImageUpload()
+  const { uploadFile, isUploading: isFileUploading } = useFileUpload()
+  const { fetchOg, isLoading: isOgLoading } = useOgPreview()
   const notesRef = useRef(allNotes)
   const creatingLinkRef = useRef<string | null>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     notesRef.current = allNotes
@@ -259,6 +272,12 @@ export function NoteEditorAdvanced({
       TableRow,
       TableHeader,
       TableCell,
+      ResizableImage.configure({
+        inline: false,
+        allowBase64: false,
+      }),
+      FileAttachment,
+      LinkPreview,
       Callout,
       ToggleBlock,
       Placeholder.configure({
@@ -313,6 +332,82 @@ export function NoteEditorAdvanced({
       setTocHeadings(buildTocHeadings(editor))
     },
   })
+
+  const insertImage = useCallback(
+    async (file: File) => {
+      if (!editor) return false
+      if (!file.type.startsWith('image/')) return false
+
+      const result = await uploadImage(file)
+      if (!result) {
+        toast.error('이미지 업로드에 실패했습니다')
+        return false
+      }
+
+      editor
+        .chain()
+        .focus()
+        .setImage({
+          src: result.url,
+          width: result.width || undefined,
+          height: result.height || undefined,
+          publicId: result.publicId,
+        })
+        .run()
+
+      return true
+    },
+    [editor, uploadImage]
+  )
+
+  const insertFile = useCallback(
+    async (file: File) => {
+      if (!editor) return false
+
+      const result = await uploadFile(file)
+      if (!result) {
+        toast.error('파일 업로드에 실패했습니다')
+        return false
+      }
+
+      editor
+        .chain()
+        .focus()
+        .setFileAttachment({
+          url: result.url,
+          filename: result.filename,
+          bytes: result.bytes,
+          publicId: result.publicId,
+        })
+        .run()
+
+      return true
+    },
+    [editor, uploadFile]
+  )
+
+  const insertLinkPreview = useCallback(
+    async (url: string) => {
+      if (!editor) return false
+      const og = await fetchOg(url)
+      if (!og) return false
+
+      editor
+        .chain()
+        .focus()
+        .setLinkPreview({
+          url: og.url,
+          title: og.title,
+          description: og.description,
+          image: og.image,
+          siteName: og.siteName,
+        })
+        .run()
+
+      return true
+    },
+    [editor, fetchOg]
+  )
 
   // content가 외부에서 변경되면 에디터 업데이트
   useEffect(() => {
@@ -424,6 +519,72 @@ export function NoteEditorAdvanced({
       }
     }
   }, [editor, handleWikiLinkClick])
+
+  useEffect(() => {
+    if (!editor) return
+    const editorElement = editor.view.dom
+
+    const handlePaste = async (event: ClipboardEvent) => {
+      const clipboard = event.clipboardData
+      if (!clipboard) return
+
+      const imageItems = Array.from(clipboard.items).filter((item) =>
+        item.type.startsWith('image/')
+      )
+
+      if (imageItems.length > 0) {
+        event.preventDefault()
+        for (const item of imageItems) {
+          const file = item.getAsFile()
+          if (file) {
+            await insertImage(file)
+          }
+        }
+        return
+      }
+
+      const text = clipboard.getData('text/plain').trim()
+      if (/^https?:\/\/\S+$/i.test(text)) {
+        event.preventDefault()
+        const inserted = await insertLinkPreview(text)
+        if (!inserted) {
+          editor.chain().focus().insertContent(text).run()
+        }
+      }
+    }
+
+    const handleDrop = async (event: DragEvent) => {
+      const transfer = event.dataTransfer
+      if (!transfer) return
+      const files = Array.from(transfer.files)
+      if (files.length === 0) return
+
+      event.preventDefault()
+      for (const file of files) {
+        if (file.type.startsWith('image/')) {
+          await insertImage(file)
+        } else {
+          await insertFile(file)
+        }
+      }
+    }
+
+    const handleDragOver = (event: DragEvent) => {
+      if (event.dataTransfer?.types?.includes('Files')) {
+        event.preventDefault()
+      }
+    }
+
+    editorElement.addEventListener('paste', handlePaste)
+    editorElement.addEventListener('drop', handleDrop)
+    editorElement.addEventListener('dragover', handleDragOver)
+
+    return () => {
+      editorElement.removeEventListener('paste', handlePaste)
+      editorElement.removeEventListener('drop', handleDrop)
+      editorElement.removeEventListener('dragover', handleDragOver)
+    }
+  }, [editor, insertFile, insertImage, insertLinkPreview])
 
   // Vim 모드 변경 시 에디터 업데이트
   useEffect(() => {
@@ -571,6 +732,20 @@ export function NoteEditorAdvanced({
       active: editor.isActive('blockMath'),
       onClick: insertBlockMath,
     },
+    {
+      key: 'image-upload',
+      label: '이미지 첨부',
+      icon: ImagePlus,
+      active: false,
+      onClick: () => imageInputRef.current?.click(),
+    },
+    {
+      key: 'file-upload',
+      label: '파일 첨부',
+      icon: Paperclip,
+      active: false,
+      onClick: () => fileInputRef.current?.click(),
+    },
   ]
 
   const mobileToolbarItems = [
@@ -713,6 +888,20 @@ export function NoteEditorAdvanced({
       icon: AlignRight,
       active: editor.isActive({ textAlign: 'right' }),
       onClick: () => editor.chain().focus().setTextAlign('right').run(),
+    },
+    {
+      key: 'image-upload',
+      label: '이미지 첨부',
+      icon: ImagePlus,
+      active: false,
+      onClick: () => imageInputRef.current?.click(),
+    },
+    {
+      key: 'file-upload',
+      label: '파일 첨부',
+      icon: Paperclip,
+      active: false,
+      onClick: () => fileInputRef.current?.click(),
     },
   ]
 
@@ -901,6 +1090,31 @@ export function NoteEditorAdvanced({
       )}
 
       <EditorContent editor={editor} />
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={async (event) => {
+          const file = event.target.files?.[0]
+          if (file) {
+            await insertImage(file)
+            event.target.value = ''
+          }
+        }}
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={async (event) => {
+          const file = event.target.files?.[0]
+          if (file) {
+            await insertFile(file)
+            event.target.value = ''
+          }
+        }}
+      />
       <div className="fixed bottom-3 right-3 z-40 lg:hidden">
         <Button
           type="button"
@@ -910,6 +1124,7 @@ export function NoteEditorAdvanced({
           onClick={() => setIsMobileToolbarOpen((prev) => !prev)}
           aria-expanded={isMobileToolbarOpen}
           aria-controls="note-editor-mobile-toolbar"
+          disabled={isImageUploading || isFileUploading || isOgLoading}
         >
           <SlidersHorizontal className="h-4 w-4" />
           {isMobileToolbarOpen ? '도구 닫기' : '도구'}

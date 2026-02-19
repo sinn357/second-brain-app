@@ -1,551 +1,978 @@
-# Codex(X) 작업 지시서: Obsidian Parity 99%
+# Codex(X) 작업 지시서: 미디어 기능
 
 > **작성일**: 2026-02-19
 > **작성자**: Arch (Claude)
-> **목표**: 옵시디언 95% → 99% 달성
+> **목표**: v0.1 출시를 위한 미디어 기능 구현
 > **상태**: Ready for X
 
 ---
 
 ## 📋 Task 목록
 
-| # | Task | 난이도 | 예상 기여도 | 상태 |
-|---|------|:------:|:-----------:|:----:|
-| 1 | 검색 연산자 확장 | 낮 | +1% | |
-| 2 | Periodic Notes (Weekly/Monthly) | 낮 | +1% | |
-| 3 | 헤딩 링크 `[[Note#Heading]]` | 중 | +1% | |
-| 4 | 중첩 태그 `#a/b` | 중 | +1% | |
-| 5 | PDF Export | 중 | +0.5% | |
+| # | Task | 난이도 | 중요도 | 상태 |
+|---|------|:------:|:------:|:----:|
+| 1 | Cloudinary 설정 + 이미지 업로드 API | 중 | 🔴 필수 | |
+| 2 | Tiptap 이미지 Extension | 중 | 🔴 필수 | |
+| 3 | 이미지 드래그&드롭 + 붙여넣기 | 중 | 🔴 필수 | |
+| 4 | 파일 첨부 | 중 | 🔴 필수 | |
+| 5 | 링크 미리보기 (OG) | 낮 | 🟡 권장 | |
 
 ---
 
-## Task 1: 검색 연산자 확장
+## 환경변수 (설정 완료)
+
+```env
+CLOUDINARY_CLOUD_NAME=xxx
+CLOUDINARY_API_KEY=xxx
+CLOUDINARY_API_SECRET=xxx
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=xxx
+```
+
+---
+
+## Task 1: Cloudinary 설정 + 이미지 업로드 API
 
 ### 목표
-검색창에서 `tag:태그명`, `path:폴더명`, `file:파일명` 연산자 지원
+서버 사이드에서 Cloudinary로 이미지 업로드
 
 ### 구현 방법
-
-**1. 검색 쿼리 파서 추가**
-
-파일: `lib/searchParser.ts` (새 파일)
-
-```typescript
-export interface ParsedQuery {
-  text: string           // 일반 검색어
-  tags: string[]         // tag:xxx
-  paths: string[]        // path:xxx
-  files: string[]        // file:xxx
-}
-
-export function parseSearchQuery(query: string): ParsedQuery {
-  const result: ParsedQuery = { text: '', tags: [], paths: [], files: [] }
-
-  const operatorRegex = /(tag|path|file):(\S+)/gi
-  let match
-
-  let remaining = query
-  while ((match = operatorRegex.exec(query)) !== null) {
-    const [full, operator, value] = match
-    remaining = remaining.replace(full, '')
-
-    switch (operator.toLowerCase()) {
-      case 'tag': result.tags.push(value); break
-      case 'path': result.paths.push(value); break
-      case 'file': result.files.push(value); break
-    }
-  }
-
-  result.text = remaining.trim()
-  return result
-}
-```
-
-**2. 검색 API 수정**
-
-파일: `app/api/notes/search/route.ts`
-
-```typescript
-import { parseSearchQuery } from '@/lib/searchParser'
-
-// GET 핸들러 내부 (기존 query 파라미터 처리 부분 수정)
-const parsed = parseSearchQuery(query)
-
-// tag: 연산자
-if (parsed.tags.length > 0) {
-  andConditions.push({
-    tags: {
-      some: {
-        tag: { name: { in: parsed.tags } }
-      }
-    }
-  })
-}
-
-// path: 연산자
-if (parsed.paths.length > 0) {
-  andConditions.push({
-    folder: {
-      name: { in: parsed.paths, mode: 'insensitive' }
-    }
-  })
-}
-
-// file: 연산자
-if (parsed.files.length > 0) {
-  andConditions.push({
-    OR: parsed.files.map(f => ({
-      title: { contains: f, mode: 'insensitive' }
-    }))
-  })
-}
-
-// 일반 텍스트 검색 (기존 로직 유지하되 parsed.text 사용)
-if (parsed.text && mode === 'normal') {
-  andConditions.push({
-    OR: [
-      { title: { contains: parsed.text, mode: 'insensitive' } },
-      { body: { contains: parsed.text, mode: 'insensitive' } },
-    ]
-  })
-}
-```
-
-**3. CommandPalette UI 힌트**
-
-파일: `components/CommandPalette.tsx`
-
-- placeholder 수정: `"검색... (tag:, path:, file: 지원)"`
-
-### 참고 파일
-- `app/api/notes/search/route.ts:28-215` (기존 검색)
-- `lib/filterEngine.ts` (필터 쿼리 빌더)
-- `components/CommandPalette.tsx`
-
-### 테스트 케이스
-```
-tag:프로젝트
-path:Daily Notes
-file:회의록
-tag:중요 path:업무
-검색어 tag:메모
-```
-
----
-
-## Task 2: Periodic Notes (Weekly/Monthly)
-
-### 목표
-Daily Notes처럼 Weekly Notes, Monthly Notes 자동 생성
-
-### 구현 방법
-
-**1. Weekly Notes API**
-
-파일: `app/api/weekly-notes/route.ts` (새 파일)
-
-```typescript
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-import { format, startOfWeek, endOfWeek } from 'date-fns'
-
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const dateParam = searchParams.get('date')
-    const targetDate = dateParam ? new Date(dateParam) : new Date()
-
-    const weekStart = startOfWeek(targetDate, { weekStartsOn: 1 })
-    const weekEnd = endOfWeek(targetDate, { weekStartsOn: 1 })
-    const weekTitle = `${format(weekStart, 'yyyy-MM-dd')} ~ ${format(weekEnd, 'MM-dd')}`
-
-    let folder = await prisma.folder.findFirst({
-      where: { name: 'Weekly Notes' }
-    })
-    if (!folder) {
-      folder = await prisma.folder.create({
-        data: { name: 'Weekly Notes', position: 1 }
-      })
-    }
-
-    let note = await prisma.note.findFirst({
-      where: { title: weekTitle, folderId: folder.id },
-      include: { folder: true, tags: { include: { tag: true } } }
-    })
-
-    if (!note) {
-      const template = await prisma.template.findFirst({
-        where: { name: 'Weekly Note' }
-      })
-
-      const content = template?.content
-        .replace(/\{\{week_start\}\}/g, format(weekStart, 'yyyy-MM-dd'))
-        .replace(/\{\{week_end\}\}/g, format(weekEnd, 'yyyy-MM-dd'))
-        || `# ${weekTitle}\n\n## Goals\n\n- [ ] \n\n## Review\n\n`
-
-      note = await prisma.note.create({
-        data: { title: weekTitle, body: content, folderId: folder.id },
-        include: { folder: true, tags: { include: { tag: true } } }
-      })
-    }
-
-    return NextResponse.json({ success: true, note })
-  } catch (error) {
-    console.error('GET /api/weekly-notes error:', error)
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
-  }
-}
-```
-
-**2. Monthly Notes API**
-
-파일: `app/api/monthly-notes/route.ts` (새 파일)
-
-```typescript
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-import { format, startOfMonth, endOfMonth } from 'date-fns'
-
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const dateParam = searchParams.get('date')
-    const targetDate = dateParam ? new Date(dateParam) : new Date()
-
-    const monthTitle = format(targetDate, 'yyyy-MM')
-
-    let folder = await prisma.folder.findFirst({
-      where: { name: 'Monthly Notes' }
-    })
-    if (!folder) {
-      folder = await prisma.folder.create({
-        data: { name: 'Monthly Notes', position: 2 }
-      })
-    }
-
-    let note = await prisma.note.findFirst({
-      where: { title: monthTitle, folderId: folder.id },
-      include: { folder: true, tags: { include: { tag: true } } }
-    })
-
-    if (!note) {
-      const template = await prisma.template.findFirst({
-        where: { name: 'Monthly Note' }
-      })
-
-      const content = template?.content
-        .replace(/\{\{month\}\}/g, monthTitle)
-        || `# ${monthTitle}\n\n## Goals\n\n- [ ] \n\n## Review\n\n`
-
-      note = await prisma.note.create({
-        data: { title: monthTitle, body: content, folderId: folder.id },
-        include: { folder: true, tags: { include: { tag: true } } }
-      })
-    }
-
-    return NextResponse.json({ success: true, note })
-  } catch (error) {
-    console.error('GET /api/monthly-notes error:', error)
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 })
-  }
-}
-```
-
-**3. Weekly 페이지**
-
-파일: `app/weekly/page.tsx` (새 파일)
-
-- `app/daily/page.tsx` 패턴 복사
-- API: `/api/weekly-notes`
-- 이전/다음 주 네비게이션: `addWeeks`, `subWeeks` 사용
-
-**4. Monthly 페이지**
-
-파일: `app/monthly/page.tsx` (새 파일)
-
-- 이전/다음 월 네비게이션: `addMonths`, `subMonths` 사용
-
-**5. 네비게이션 추가**
-
-파일: `components/SidebarNav.tsx`
-
-```typescript
-// Daily Notes 아래에 추가
-{ name: 'Weekly', href: '/weekly', icon: CalendarDaysIcon },
-{ name: 'Monthly', href: '/monthly', icon: CalendarIcon },
-```
-
-### 참고 파일
-- `app/api/daily-notes/route.ts` (패턴 참고)
-- `app/daily/page.tsx` (UI 패턴)
-- `lib/hooks/useDailyNote.ts` (훅 패턴)
-
----
-
-## Task 3: 헤딩 링크 `[[Note#Heading]]`
-
-### 목표
-`[[노트명#헤딩]]` 형식으로 특정 헤딩으로 직접 링크
-
-### 구현 방법
-
-**1. WikiLink 정규식 수정**
-
-파일: `lib/tiptap-extensions/WikiLink.ts:70`
-
-```typescript
-// 기존
-const regex = /\[\[([^\]]+)\]\]/g
-
-// 변경 (# 뒤 헤딩 캡처)
-const regex = /\[\[([^\]#]+)(?:#([^\]]+))?\]\]/g
-// match[1] = 노트명
-// match[2] = 헤딩 (optional)
-```
-
-**2. 클릭 핸들러 수정**
-
-파일: `lib/tiptap-extensions/WikiLink.ts:101-134`
-
-```typescript
-// foundTitle 처리 부분
-if (foundTitle && this.options.onLinkClick) {
-  // '#' 기준으로 분리
-  const hashIndex = foundTitle.indexOf('#')
-  if (hashIndex > -1) {
-    const noteTitle = foundTitle.substring(0, hashIndex)
-    const heading = foundTitle.substring(hashIndex + 1)
-    this.options.onLinkClick(noteTitle, heading)
-  } else {
-    this.options.onLinkClick(foundTitle)
-  }
-  return true
-}
-```
-
-**3. onLinkClick 타입 수정**
-
-파일: `lib/tiptap-extensions/WikiLink.ts:7`
-
-```typescript
-export interface WikiLinkOptions {
-  HTMLAttributes: Record<string, unknown>
-  onLinkClick?: (title: string, heading?: string) => void  // heading 추가
-}
-```
-
-**4. NoteEditor에서 헤딩 스크롤 처리**
-
-파일: `components/NoteEditor.tsx` (handleWikiLinkClick 부분)
-
-```typescript
-const handleWikiLinkClick = async (title: string, heading?: string) => {
-  // 기존 노트 찾기 로직...
-  const note = await findNoteByTitle(title)
-  if (!note) return
-
-  router.push(`/notes?id=${note.id}`)
-
-  // 헤딩이 있으면 스크롤
-  if (heading) {
-    setTimeout(() => {
-      const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6')
-      for (const el of headings) {
-        if (el.textContent?.toLowerCase().includes(heading.toLowerCase())) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          break
-        }
-      }
-    }, 500)  // 노트 로드 대기
-  }
-}
-```
-
-### 참고 파일
-- `lib/tiptap-extensions/WikiLink.ts` (메인 수정)
-- `components/NoteEditor.tsx` (클릭 핸들러)
-
-### 주의사항
-- 헤딩에 특수문자 있을 수 있음 → 정규식 이스케이프 고려
-- 헤딩 없으면 기존처럼 노트 상단으로 이동
-
----
-
-## Task 4: 중첩 태그 `#a/b`
-
-### 목표
-`#project/personal` 같은 계층적 태그 지원
-
-### 구현 방법
-
-**1. HashTag 정규식 수정**
-
-파일: `lib/tiptap-extensions/HashTag.ts`
-
-```typescript
-// 기존
-const tagRegex = /#[\w가-힣]+/g
-
-// 변경 (슬래시 허용)
-const tagRegex = /#[\w가-힣]+(\/[\w가-힣]+)*/g
-```
-
-**2. 태그 유효성 검사 수정**
-
-파일: `lib/validations/tag.ts`
-
-```typescript
-// 슬래시 허용하도록 스키마 수정
-export const tagNameSchema = z.string()
-  .min(1)
-  .max(100)
-  .regex(/^[\w가-힣]+(\/[\w가-힣]+)*$/, '유효하지 않은 태그명')
-```
-
-**3. 필터 엔진 수정 (하위 태그 포함 검색)**
-
-파일: `lib/filterEngine.ts:272-306`
-
-```typescript
-function buildTagConditionQuery(
-  operator: FilterCondition['operator'],
-  value: unknown
-): Prisma.NoteWhereInput {
-  const safeValue = String(value ?? '')
-
-  switch (operator) {
-    case 'equals':
-    case 'contains':
-      return {
-        tags: {
-          some: {
-            tag: {
-              OR: [
-                { name: { equals: safeValue } },
-                { name: { startsWith: safeValue + '/' } }  // 하위 태그도 매칭
-              ]
-            }
-          }
-        }
-      }
-    // ... 나머지 케이스
-  }
-}
-```
-
-**4. UI 힌트 (선택)**
-
-- 태그 입력 시 `#project/` 입력하면 하위 태그 자동완성 표시
-- 복잡하면 생략 가능
-
-### 참고 파일
-- `lib/tiptap-extensions/HashTag.ts`
-- `lib/validations/tag.ts`
-- `lib/filterEngine.ts:272-306`
-
-### 테스트 케이스
-```
-#project
-#project/personal
-#project/work/urgent
-```
-
----
-
-## Task 5: PDF Export
-
-### 목표
-노트를 PDF로 내보내기
-
-### 구현 방법 (브라우저 print 활용 - 가장 간단)
 
 **1. 의존성 추가**
 
 ```bash
-npm install html2pdf.js
+npm install cloudinary
 ```
 
-**2. ExportPdfButton 컴포넌트**
+**2. Cloudinary 설정 파일**
 
-파일: `components/ExportPdfButton.tsx` (새 파일)
+파일: `lib/cloudinary.ts` (새 파일)
 
 ```typescript
-'use client'
+import { v2 as cloudinary } from 'cloudinary'
 
-import { Button } from '@/components/ui/button'
-import { FileDown } from 'lucide-react'
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
-interface ExportPdfButtonProps {
-  noteTitle: string
-  contentElementId?: string
+export { cloudinary }
+
+export interface UploadResult {
+  url: string
+  publicId: string
+  width: number
+  height: number
+  format: string
+  bytes: number
 }
 
-export function ExportPdfButton({
-  noteTitle,
-  contentElementId = 'note-content'
-}: ExportPdfButtonProps) {
-  const handleExport = async () => {
-    const element = document.getElementById(contentElementId)
-    if (!element) return
+export async function uploadImage(
+  file: Buffer,
+  options?: {
+    folder?: string
+    maxWidth?: number
+    maxHeight?: number
+  }
+): Promise<UploadResult> {
+  const { folder = 'second-brain', maxWidth = 1920, maxHeight = 1080 } = options || {}
 
-    const html2pdf = (await import('html2pdf.js')).default
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: 'image',
+        transformation: [
+          { width: maxWidth, height: maxHeight, crop: 'limit' },
+          { quality: 'auto', fetch_format: 'auto' }
+        ]
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error || new Error('Upload failed'))
+        } else {
+          resolve({
+            url: result.secure_url,
+            publicId: result.public_id,
+            width: result.width,
+            height: result.height,
+            format: result.format,
+            bytes: result.bytes,
+          })
+        }
+      }
+    ).end(file)
+  })
+}
 
-    const opt = {
-      margin: 10,
-      filename: `${noteTitle}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+export async function uploadFile(
+  file: Buffer,
+  filename: string,
+  options?: { folder?: string }
+): Promise<UploadResult> {
+  const { folder = 'second-brain/files' } = options || {}
+
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: 'raw',
+        public_id: filename.replace(/\.[^/.]+$/, ''), // 확장자 제거
+        use_filename: true,
+      },
+      (error, result) => {
+        if (error || !result) {
+          reject(error || new Error('Upload failed'))
+        } else {
+          resolve({
+            url: result.secure_url,
+            publicId: result.public_id,
+            width: 0,
+            height: 0,
+            format: result.format || '',
+            bytes: result.bytes || 0,
+          })
+        }
+      }
+    ).end(file)
+  })
+}
+
+export async function deleteFile(publicId: string): Promise<void> {
+  await cloudinary.uploader.destroy(publicId)
+}
+```
+
+**3. 이미지 업로드 API**
+
+파일: `app/api/upload/image/route.ts` (새 파일)
+
+```typescript
+import { NextResponse } from 'next/server'
+import { uploadImage } from '@/lib/cloudinary'
+
+export async function POST(request: Request) {
+  try {
+    const formData = await request.formData()
+    const file = formData.get('file') as File | null
+
+    if (!file) {
+      return NextResponse.json(
+        { success: false, error: 'No file provided' },
+        { status: 400 }
+      )
     }
 
-    html2pdf().from(element).set(opt).save()
-  }
+    // 파일 타입 검증
+    if (!file.type.startsWith('image/')) {
+      return NextResponse.json(
+        { success: false, error: 'File must be an image' },
+        { status: 400 }
+      )
+    }
 
-  return (
-    <Button variant="ghost" size="sm" onClick={handleExport}>
-      <FileDown className="h-4 w-4 mr-1" />
-      PDF
-    </Button>
-  )
+    // 파일 크기 제한 (10MB)
+    const MAX_SIZE = 10 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json(
+        { success: false, error: 'File size must be less than 10MB' },
+        { status: 400 }
+      )
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const result = await uploadImage(buffer)
+
+    return NextResponse.json({
+      success: true,
+      url: result.url,
+      publicId: result.publicId,
+      width: result.width,
+      height: result.height,
+    })
+  } catch (error) {
+    console.error('POST /api/upload/image error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Upload failed' },
+      { status: 500 }
+    )
+  }
 }
 ```
 
-**3. 노트 편집기에 버튼 추가**
+**4. 파일 업로드 API**
 
-파일: `components/NoteEditor.tsx` 또는 `NoteEditorAdvanced.tsx`
+파일: `app/api/upload/file/route.ts` (새 파일)
 
-- 상단 툴바에 `<ExportPdfButton noteTitle={note.title} />` 추가
-- 노트 본문 영역에 `id="note-content"` 추가
+```typescript
+import { NextResponse } from 'next/server'
+import { uploadFile } from '@/lib/cloudinary'
 
-**4. 프린트 스타일**
+export async function POST(request: Request) {
+  try {
+    const formData = await request.formData()
+    const file = formData.get('file') as File | null
 
-파일: `app/globals.css`
+    if (!file) {
+      return NextResponse.json(
+        { success: false, error: 'No file provided' },
+        { status: 400 }
+      )
+    }
 
-```css
-@media print {
-  .no-print {
-    display: none !important;
-  }
-  #note-content {
-    max-width: 100%;
-    padding: 20px;
+    // 파일 크기 제한 (50MB)
+    const MAX_SIZE = 50 * 1024 * 1024
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json(
+        { success: false, error: 'File size must be less than 50MB' },
+        { status: 400 }
+      )
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const result = await uploadFile(buffer, file.name)
+
+    return NextResponse.json({
+      success: true,
+      url: result.url,
+      publicId: result.publicId,
+      filename: file.name,
+      bytes: result.bytes,
+    })
+  } catch (error) {
+    console.error('POST /api/upload/file error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Upload failed' },
+      { status: 500 }
+    )
   }
 }
 ```
 
-### 참고 파일
-- `app/api/export/markdown/route.ts` (Export 패턴)
-- `components/NoteEditor.tsx`
+### 참고
+- Cloudinary Node.js SDK: https://cloudinary.com/documentation/node_integration
 
 ---
 
-## ⚠️ 공통 주의사항
+## Task 2: Tiptap 이미지 Extension
 
-1. **빌드 확인**: 각 Task 완료 후 `npm run build`
-2. **lint 유지**: 현재 0 errors 상태 유지
-3. **기존 패턴**: 이미 있는 코드 스타일 준수
-4. **타입 안전성**: TypeScript 타입 명시
-5. **에러 핸들링**: try-catch 사용
+### 목표
+에디터에서 이미지 삽입/표시/리사이즈
+
+### 구현 방법
+
+**1. 의존성 추가**
+
+```bash
+npm install @tiptap/extension-image
+```
+
+**2. 커스텀 이미지 Extension (리사이즈 지원)**
+
+파일: `lib/tiptap-extensions/ResizableImage.ts` (새 파일)
+
+```typescript
+import Image from '@tiptap/extension-image'
+import { Plugin, PluginKey } from '@tiptap/pm/state'
+
+export interface ResizableImageOptions {
+  inline: boolean
+  allowBase64: boolean
+  HTMLAttributes: Record<string, unknown>
+}
+
+export const ResizableImage = Image.extend<ResizableImageOptions>({
+  name: 'resizableImage',
+
+  addOptions() {
+    return {
+      ...this.parent?.(),
+      inline: false,
+      allowBase64: false,
+      HTMLAttributes: {
+        class: 'resizable-image',
+      },
+    }
+  },
+
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('width'),
+        renderHTML: (attributes) => {
+          if (!attributes.width) return {}
+          return { width: attributes.width }
+        },
+      },
+      height: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('height'),
+        renderHTML: (attributes) => {
+          if (!attributes.height) return {}
+          return { height: attributes.height }
+        },
+      },
+      'data-public-id': {
+        default: null,
+        parseHTML: (element) => element.getAttribute('data-public-id'),
+        renderHTML: (attributes) => {
+          if (!attributes['data-public-id']) return {}
+          return { 'data-public-id': attributes['data-public-id'] }
+        },
+      },
+    }
+  },
+
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('resizableImage'),
+        props: {
+          handleDOMEvents: {
+            // 이미지 클릭 시 리사이즈 핸들 표시는 CSS로 처리
+          },
+        },
+      }),
+    ]
+  },
+})
+```
+
+**3. 이미지 스타일 추가**
+
+파일: `app/globals.css` (추가)
+
+```css
+/* 이미지 스타일 */
+.ProseMirror .resizable-image {
+  max-width: 100%;
+  height: auto;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: box-shadow 0.2s;
+}
+
+.ProseMirror .resizable-image:hover {
+  box-shadow: 0 0 0 2px hsl(var(--primary));
+}
+
+.ProseMirror .resizable-image.ProseMirror-selectednode {
+  box-shadow: 0 0 0 2px hsl(var(--primary));
+}
+
+/* 이미지 정렬 */
+.ProseMirror img[data-align="left"] {
+  float: left;
+  margin-right: 1rem;
+}
+
+.ProseMirror img[data-align="center"] {
+  display: block;
+  margin: 0 auto;
+}
+
+.ProseMirror img[data-align="right"] {
+  float: right;
+  margin-left: 1rem;
+}
+```
+
+---
+
+## Task 3: 이미지 드래그&드롭 + 붙여넣기
+
+### 목표
+이미지를 드래그하거나 붙여넣기로 삽입
+
+### 구현 방법
+
+**1. 이미지 업로드 훅**
+
+파일: `lib/hooks/useImageUpload.ts` (새 파일)
+
+```typescript
+import { useState } from 'react'
+
+interface UploadResult {
+  url: string
+  publicId: string
+  width: number
+  height: number
+}
+
+export function useImageUpload() {
+  const [isUploading, setIsUploading] = useState(false)
+
+  const uploadImage = async (file: File): Promise<UploadResult | null> => {
+    setIsUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload/image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!data.success) {
+        throw new Error(data.error || 'Upload failed')
+      }
+
+      return {
+        url: data.url,
+        publicId: data.publicId,
+        width: data.width,
+        height: data.height,
+      }
+    } catch (error) {
+      console.error('Image upload error:', error)
+      return null
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  return { uploadImage, isUploading }
+}
+```
+
+**2. NoteEditorAdvanced에 이미지 기능 추가**
+
+파일: `components/NoteEditorAdvanced.tsx` (수정)
+
+```typescript
+// 상단 import 추가
+import { ResizableImage } from '@/lib/tiptap-extensions/ResizableImage'
+import { useImageUpload } from '@/lib/hooks/useImageUpload'
+import { ImagePlus, Paperclip } from 'lucide-react'
+
+// useEditor extensions 배열에 추가
+ResizableImage.configure({
+  inline: false,
+  allowBase64: false,
+}),
+
+// 컴포넌트 내부에 추가
+const { uploadImage, isUploading } = useImageUpload()
+const fileInputRef = useRef<HTMLInputElement>(null)
+
+// 이미지 삽입 함수
+const insertImage = useCallback(async (file: File) => {
+  if (!editor) return
+
+  const result = await uploadImage(file)
+  if (result) {
+    editor
+      .chain()
+      .focus()
+      .setImage({
+        src: result.url,
+        'data-public-id': result.publicId,
+      })
+      .run()
+  }
+}, [editor, uploadImage])
+
+// 드래그&드롭 핸들러
+const handleDrop = useCallback(async (e: React.DragEvent) => {
+  e.preventDefault()
+  const files = Array.from(e.dataTransfer.files)
+  const imageFiles = files.filter(f => f.type.startsWith('image/'))
+
+  for (const file of imageFiles) {
+    await insertImage(file)
+  }
+}, [insertImage])
+
+// 붙여넣기 핸들러
+const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
+  const items = Array.from(e.clipboardData.items)
+  const imageItems = items.filter(item => item.type.startsWith('image/'))
+
+  if (imageItems.length > 0) {
+    e.preventDefault()
+    for (const item of imageItems) {
+      const file = item.getAsFile()
+      if (file) {
+        await insertImage(file)
+      }
+    }
+  }
+}, [insertImage])
+
+// 툴바에 이미지 버튼 추가
+<button
+  type="button"
+  onClick={() => fileInputRef.current?.click()}
+  disabled={isUploading}
+  className="p-2 rounded hover:bg-muted"
+  title="이미지 삽입"
+>
+  <ImagePlus className="w-4 h-4" />
+</button>
+
+// hidden file input
+<input
+  ref={fileInputRef}
+  type="file"
+  accept="image/*"
+  className="hidden"
+  onChange={async (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      await insertImage(file)
+      e.target.value = ''
+    }
+  }}
+/>
+
+// EditorContent에 이벤트 핸들러 추가
+<div onDrop={handleDrop} onPaste={handlePaste} onDragOver={(e) => e.preventDefault()}>
+  <EditorContent editor={editor} />
+</div>
+```
+
+---
+
+## Task 4: 파일 첨부
+
+### 목표
+이미지 외 파일 (PDF, 문서 등) 첨부
+
+### 구현 방법
+
+**1. 파일 첨부 Extension**
+
+파일: `lib/tiptap-extensions/FileAttachment.ts` (새 파일)
+
+```typescript
+import { Node, mergeAttributes } from '@tiptap/core'
+
+export interface FileAttachmentOptions {
+  HTMLAttributes: Record<string, unknown>
+}
+
+export const FileAttachment = Node.create<FileAttachmentOptions>({
+  name: 'fileAttachment',
+
+  group: 'block',
+
+  atom: true,
+
+  addOptions() {
+    return {
+      HTMLAttributes: {
+        class: 'file-attachment',
+      },
+    }
+  },
+
+  addAttributes() {
+    return {
+      url: { default: null },
+      filename: { default: null },
+      bytes: { default: null },
+      publicId: { default: null },
+    }
+  },
+
+  parseHTML() {
+    return [{ tag: 'div[data-file-attachment]' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const filename = HTMLAttributes.filename || 'file'
+    const bytes = HTMLAttributes.bytes || 0
+    const sizeStr = formatBytes(bytes)
+
+    return [
+      'div',
+      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
+        'data-file-attachment': '',
+      }),
+      [
+        'a',
+        {
+          href: HTMLAttributes.url,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'file-link',
+        },
+        [
+          'span',
+          { class: 'file-icon' },
+          '📎',
+        ],
+        [
+          'span',
+          { class: 'file-name' },
+          filename,
+        ],
+        [
+          'span',
+          { class: 'file-size' },
+          sizeStr,
+        ],
+      ],
+    ]
+  },
+
+  addCommands() {
+    return {
+      setFileAttachment:
+        (options) =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: options,
+          })
+        },
+    }
+  },
+})
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}
+```
+
+**2. 파일 첨부 스타일**
+
+파일: `app/globals.css` (추가)
+
+```css
+/* 파일 첨부 스타일 */
+.file-attachment {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: hsl(var(--muted));
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+
+.file-attachment .file-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.file-attachment .file-link:hover {
+  text-decoration: underline;
+}
+
+.file-attachment .file-icon {
+  font-size: 1.25rem;
+}
+
+.file-attachment .file-name {
+  font-weight: 500;
+}
+
+.file-attachment .file-size {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+}
+```
+
+**3. 파일 업로드 훅**
+
+파일: `lib/hooks/useFileUpload.ts` (새 파일)
+
+```typescript
+import { useState } from 'react'
+
+interface UploadResult {
+  url: string
+  publicId: string
+  filename: string
+  bytes: number
+}
+
+export function useFileUpload() {
+  const [isUploading, setIsUploading] = useState(false)
+
+  const uploadFile = async (file: File): Promise<UploadResult | null> => {
+    setIsUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload/file', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!data.success) {
+        throw new Error(data.error || 'Upload failed')
+      }
+
+      return {
+        url: data.url,
+        publicId: data.publicId,
+        filename: data.filename,
+        bytes: data.bytes,
+      }
+    } catch (error) {
+      console.error('File upload error:', error)
+      return null
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  return { uploadFile, isUploading }
+}
+```
+
+---
+
+## Task 5: 링크 미리보기 (OG)
+
+### 목표
+URL 붙여넣기 시 OG 이미지/제목 표시
+
+### 구현 방법
+
+**1. OG 메타 파싱 API**
+
+파일: `app/api/og/route.ts` (새 파일)
+
+```typescript
+import { NextResponse } from 'next/server'
+
+interface OGData {
+  title: string
+  description: string
+  image: string
+  url: string
+  siteName: string
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const url = searchParams.get('url')
+
+    if (!url) {
+      return NextResponse.json(
+        { success: false, error: 'URL required' },
+        { status: 400 }
+      )
+    }
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; SecondBrainBot/1.0)',
+      },
+    })
+
+    const html = await response.text()
+    const og = parseOG(html, url)
+
+    return NextResponse.json({ success: true, og })
+  } catch (error) {
+    console.error('GET /api/og error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch OG data' },
+      { status: 500 }
+    )
+  }
+}
+
+function parseOG(html: string, url: string): OGData {
+  const getMetaContent = (property: string): string => {
+    const regex = new RegExp(
+      `<meta[^>]*(?:property|name)=["']${property}["'][^>]*content=["']([^"']+)["']`,
+      'i'
+    )
+    const match = html.match(regex)
+    return match?.[1] || ''
+  }
+
+  const getTitle = (): string => {
+    const ogTitle = getMetaContent('og:title')
+    if (ogTitle) return ogTitle
+
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
+    return titleMatch?.[1] || url
+  }
+
+  return {
+    title: getTitle(),
+    description: getMetaContent('og:description') || getMetaContent('description'),
+    image: getMetaContent('og:image'),
+    url: getMetaContent('og:url') || url,
+    siteName: getMetaContent('og:site_name') || new URL(url).hostname,
+  }
+}
+```
+
+**2. 링크 미리보기 Extension**
+
+파일: `lib/tiptap-extensions/LinkPreview.ts` (새 파일)
+
+```typescript
+import { Node, mergeAttributes } from '@tiptap/core'
+
+export interface LinkPreviewOptions {
+  HTMLAttributes: Record<string, unknown>
+}
+
+export const LinkPreview = Node.create<LinkPreviewOptions>({
+  name: 'linkPreview',
+
+  group: 'block',
+
+  atom: true,
+
+  addOptions() {
+    return {
+      HTMLAttributes: {
+        class: 'link-preview',
+      },
+    }
+  },
+
+  addAttributes() {
+    return {
+      url: { default: null },
+      title: { default: null },
+      description: { default: null },
+      image: { default: null },
+      siteName: { default: null },
+    }
+  },
+
+  parseHTML() {
+    return [{ tag: 'div[data-link-preview]' }]
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'div',
+      mergeAttributes(this.options.HTMLAttributes, {
+        'data-link-preview': '',
+      }),
+      [
+        'a',
+        {
+          href: HTMLAttributes.url,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'link-preview-content',
+        },
+        HTMLAttributes.image
+          ? ['img', { src: HTMLAttributes.image, class: 'link-preview-image' }]
+          : '',
+        [
+          'div',
+          { class: 'link-preview-text' },
+          ['div', { class: 'link-preview-title' }, HTMLAttributes.title || HTMLAttributes.url],
+          HTMLAttributes.description
+            ? ['div', { class: 'link-preview-description' }, HTMLAttributes.description]
+            : '',
+          ['div', { class: 'link-preview-site' }, HTMLAttributes.siteName || ''],
+        ],
+      ],
+    ]
+  },
+
+  addCommands() {
+    return {
+      setLinkPreview:
+        (options) =>
+        ({ commands }) => {
+          return commands.insertContent({
+            type: this.name,
+            attrs: options,
+          })
+        },
+    }
+  },
+})
+```
+
+**3. 링크 미리보기 스타일**
+
+파일: `app/globals.css` (추가)
+
+```css
+/* 링크 미리보기 스타일 */
+.link-preview {
+  margin: 1rem 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.link-preview-content {
+  display: flex;
+  text-decoration: none;
+  color: inherit;
+}
+
+.link-preview-image {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.link-preview-text {
+  padding: 0.75rem 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.link-preview-title {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-preview-description {
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.link-preview-site {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .link-preview-content {
+    flex-direction: column;
+  }
+
+  .link-preview-image {
+    width: 100%;
+    height: 160px;
+  }
+}
+```
 
 ---
 
@@ -553,52 +980,61 @@ export function ExportPdfButton({
 
 ```
 새로 만들 파일:
-├── lib/searchParser.ts              # Task 1
-├── app/api/weekly-notes/route.ts    # Task 2
-├── app/api/monthly-notes/route.ts   # Task 2
-├── app/weekly/page.tsx              # Task 2
-├── app/monthly/page.tsx             # Task 2
-├── components/ExportPdfButton.tsx   # Task 5
+├── lib/cloudinary.ts                      # Task 1
+├── app/api/upload/image/route.ts          # Task 1
+├── app/api/upload/file/route.ts           # Task 1
+├── lib/tiptap-extensions/ResizableImage.ts # Task 2
+├── lib/hooks/useImageUpload.ts            # Task 3
+├── lib/tiptap-extensions/FileAttachment.ts # Task 4
+├── lib/hooks/useFileUpload.ts             # Task 4
+├── app/api/og/route.ts                    # Task 5
+├── lib/tiptap-extensions/LinkPreview.ts   # Task 5
 
 수정할 파일:
-├── app/api/notes/search/route.ts    # Task 1
-├── components/CommandPalette.tsx    # Task 1
-├── lib/tiptap-extensions/WikiLink.ts        # Task 3
-├── components/NoteEditor.tsx        # Task 3
-├── lib/tiptap-extensions/HashTag.ts # Task 4
-├── lib/validations/tag.ts           # Task 4
-├── lib/filterEngine.ts              # Task 4
-├── components/SidebarNav.tsx        # Task 2
-├── app/globals.css                  # Task 5
+├── package.json                           # 의존성 추가
+├── components/NoteEditorAdvanced.tsx      # 에디터 통합
+├── app/globals.css                        # 스타일 추가
 ```
+
+---
+
+## ⚠️ 주의사항
+
+1. **빌드 확인**: 각 Task 완료 후 `npm run build`
+2. **lint 유지**: 0 errors 유지
+3. **환경변수**: Cloudinary 설정 확인 (이미 완료)
+4. **파일 크기**: 이미지 10MB, 파일 50MB 제한
+5. **보안**: 서버 사이드 업로드로 secret 보호
 
 ---
 
 ## ✅ 완료 기준
 
-- [ ] Task 1: `tag:`, `path:`, `file:` 검색 작동
-- [ ] Task 2: `/weekly`, `/monthly` 페이지 작동
-- [ ] Task 3: `[[Note#Heading]]` 클릭 시 헤딩으로 스크롤
-- [ ] Task 4: `#a/b/c` 태그 생성/필터 가능
-- [ ] Task 5: PDF 다운로드 작동
+- [x] Task 1: 이미지 업로드 API 작동
+- [x] Task 2: 에디터에서 이미지 표시
+- [x] Task 3: 드래그&드롭, 붙여넣기로 이미지 삽입
+- [x] Task 4: 파일 첨부 작동
+- [x] Task 5: URL 붙여넣기 시 미리보기 표시
 
 ---
 
 ## ✅ 완료 보고 형식
 
 ```markdown
-✅ Obsidian Parity 99% 완료
+✅ 미디어 기능 완료
 
 **완료 Task**:
-- [x] Task 1: 검색 연산자
-- [x] Task 2: Periodic Notes
-- [x] Task 3: 헤딩 링크
-- [x] Task 4: 중첩 태그
-- [x] Task 5: PDF Export
+- [x] Task 1: Cloudinary + 업로드 API
+- [x] Task 2: Tiptap 이미지 Extension
+- [x] Task 3: 드래그&드롭 + 붙여넣기
+- [x] Task 4: 파일 첨부
+- [x] Task 5: 링크 미리보기
 
 **테스트 결과**:
 - npm run lint: 0 errors
 - npm run build: 통과
+- 이미지 업로드: 테스트 완료
+- 파일 첨부: 테스트 완료
 
 **수정된 파일 목록**:
 - (파일 리스트)
@@ -614,40 +1050,37 @@ export function ExportPdfButton({
 ---
 
 **Status**: Ready for X (Codex)
-**이전 작업 (아카이브)**: Phase 4 lint 정리 완료 (2026-02-18)
+**이전 작업 (아카이브)**: Obsidian Parity 99% 완료 (2026-02-19)
 
 ---
 
-## ✅ X 완료 보고 (2026-02-19)
+## ✅ 완료 보고 (X) - 2026-02-19
 
-✅ Obsidian Parity 99% 완료
+✅ 미디어 기능 완료
 
 **완료 Task**:
-- [x] Task 1: 검색 연산자
-- [x] Task 2: Periodic Notes
-- [x] Task 3: 헤딩 링크
-- [x] Task 4: 중첩 태그
-- [x] Task 5: PDF Export
+- [x] Task 1: Cloudinary + 업로드 API
+- [x] Task 2: Tiptap 이미지 Extension
+- [x] Task 3: 드래그&드롭 + 붙여넣기
+- [x] Task 4: 파일 첨부
+- [x] Task 5: 링크 미리보기
 
 **테스트 결과**:
-- npm run lint: 0 errors (warnings only)
-- npm run build: 통과
+- `npm run lint`: 0 errors (기존 warning 27개 유지)
+- `npm run build`: 통과
 
 **수정된 파일 목록**:
-- app/notes/page.tsx
-- lib/searchParser.ts
-- app/api/notes/search/route.ts
-- components/CommandPalette.tsx
-- app/api/weekly-notes/route.ts
-- app/api/monthly-notes/route.ts
-- app/weekly/page.tsx
-- app/monthly/page.tsx
-- components/AppMenuSheet.tsx
-- components/SidebarNav.tsx
-- lib/tiptap-extensions/WikiLink.ts
-- components/NoteEditorAdvanced.tsx
-- lib/tiptap-extensions/HashTag.ts
-- lib/validations/tag.ts
-- lib/filterEngine.ts
-- components/ExportPdfButton.tsx
-- app/globals.css
+- `package.json`
+- `package-lock.json`
+- `lib/cloudinary.ts`
+- `app/api/upload/image/route.ts`
+- `app/api/upload/file/route.ts`
+- `app/api/og/route.ts`
+- `lib/hooks/useImageUpload.ts`
+- `lib/hooks/useFileUpload.ts`
+- `lib/hooks/useOgPreview.ts`
+- `lib/tiptap-extensions/ResizableImage.ts`
+- `lib/tiptap-extensions/FileAttachment.ts`
+- `lib/tiptap-extensions/LinkPreview.ts`
+- `components/NoteEditorAdvanced.tsx`
+- `app/globals.css`
