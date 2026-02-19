@@ -63,6 +63,8 @@ import {
   AlertTriangle,
   ChevronsUpDown,
   Sigma,
+  SlidersHorizontal,
+  X,
 } from 'lucide-react'
 
 const lowlight = createLowlight(common)
@@ -83,6 +85,9 @@ interface TocHeading {
   pos: number
 }
 
+const DESKTOP_TOOLBAR_STORAGE_KEY = 'noteToolbarDesktop'
+const MOBILE_TOOLBAR_STORAGE_KEY = 'noteToolbarMobile'
+
 export function NoteEditorAdvanced({
   content,
   onUpdate,
@@ -100,6 +105,8 @@ export function NoteEditorAdvanced({
     candidates: typeof allNotes
   } | null>(null)
   const [tocHeadings, setTocHeadings] = useState<TocHeading[]>([])
+  const [isDesktopToolbarOpen, setIsDesktopToolbarOpen] = useState(false)
+  const [isMobileToolbarOpen, setIsMobileToolbarOpen] = useState(false)
   const lastSyncedMarkdown = useRef<string | null>(null)
   const { vimMode } = useEditorStore()
   const notesRef = useRef(allNotes)
@@ -307,6 +314,24 @@ export function NoteEditorAdvanced({
     if (!editor || !forceFirstHeading) return
     ensureFirstHeading(editor)
   }, [editor, forceFirstHeading])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const desktopSaved = window.localStorage.getItem(DESKTOP_TOOLBAR_STORAGE_KEY)
+    const mobileSaved = window.localStorage.getItem(MOBILE_TOOLBAR_STORAGE_KEY)
+    if (desktopSaved === 'true') setIsDesktopToolbarOpen(true)
+    if (mobileSaved === 'true') setIsMobileToolbarOpen(true)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(DESKTOP_TOOLBAR_STORAGE_KEY, String(isDesktopToolbarOpen))
+  }, [isDesktopToolbarOpen])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem(MOBILE_TOOLBAR_STORAGE_KEY, String(isMobileToolbarOpen))
+  }, [isMobileToolbarOpen])
 
   // WikiLink hover 미리보기 + 클릭 핸들러 보강
   useEffect(() => {
@@ -678,7 +703,22 @@ export function NoteEditorAdvanced({
 
   return (
     <div>
-      {tocHeadings.length > 0 && (
+      <div className="mb-2 hidden justify-end lg:flex">
+        <Button
+          type="button"
+          variant={isDesktopToolbarOpen ? 'default' : 'outline'}
+          size="sm"
+          className="gap-2"
+          onClick={() => setIsDesktopToolbarOpen((prev) => !prev)}
+          aria-expanded={isDesktopToolbarOpen}
+          aria-controls="note-editor-desktop-toolbar"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          {isDesktopToolbarOpen ? '도구 접기' : '도구 펼치기'}
+        </Button>
+      </div>
+
+      {isDesktopToolbarOpen && tocHeadings.length > 0 && (
         <div className="mb-2 hidden rounded-lg border border-indigo-200/70 bg-white/85 px-3 py-2 dark:border-indigo-700/60 dark:bg-indigo-950/70 lg:block">
           <p className="mb-2 text-xs font-semibold text-indigo-500 dark:text-indigo-300">목차</p>
           <div className="flex flex-wrap gap-1">
@@ -698,7 +738,11 @@ export function NoteEditorAdvanced({
         </div>
       )}
 
-      <div className="mb-2 hidden items-center gap-2 overflow-x-auto rounded-lg border border-indigo-200/70 bg-white/85 px-3 py-2 dark:border-indigo-700/60 dark:bg-indigo-950/70 lg:flex">
+      {isDesktopToolbarOpen && (
+      <div
+        id="note-editor-desktop-toolbar"
+        className="mb-2 hidden items-center gap-2 overflow-x-auto rounded-lg border border-indigo-200/70 bg-white/85 px-3 py-2 dark:border-indigo-700/60 dark:bg-indigo-950/70 lg:flex"
+      >
         {desktopToolbarItems.map((item) => {
           const Icon = item.icon
           return (
@@ -839,29 +883,55 @@ export function NoteEditorAdvanced({
           블록 수식
         </Button>
       </div>
+      )}
 
       <EditorContent editor={editor} />
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-indigo-200/70 bg-white/95 px-3 py-2 backdrop-blur supports-[padding:max(0px)]:pb-[max(env(safe-area-inset-bottom),0.5rem)] dark:border-indigo-700/60 dark:bg-indigo-950/90 lg:hidden">
-        <div className="flex items-center gap-1 overflow-x-auto pb-1">
-          {mobileToolbarItems.map((item) => {
-            const Icon = item.icon
-            return (
-              <Button
-                key={item.key}
-                type="button"
-                variant={item.active ? 'default' : 'outline'}
-                size="sm"
-                className="h-9 shrink-0 gap-1"
-                onClick={item.onClick}
-                aria-label={item.label}
-                title={item.label}
-              >
-                <Icon className="h-4 w-4" />
-              </Button>
-            )
-          })}
-        </div>
+      <div className="fixed bottom-3 right-3 z-40 lg:hidden">
+        <Button
+          type="button"
+          variant={isMobileToolbarOpen ? 'default' : 'outline'}
+          size="sm"
+          className="h-9 gap-2 rounded-full"
+          onClick={() => setIsMobileToolbarOpen((prev) => !prev)}
+          aria-expanded={isMobileToolbarOpen}
+          aria-controls="note-editor-mobile-toolbar"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          {isMobileToolbarOpen ? '도구 닫기' : '도구'}
+        </Button>
       </div>
+
+      {isMobileToolbarOpen && (
+        <div
+          id="note-editor-mobile-toolbar"
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-indigo-200/70 bg-white/95 px-3 py-2 backdrop-blur supports-[padding:max(0px)]:pb-[max(env(safe-area-inset-bottom),0.5rem)] dark:border-indigo-700/60 dark:bg-indigo-950/90 lg:hidden"
+        >
+          <div className="mb-2 flex justify-end">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setIsMobileToolbarOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-1 overflow-x-auto pb-1">
+            {mobileToolbarItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <Button
+                  key={item.key}
+                  type="button"
+                  variant={item.active ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-9 shrink-0 gap-1"
+                  onClick={item.onClick}
+                  aria-label={item.label}
+                  title={item.label}
+                >
+                  <Icon className="h-4 w-4" />
+                </Button>
+              )
+            })}
+          </div>
+        </div>
+      )}
       <Dialog open={Boolean(linkChoices)} onOpenChange={(open) => !open && setLinkChoices(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

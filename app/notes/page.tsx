@@ -12,7 +12,7 @@ import { useCreateNote, useDeleteNote, useLocalGraph, useNote, useOutgoingLinks,
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Trash2, FolderOpen, ChevronLeft, ChevronRight, History, ArrowUpDown, LayoutGrid, List, Lock } from 'lucide-react'
+import { Trash2, FolderOpen, ChevronLeft, ChevronRight, History, ArrowUpDown, LayoutGrid, List, Lock, Network } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { VersionHistoryPanel } from '@/components/VersionHistoryPanel'
 import { useFolders } from '@/lib/hooks/useFolders'
@@ -1000,6 +1000,31 @@ function NotesPageContent() {
                     </div>
                   </SheetContent>
                 </Sheet>
+                {note && !isContentLocked ? (
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <Network className="h-4 w-4" />
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="h-[72vh] rounded-t-2xl">
+                      <SheetHeader>
+                        <SheetTitle>연결 패널</SheetTitle>
+                      </SheetHeader>
+                      <div className="mt-4 space-y-4 overflow-y-auto max-h-[calc(72vh-88px)]">
+                        <LocalGraph
+                          noteId={note.id}
+                          noteTitle={note.title || '제목 없음'}
+                          links={localGraphLinks}
+                        />
+                        <OutgoingLinksPanel
+                          links={outgoingLinks}
+                          onCreateMissing={handleCreateMissingOutgoing}
+                        />
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                ) : null}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -1023,7 +1048,7 @@ function NotesPageContent() {
                   <Button onClick={() => setLockDialogMode('unlock')}>잠금 해제</Button>
                 </div>
               ) : note ? (
-                <div className="space-y-4">
+                <div>
                   <NoteEditorAdvanced
                     content={editorContent}
                     onUpdate={handleEditorUpdate}
@@ -1031,15 +1056,6 @@ function NotesPageContent() {
                     currentFolderId={selectedFolderId ?? defaultFolder?.id ?? null}
                     placeholder="내용을 입력하세요..."
                     forceFirstHeading
-                  />
-                  <LocalGraph
-                    noteId={note.id}
-                    noteTitle={note.title || '제목 없음'}
-                    links={localGraphLinks}
-                  />
-                  <OutgoingLinksPanel
-                    links={outgoingLinks}
-                    onCreateMissing={handleCreateMissingOutgoing}
                   />
                 </div>
               ) : (
@@ -1319,6 +1335,32 @@ function NotesPageContent() {
                       </div>
                     </SheetContent>
                   </Sheet>
+                  {noteId && note && !isContentLocked ? (
+                    <Sheet>
+                      <SheetTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Network className="h-4 w-4 mr-1" />
+                          연결
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="right" className="w-[420px] sm:w-[560px]">
+                        <SheetHeader>
+                          <SheetTitle>연결 패널</SheetTitle>
+                        </SheetHeader>
+                        <div className="mt-4 space-y-4 overflow-y-auto max-h-[calc(100dvh-120px)]">
+                          <LocalGraph
+                            noteId={note.id}
+                            noteTitle={note.title || '제목 없음'}
+                            links={localGraphLinks}
+                          />
+                          <OutgoingLinksPanel
+                            links={outgoingLinks}
+                            onCreateMissing={handleCreateMissingOutgoing}
+                          />
+                        </div>
+                      </SheetContent>
+                    </Sheet>
+                  ) : null}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1339,7 +1381,7 @@ function NotesPageContent() {
                   <Button onClick={() => setLockDialogMode('unlock')}>잠금 해제</Button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div>
                   <NoteEditorAdvanced
                     content={editorContent}
                     onUpdate={handleEditorUpdate}
@@ -1347,15 +1389,6 @@ function NotesPageContent() {
                     currentFolderId={selectedFolderId ?? defaultFolder?.id ?? null}
                     placeholder="내용을 입력하세요. [[노트제목]]으로 링크, #태그로 태그를 추가할 수 있습니다."
                     forceFirstHeading
-                  />
-                  <LocalGraph
-                    noteId={note.id}
-                    noteTitle={note.title || '제목 없음'}
-                    links={localGraphLinks}
-                  />
-                  <OutgoingLinksPanel
-                    links={outgoingLinks}
-                    onCreateMissing={handleCreateMissingOutgoing}
                   />
                 </div>
               )}
