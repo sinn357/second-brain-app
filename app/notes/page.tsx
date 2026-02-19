@@ -1118,7 +1118,7 @@ function NotesPageContent() {
         }}
       >
         {/* 중앙: 노트 리스트 */}
-        <section className={isListCollapsed ? 'p-2 flex items-center justify-center' : 'p-3 pr-8'}>
+        <section className={isListCollapsed ? 'p-2 flex items-center justify-center' : 'relative p-3 pr-12'}>
           {isListCollapsed ? (
             <Button
               variant="ghost"
@@ -1138,7 +1138,7 @@ function NotesPageContent() {
                   </h1>
                   <p className="page-subtitle whitespace-normal">노트를 빠르게 탐색하고 연결하세요.</p>
                 </div>
-                <div className="flex items-center gap-2 pr-4">
+                <div className="flex items-center gap-2 pr-2">
                   <Select value={sortBy} onValueChange={handleSortChange}>
                     <SelectTrigger className="w-36 text-xs">
                       <SelectValue placeholder="정렬" />
@@ -1179,17 +1179,17 @@ function NotesPageContent() {
                       <LayoutGrid className="h-4 w-4" />
                     </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsListCollapsed(true)}
-                    className="relative z-20 my-auto h-9 w-9 shrink-0 self-center text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
-                    aria-label="노트 목록 접기"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
                 </div>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsListCollapsed(true)}
+                className="absolute right-2 top-1/2 z-30 h-9 w-9 -translate-y-1/2 text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+                aria-label="노트 목록 접기"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
               {viewMode === 'list' ? (
                 <NoteList
                   folderId={isAllFolders ? undefined : selectedFolderId}
@@ -1212,13 +1212,15 @@ function NotesPageContent() {
         </section>
 
         {/* 리사이즈 핸들: 노트 리스트 */}
-        <div
-          onMouseDown={startResize('list')}
-          role="separator"
-          aria-orientation="vertical"
-          className="group cursor-col-resize"
-        >
-          <div className="mx-auto h-full w-px bg-indigo-200/70 dark:bg-indigo-700/60 group-hover:bg-indigo-400/80 transition-colors" />
+        <div className="group">
+          <div
+            onMouseDown={startResize('list')}
+            role="separator"
+            aria-orientation="vertical"
+            className="mx-auto mt-24 h-[calc(100%-6rem)] w-full cursor-col-resize"
+          >
+            <div className="mx-auto h-full w-px bg-indigo-200/70 dark:bg-indigo-700/60 group-hover:bg-indigo-400/80 transition-colors" />
+          </div>
         </div>
 
         {/* 우측: 노트 편집 */}
