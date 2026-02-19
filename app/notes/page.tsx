@@ -36,7 +36,7 @@ import type { Folder } from '@/lib/contracts/entities'
 const AUTO_SAVE_DELAY = 500 // ms
 const MIN_LIST_WIDTH = 240
 const MIN_EDITOR_WIDTH = 360
-const RESIZE_HANDLE_WIDTH = 8
+const RESIZE_HANDLE_WIDTH = 6
 const COLLAPSED_COLUMN_WIDTH = 56
 type ViewMode = 'list' | 'gallery'
 type LockDialogMode = 'set' | 'unlock' | 'remove' | null
@@ -1118,7 +1118,7 @@ function NotesPageContent() {
         }}
       >
         {/* 중앙: 노트 리스트 */}
-        <section className={isListCollapsed ? 'p-2 flex items-center justify-center' : 'p-3'}>
+        <section className={isListCollapsed ? 'p-2 flex items-center justify-center' : 'p-3 pr-8'}>
           {isListCollapsed ? (
             <Button
               variant="ghost"
@@ -1131,14 +1131,14 @@ function NotesPageContent() {
             </Button>
           ) : (
             <>
-              <div className="page-header flex flex-wrap items-start gap-3">
+              <div className="page-header flex flex-wrap items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <h1 className="page-title text-indigo-900 dark:text-indigo-100">
                     {isAllFolders ? '모든 노트' : selectedFolder ? selectedFolder.name : '모든 노트'}
                   </h1>
                   <p className="page-subtitle whitespace-normal">노트를 빠르게 탐색하고 연결하세요.</p>
                 </div>
-                <div className="flex items-center gap-2 pr-2">
+                <div className="flex items-center gap-2 pr-4">
                   <Select value={sortBy} onValueChange={handleSortChange}>
                     <SelectTrigger className="w-36 text-xs">
                       <SelectValue placeholder="정렬" />
@@ -1183,7 +1183,7 @@ function NotesPageContent() {
                     variant="ghost"
                     size="icon"
                     onClick={() => setIsListCollapsed(true)}
-                    className="relative z-10 h-9 w-9 shrink-0 text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+                    className="relative z-20 my-auto h-9 w-9 shrink-0 self-center text-indigo-600 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
                     aria-label="노트 목록 접기"
                   >
                     <ChevronLeft className="h-4 w-4" />
